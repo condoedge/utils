@@ -1,0 +1,29 @@
+{
+    "name": "condoedge/utils",
+    "description": "Utils helpers module to your kompo application",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Condoedge\\Utils\\": "src/"
+        }
+    },
+    "minimum-stability": "stable",
+    "require": {
+        "php": "^7.3|^8.0",
+        "laravel/framework": ">=5.6.0"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Condoedge\\Utils\\CondoedgeUtilsServiceProvider"
+            ]
+        }
+    },
+    "scripts": {
+        "post-autoload-dump": [
+            "@php artisan vendor:publish --tag=utils-assets",
+            "@php scripts/add-js-loader.php"
+        ]
+    },
+    "prefer-stable": true
+}

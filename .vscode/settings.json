@@ -1,0 +1,8 @@
+{
+    "php.version": "8.2",
+    "php.suggest.basic": true,
+    "intelephense.files.associations": [
+        "*.php",
+        "*.phtml"
+    ]
+}
