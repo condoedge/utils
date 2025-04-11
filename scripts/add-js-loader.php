@@ -1,6 +1,7 @@
 <?php
 
-$appJsPath = base_path('resources/js/app.js');
+$basePath = __DIR__ . '/../../../../';
+$appJsPath = $basePath. 'resources/js/app.js';
 
 $loaderCode = "\n// Added by Condoedge Utils\n
 const loader = require('./utils/components-loader');
