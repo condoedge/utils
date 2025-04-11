@@ -1,6 +1,6 @@
 <?php
 
-namespace Condoedge\Utils\Kompo\Plugins;
+namespace Condoedge\Utils\Kompo\Plugins\Base;
 
 abstract class ComponentPlugin
 {

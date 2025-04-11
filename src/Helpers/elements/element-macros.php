@@ -1,5 +1,9 @@
 <?php
 
+use Kompo\Elements\Element;
+use Kompo\Elements\Field;
+use Kompo\Rows;
+
 /* TABS */
 
 /**
@@ -52,4 +56,55 @@
     return $this->loadPartialInEl('partials.loading', 'load-panel', [
         'text' => $message,
     ], $successCb);    
+});
+
+Rows::macro('copyImageToClipboard', function ($text, $alertMessage = 'campaign.copied-to-clipboard') {
+    return $this->onClick(fn($e) => $e->run('() => {copyImageToClipboard(`'. $text .'`)}') &&
+        $e->alert($alertMessage)
+    );
+});
+
+\Kompo\Toggle::macro('fixToggleId', function($divId, $internalToggleId){
+    $js = '() => {
+        if($("#'. $internalToggleId .'")[0].checked) {
+            $("#'. $divId .'").removeClass("hidden")
+        } else {
+            $("#'. $divId .'").addClass("hidden")
+        }
+    }';
+
+    return $this->run($js);
+});
+
+\Kompo\Elements\Element::macro('disableAction', function($condition = true){
+    if(!$condition) return $this;
+
+    $this->interactions = [];
+
+    if (property_exists($this, 'href')) {
+        $this->href('javascript:void(0)');
+        $this->target(null);
+    }
+
+    return $this;
+});
+
+Element::macro('when', function ($condition, $callback) {
+    if ($condition) {
+        $callback($this);
+    }
+
+    return $this;
+});
+
+Field::macro('holdInSession', function() {
+    $routeName = \Route::currentRouteName();
+
+    $itemName = $routeName . '_'. $this->name;
+
+    return $this
+        ->value(session($itemName) ?? $this->value)
+        ->onChange(fn($e) => $e
+            ->post(route('hold-field-in-session', ['field_name' => $this->name, 'item_name' => $itemName]))
+        );
 });

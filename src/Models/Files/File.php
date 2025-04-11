@@ -1,6 +1,6 @@
 <?php
 
-namespace Kompo\Auth\Models\Files;
+namespace Condoedge\Utils\Models\Files;
 
 use Carbon\Carbon;
 use Kompo\Auth\Files\FileLibraryAttachmentQuery;

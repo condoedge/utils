@@ -1,6 +1,6 @@
 <?php
 
-namespace Kompo\Auth\Monitoring;
+namespace Condoedge\Utils\Models;
 
 use Kompo\Auth\Models\User;
 use Kompo\Komponents\Komponent;

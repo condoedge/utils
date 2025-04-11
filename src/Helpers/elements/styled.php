@@ -10,8 +10,40 @@ Element::macro('p4', fn() => $this->class('p-4'));
 /* GENERAL CARD SETTINGS */
 Element::macro('scrollY', fn($height = '300px') => $this->class('overflow-y-auto mini-scroll')->style('min-height:'.$height));
 
+\Kompo\Elements\Element::macro('pageTitle', function($color = 'text-level1'){
+    return $this->class('font-semibold text-4xl')->class($color);
+});
+
+\Kompo\Elements\Element::macro('medTitle', function($color = 'text-level3'){
+    return $this->class('font-normal text-2xl')->class($color);
+});
+
+// You need to specify name if you want to use before name method
+\Kompo\Elements\Field::macro('checkColor', function($color, $uncheckedColor = 'var(--form-control-border-color)', $name = null){
+    $js = '() => {setTimeout(() => checkChangeMyColor("' . $color . '","' . $uncheckedColor . '","' . ($name ?: $this->name) . '"), 100)}';
+
+    // opacity: 0 is to avoid the toggle to be visible before the JS is loaded
+    return $this->class('opacity-0')->onLoad->run($js)->onChange->run($js);
+});
+
+\Kompo\Toggle::macro('dotColor', function($color, $name = null){
+    $js = '() => {setTimeout(() => changeDotColor("' . $color .'","' . ($name ?: $this->name) . '"), 100)}';
+
+    // opacity: 0 is to avoid the toggle to be visible before the JS is loaded
+    return $this->class('opacity-0')->onLoad->run($js);
+});
+
+
+\Kompo\Elements\Element::macro('bigOnMobile', function(){
+    return $this->class('!text-lg !font-medium');
+});
+
 \Kompo\Elements\Element::macro('miniTitle', function(){
     return $this->class('text-sm uppercase leading-widest font-bold');
+});
+
+\Kompo\Input::macro('inputBigOnMobile', function(){
+    return $this->class('!text-xl [&>.vlFormLabel>span]:!text-base [&>.vlInputWrapper>input]:!p-4');
 });
 
 if (!function_exists('_Spinner')) {

@@ -1,6 +1,6 @@
 <?php
 
-namespace Kompo\Auth\Models\Tags;
+namespace Condoedge\Utils\Models\Tags;
 
 enum TagContextEnum: int
 {

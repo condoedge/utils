@@ -1,6 +1,6 @@
 <?php
 
-namespace Kompo\Auth\Models\Tags;
+namespace Condoedge\Utils\Models\Tags;
 
 use Kompo\Auth\Models\Model;
 use Kompo\Auth\Models\Teams\BelongsToTeamTrait;

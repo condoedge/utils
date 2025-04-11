@@ -2,6 +2,7 @@
 
 namespace Condoedge\Utils;
 
+use Condoedge\Utils\Kompo\Plugins\Base\PluginsManager;
 use Condoedge\Utils\Services\DataStructures\Graph;
 use Condoedge\Utils\Services\GlobalConfig\GlobalConfigServiceContract;
 use Illuminate\Support\Facades\File;
@@ -42,7 +43,7 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
         });
 
         $this->publishes([
-            __DIR__ . '../resources/js' => public_path('js/utils'),
+            __DIR__ . '/../resources/js' => public_path('js/utils'),
         ], 'utils-assets');
     }
 
@@ -53,6 +54,10 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
      */
     public function register()
     {
+        $this->app->singleton(PluginsManager::class, function ($app) {
+            return new PluginsManager();
+        });
+
         // Register services for integrity checking
         $this->app->bind('finance.graph', function ($app) {
             return new Graph();

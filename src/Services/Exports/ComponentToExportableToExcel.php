@@ -4,8 +4,7 @@ namespace Condoedge\Utils\Services\Exports;
 
 use Illuminate\Contracts\Database\Query\Builder;
 use Illuminate\Support\Facades\Log;
-use Kompo\Auth\Exports\Traits\ExportableUtilsTrait;
-use Kompo\Query;
+use Condoedge\Utils\Services\Exports\Traits\ExportableUtilsTrait;
 use Maatwebsite\Excel\Concerns\FromArray;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithColumnFormatting;
@@ -14,7 +13,7 @@ use Maatwebsite\Excel\Concerns\WithStyles;
 use Maatwebsite\Excel\Concerns\WithTitle;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
-class ExportableToExcel implements FromArray, WithHeadings, ShouldAutoSize, WithColumnFormatting, WithTitle, WithStyles
+class ComponentToExportableToExcel implements FromArray, WithHeadings, ShouldAutoSize, WithColumnFormatting, WithTitle, WithStyles
 {
     use ExportableUtilsTrait;
 
@@ -65,8 +64,8 @@ class ExportableToExcel implements FromArray, WithHeadings, ShouldAutoSize, With
 
     public function headings(): array
     {
-        if ($this->exportChildClass) {
-            $childInstance = $this->component->render(collect($this->getItems(null, 1))->first())->findByComponent($this->exportChildClass);
+        if ($this->getExportChildClass()) {
+            $childInstance = $this->component->render(collect($this->getItems(null, 1))->first())->findByComponent($this->getExportChildClass());
 
             return $this->parseHeaders($childInstance->headers());
         }

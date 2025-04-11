@@ -1,6 +1,6 @@
 <?php
 
-namespace Kompo\Auth\Models\Files;
+namespace Condoedge\Utils\Models\Files;
 
 use Kompo\Auth\Files\AudioPreview;
 use Kompo\Auth\Files\ImagePreview;

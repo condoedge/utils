@@ -2,16 +2,18 @@
 
 namespace Condoedge\Utils\Kompo\Plugins;
 
-use Condoedge\Utils\Kompo\Plugins\ComponentPlugin;
-use Condoedge\Utils\Services\Exports\ExportableToExcel;
+use Condoedge\Utils\Kompo\Plugins\Base\ComponentPlugin;
+use Condoedge\Utils\Services\Exports\ComponentToExportableToExcel;
+use Illuminate\Support\Facades\Log;
+use Kompo\Elements\BaseElement;
 use Kompo\Query;
 
 class ExportPlugin extends ComponentPlugin
 {
     public function onBoot()
     {
-        if (!($this->component instanceof Query)) {
-            throw new \Exception('ExportPlugin can only be used with Query components.');
+        if (!($this->component instanceof Query) && !method_exists($this->component, 'getExportableInstance')) {
+            throw new \Exception('ExportPlugin can only be used with Query components or has getExportableInstance method.');
         }
     }
 
@@ -41,19 +43,21 @@ class ExportPlugin extends ComponentPlugin
         $url = \URL::signedRoute('report.download', ['filename' => $filename]);
 
         return _Rows(
-            _Html('reports-export-completed')->icon('icon-check')->class('text-lg font-semibold'),
-            _Link('reports-download-file')->outlined()->toggleClass('hidden')->class('mt-4')
+            _Html('translate.utils.reports-export-completed')->icon('icon-check')->class('text-lg font-semibold'),
+            _Link('translate.utils.reports-download-file')->outlined()->toggleClass('hidden')->class('mt-4')
                 ->href($url),
         )->class('bg-white rounded-lg p-6');
     }
 
     protected function getExportableInstance()
     {
-        if (method_exists($this->component, 'getExportableInstance')) {
-            return new ExportableToExcel($this->component->getExportableInstance);
+        $exportableInstance = method_exists($this->component, 'getExportableInstance') ? $this->component->getExportableInstance() : $this->component;
+
+        if ($exportableInstance instanceof BaseElement) {
+            return new ComponentToExportableToExcel($exportableInstance);
         }
 
-        return new ExportableToExcel($this->component);
+        return $exportableInstance;
     }
 
     protected function getFilename()

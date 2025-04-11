@@ -1,15 +1,18 @@
 <?php
 
-namespace Condoedge\Finance\Kompo\Common;
+namespace Condoedge\Utils\Kompo\Common;
 
-use Kompo\Auth\Common\Modal as KompoAuthModal;
+use Condoedge\Utils\Kompo\Plugins\Base\HasComponentPlugins;
+use Kompo\Modal as KompoModal;
 
-class Modal extends KompoAuthModal
+class Modal extends KompoModal
 {
+    use HasComponentPlugins;
+    
     public $class = 'overflow-y-auto mini-scroll max-w-xl';
     public $style = 'max-height: 95vh; width: 95vw;';
 
-    protected $hasSubmitButton = false;
+    protected $hasSubmitButton = true;
 
     public function render()
     {

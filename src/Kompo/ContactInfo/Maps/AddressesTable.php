@@ -1,6 +1,6 @@
 <?php
 
-namespace Kompo\Auth\Maps;
+namespace Condoedge\Utils\Kompo\ContactInfo\Maps;
 
 use Kompo\Auth\Models\Maps\Address;
 use Kompo\Table;

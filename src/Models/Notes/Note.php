@@ -1,6 +1,6 @@
 <?php
 
-namespace Kompo\Auth\Models\Notes;
+namespace Condoedge\Utils\Models\Notes;
 
 use Kompo\Auth\Models\Model;
 

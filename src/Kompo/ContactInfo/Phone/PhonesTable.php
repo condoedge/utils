@@ -1,6 +1,6 @@
 <?php
 
-namespace Kompo\Auth\Phone;
+namespace Condoedge\Utils\Kompo\ContactInfo\Phone;
 
 use Kompo\Auth\Models\Phone\Phone;
 use Kompo\Table;

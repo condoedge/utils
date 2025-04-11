@@ -1,6 +1,6 @@
 <?php
 
-namespace Kompo\Auth\Phone;
+namespace Condoedge\Utils\Models\ContactInfo\Phone;
 
 use Kompo\Auth\Common\ModalScroll;
 use Kompo\Auth\Models\Phone\Phone;

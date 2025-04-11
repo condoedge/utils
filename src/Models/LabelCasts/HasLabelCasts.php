@@ -1,6 +1,6 @@
 <?php
 
-namespace Kompo\Auth\Models\LabelCasts;
+namespace Condoedge\Utils\Models\LabelCasts;
 
 /**
  * @param array<string, \Kompo\Auth\Models\LabelCasts\AbstractLabelCast> $labelCasts

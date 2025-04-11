@@ -1,6 +1,6 @@
 <?php
 
-namespace Kompo\Auth\Models\Email;
+namespace Condoedge\Utils\Models\ContactInfo\Email;
 
 use Kompo\Auth\Models\Model;
 

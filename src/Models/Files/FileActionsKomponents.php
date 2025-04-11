@@ -1,6 +1,6 @@
 <?php
 
-namespace Kompo\Auth\Models\Files;
+namespace Condoedge\Utils\Models\Files;
 
 use Illuminate\Support\Facades\Storage;
 use App\Models\Messaging\Attachment;

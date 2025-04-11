@@ -1,6 +1,6 @@
 <?php
 
-namespace Kompo\Auth\Monitoring;
+namespace Condoedge\Utils\Models;
 
 enum ChangeTypeEnum: int
 {

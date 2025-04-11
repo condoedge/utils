@@ -26,3 +26,19 @@ if (!function_exists('_ValidatedInput')) {
         return \Kompo\Auth\Elements\ValidatedInput::form(...func_get_args());
     }
 }
+
+
+function _CreditCardInput()
+{
+    return \Condoedge\Utils\Kompo\Elements\CreditCardInput::form(...func_get_args());
+}
+
+function _DateTextInput()
+{
+    return \Condoedge\Utils\Kompo\Elements\DateTextInput::form(...func_get_args());
+}
+
+function _Text()
+{
+    return \Condoedge\Utils\Kompo\Elements\Text::form(...func_get_args());
+}

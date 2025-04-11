@@ -1,6 +1,6 @@
 <?php
 
-namespace Kompo\Auth\Models\LabelCasts;
+namespace Condoedge\Utils\Models\LabelCasts;
 
 class RelationshipLabelCast extends AbstractLabelCast
 {

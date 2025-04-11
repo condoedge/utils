@@ -1,6 +1,6 @@
 <?php
 
-namespace Kompo\Auth\Email;
+namespace Condoedge\Utils\Kompo\ContactInfo\Email;
 
 use Kompo\Auth\Models\Email\Email;
 use Kompo\Auth\Common\ResponsiveTable;

@@ -1,6 +1,6 @@
 <?php
 
-namespace Kompo\Auth\Tags;
+namespace Condoedge\Utils\Kompo\Tags;
 
 use Kompo\Auth\Common\Modal;
 use Kompo\Auth\Models\Tags\Tag;

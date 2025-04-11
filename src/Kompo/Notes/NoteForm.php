@@ -1,6 +1,6 @@
 <?php
 
-namespace Kompo\Auth\Notes;
+namespace Condoedge\Utils\Kompo\Notes;
 
 use Kompo\Auth\Common\Modal;
 use Kompo\Auth\Facades\NoteModel;

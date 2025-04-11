@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Kompo\Tags;
+namespace Condoedge\Utils\Kompo\Tags;
 
 use Kompo\Auth\Models\Tags\Tag;
 use Kompo\Auth\Models\Tags\TagContextEnum;
