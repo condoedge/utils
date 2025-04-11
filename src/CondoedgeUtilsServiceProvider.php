@@ -43,7 +43,7 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
         });
 
         $this->publishes([
-            __DIR__ . '/../resources/js' => public_path('js/utils'),
+            __DIR__ . '/../resources/js' => base_path('resources/js/utils'),
         ], 'utils-assets');
     }
 

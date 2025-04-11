@@ -137,8 +137,27 @@ if (!function_exists('_ModalHeader')) {
         return _FlexBetween(
             $els,
         )
-            ->class('px-8 pt-6 pb-4 rounded-t-2xl')
+            ->class('px-8 pt-6 pb-4 rounded-t-2xl text-level2 bg-white')
             ->class('flex-col items-start md:flex-row md:items-center')
             ->alignStart();
     }
+}
+
+function _ModalTitle($title, $icon = null)
+{
+    if (!$title && !$icon) {
+        return;
+    }
+
+    return _Title($title)
+        ->icon(_ModalIcon($icon))
+        ->class('text-2xl sm:text-3xl font-semibold text-level2')
+        ->class('mb-4 md:mb-0')
+        ->class('flex items-center');
+}
+
+
+function _ModalIcon($icon)
+{
+    return !$icon ? null : _Sax($icon, 32)->class('mr-1');
 }
