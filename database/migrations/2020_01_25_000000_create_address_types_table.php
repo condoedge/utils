@@ -13,13 +13,13 @@ class CreateAddressTypesTable extends Migration
      */
     public function up()
     {
-        Schema::create('address_types', function (Blueprint $table) {
+        // Schema::create('address_types', function (Blueprint $table) {
 
-            // addMetaData($table);
+        //     addMetaData($table);
 
-            // $table->foreignId('team_id')->nullable()->constrained();
-            // $table->string('adt_name')->nullable();
-        });
+        //     $table->foreignId('team_id')->nullable()->constrained();
+        //     $table->string('adt_name')->nullable();
+        // });
     }
 
     /**

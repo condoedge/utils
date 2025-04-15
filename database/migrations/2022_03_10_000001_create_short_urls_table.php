@@ -13,7 +13,7 @@ class CreateShortUrlsTable extends Migration
      */
     public function up()
     {
-        Schema::create('short_urls', function (Blueprint $table) {
+        // Schema::create('short_urls', function (Blueprint $table) {
             // $table->id();
 
             // $table->string('short_url_code');
@@ -21,7 +21,7 @@ class CreateShortUrlsTable extends Migration
             // $table->string('invitation_id')->nullable();
 
             // $table->timestamps();
-        });
+        // });
     }
 
     /**

@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('emails', function (Blueprint $table) {
+        // Schema::create('emails', function (Blueprint $table) {
 
             // addMetaData($table);
             
@@ -22,7 +22,7 @@ return new class extends Migration
 
             // $table->integer('type_em')->nullable();
             // $table->string('address_em');
-        });
+        // });
     }
 
     /**

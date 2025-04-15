@@ -13,7 +13,7 @@ class CreatePhonesTable extends Migration
      */
     public function up()
     {
-        Schema::create('phones', function (Blueprint $table) {
+        // Schema::create('phones', function (Blueprint $table) {
 
             // addMetaData($table);
             
@@ -23,7 +23,7 @@ class CreatePhonesTable extends Migration
             // $table->tinyInteger('type_ph')->nullable();
             // $table->string('number_ph');
             // $table->string('extension_ph')->nullable();
-        });
+        // });
     }
 
     /**

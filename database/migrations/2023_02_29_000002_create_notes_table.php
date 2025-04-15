@@ -13,8 +13,8 @@ class CreateNotesTable extends Migration
      */
     public function up()
     {
-        Schema::create('notes', function (Blueprint $table)
-        {
+        // Schema::create('notes', function (Blueprint $table)
+        // {
             // addMetaData($table);
             
             // $table->foreignId('team_id')->constrained();
@@ -24,7 +24,7 @@ class CreateNotesTable extends Migration
             // $table->timestamp('date_nt')->default(now());
 
             // $table->tinyInteger('note_subtype')->nullable();
-        });
+        // });
     }
 
     /**
