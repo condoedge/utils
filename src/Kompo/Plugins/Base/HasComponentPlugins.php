@@ -76,9 +76,14 @@ trait HasComponentPlugins
         return collect(array_merge($this->getLocalPlugins(), app(PluginsManager::class)->getPlugins(static::class)));
     }
 
-    public static function setPlugins($plugins)
+    public static function setPlugins($plugins, $override = false)
     {
-        static::$globalPlugins = $plugins;
+        if ($override) {
+            static::$globalPlugins = $plugins;
+            return;
+        }
+
+        static::$globalPlugins = array_merge(static::$globalPlugins ?? [], $plugins);
     }
 
     public static function getGlobalPlugins()

@@ -2,7 +2,7 @@
 
 namespace Condoedge\Utils\Kompo\Notes;
 
-use Kompo\Auth\Common\Modal;
+use Condoedge\Utils\Kompo\Common\Modal;
 use Kompo\Auth\Facades\NoteModel;
 
 class NoteForm extends Modal

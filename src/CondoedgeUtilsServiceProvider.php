@@ -2,13 +2,21 @@
 
 namespace Condoedge\Utils;
 
-use Condoedge\Utils\Kompo\Plugins\Base\PluginsManager;
-use Condoedge\Utils\Services\DataStructures\Graph;
-use Condoedge\Utils\Services\GlobalConfig\GlobalConfigServiceContract;
-use Illuminate\Support\Facades\File;
-use Illuminate\Support\ServiceProvider;
-use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Route;
+use Condoedge\Utils\Kompo\Common\Modal;
+use Condoedge\Utils\Kompo\Common\Query;
+use Condoedge\Utils\Kompo\Common\Table;
+use Illuminate\Support\ServiceProvider;
+use Condoedge\Utils\Kompo\Plugins\HasScroll;
+use Condoedge\Utils\Kompo\Plugins\ExportPlugin;
+use Condoedge\Utils\Services\DataStructures\Graph;
+use Illuminate\Database\Eloquent\Relations\Relation;
+use Condoedge\Utils\Kompo\Plugins\Base\PluginsManager;
+use Condoedge\Utils\Kompo\Plugins\EnableResponsiveTable;
+use Condoedge\Utils\Kompo\Plugins\EnableWhiteTableStyle;
+use Condoedge\Utils\Services\GlobalConfig\GlobalConfigServiceContract;
 
 class CondoedgeUtilsServiceProvider extends ServiceProvider
 {
@@ -45,6 +53,20 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__ . '/../resources/js' => base_path('resources/js/utils'),
         ], 'utils-assets');
+
+
+        Query::setPlugins([
+            ExportPlugin::class,
+        ]);
+
+        Table::setPlugins([
+            EnableWhiteTableStyle::class,
+            EnableResponsiveTable::class,
+        ]);
+
+        Modal::setPlugins([
+            HasScroll::class,
+        ]);
     }
 
     /**
@@ -75,6 +97,14 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
             $driverClass = $driverConfig['class'];
 
             return new $driverClass();
+        });
+
+        $this->app->bind('file-model', function () {
+            return new (config('kompo-utils.file-model-namespace'));
+        });
+
+        $this->app->bind('note-model', function () {
+            return new (config('kompo-utils.note-model-namespace'));
         });
     }
 

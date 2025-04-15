@@ -27,9 +27,14 @@ trait HasModelPlugins
         ));
     }
 
-    public static function setPlugins(array $plugins)
+    public static function setPlugins(array $plugins, $override = false)
     {
-        static::$globalPlugins = $plugins;
+        if ($override) {
+            static::$globalPlugins = $plugins;
+            return;
+        }
+
+        static::$globalPlugins = array_merge(static::$globalPlugins ?? [], $plugins);
     }
 
     public static function getGlobalPlugins()

@@ -15,6 +15,7 @@ class ResponsiveTabs extends Rows
 
     protected $tabsClass;
     protected $tabsSelectedClass;
+    protected $tabsUnselectedClass;
     protected $tabsCommonClass;
 
     protected $tabsCallbackDecoration;
@@ -66,6 +67,13 @@ class ResponsiveTabs extends Rows
         return $this;
     }
 
+    public function tabsUnselectedClass(string|null $tabsUnselectedClass)
+    {
+        $this->tabsUnselectedClass = $tabsUnselectedClass;
+
+        return $this;
+    }
+
     public function tabsCommonClass(string|null $tabsCommonClass)
     {
         $this->tabsCommonClass = $tabsCommonClass;
@@ -88,7 +96,7 @@ class ResponsiveTabs extends Rows
             ->commonClass("hidden {$this->breakpoint}:block mr-8")
             ->when($this->tabsClass, fn ($el) => $el->class($this->tabsClass))
             ->when($this->tabsCommonClass, fn ($el) => $el->commonClass($this->tabsCommonClass . " hidden {$this->breakpoint}:block"))
-            ->when($this->tabsSelectedClass, fn ($el) => $el->selectedClass($this->tabsSelectedClass))
+            ->when($this->tabsSelectedClass, fn ($el) => $el->selectedClass($this->tabsSelectedClass, $this->tabsUnselectedClass))
             ->id('responsive-tabs-' . $this->uniqueId)
             ->holdActualTab()
             ->when($callback && is_callable($callback), fn ($el) => $callback($el));
