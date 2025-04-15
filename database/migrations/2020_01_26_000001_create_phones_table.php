@@ -15,14 +15,14 @@ class CreatePhonesTable extends Migration
     {
         Schema::create('phones', function (Blueprint $table) {
 
-            addMetaData($table);
+            // addMetaData($table);
             
-            $table->foreignId('team_id')->nullable()->constrained();
+            // $table->foreignId('team_id')->nullable()->constrained();
 
-            $table->nullableMorphs('phonable');
-            $table->tinyInteger('type_ph')->nullable();
-            $table->string('number_ph');
-            $table->string('extension_ph')->nullable();
+            // $table->nullableMorphs('phonable');
+            // $table->tinyInteger('type_ph')->nullable();
+            // $table->string('number_ph');
+            // $table->string('extension_ph')->nullable();
         });
     }
 

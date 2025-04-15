@@ -15,10 +15,10 @@ class CreateAddressTypesTable extends Migration
     {
         Schema::create('address_types', function (Blueprint $table) {
 
-            addMetaData($table);
+            // addMetaData($table);
 
-            $table->foreignId('team_id')->nullable()->constrained();
-            $table->string('adt_name')->nullable();
+            // $table->foreignId('team_id')->nullable()->constrained();
+            // $table->string('adt_name')->nullable();
         });
     }
 

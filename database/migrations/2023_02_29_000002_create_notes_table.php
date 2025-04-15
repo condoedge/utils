@@ -15,15 +15,15 @@ class CreateNotesTable extends Migration
     {
         Schema::create('notes', function (Blueprint $table)
         {
-            addMetaData($table);
+            // addMetaData($table);
             
-            $table->foreignId('team_id')->constrained();
-            $table->morphs('notable');
+            // $table->foreignId('team_id')->constrained();
+            // $table->morphs('notable');
 
-            $table->string('content_nt');
-            $table->timestamp('date_nt')->default(now());
+            // $table->string('content_nt');
+            // $table->timestamp('date_nt')->default(now());
 
-            $table->tinyInteger('note_subtype')->nullable();
+            // $table->tinyInteger('note_subtype')->nullable();
         });
     }
 

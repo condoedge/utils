@@ -15,13 +15,13 @@ return new class extends Migration
     {
         Schema::create('emails', function (Blueprint $table) {
 
-            addMetaData($table);
+            // addMetaData($table);
             
-            $table->foreignId('team_id')->constrained();
-            $table->nullableMorphs('emailable');
+            // $table->foreignId('team_id')->constrained();
+            // $table->nullableMorphs('emailable');
 
-            $table->integer('type_em')->nullable();
-            $table->string('address_em');
+            // $table->integer('type_em')->nullable();
+            // $table->string('address_em');
         });
     }
 
