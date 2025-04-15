@@ -14,26 +14,6 @@ class CreateTagsTable extends Migration
      */
     public function up()
     {
-<<<<<<< HEAD
-        // Schema::create('tags', function (Blueprint $table) {
-        //     addMetaData($table);
-        //     $table->foreignId('tag_id')->nullable()->constrained('tags');
-        //     $table->foreignId('team_id')->nullable()->constrained();
-
-        //     $table->string('name');
-        //     $table->string('description', 500)->nullable();
-
-        //     $table->tinyInteger('tag_type')->nullable();
-        //     $table->tinyInteger('context')->default(TagContextEnum::TEAM);
-        // });
-
-        // Schema::create('taggable_tag', function (Blueprint $table) {
-        //     $table->id();
-        //     $table->morphs('taggable');
-        //     $table->foreignId('tag_id')->constrained()->onDelete('cascade');
-        //     $table->timestamps();
-        // });
-=======
         Schema::create('tags', function (Blueprint $table) {
             addMetaData($table);
             $table->foreignId('tag_id')->nullable()->constrained('tags');
@@ -52,7 +32,6 @@ class CreateTagsTable extends Migration
             $table->foreignId('tag_id')->constrained()->onDelete('cascade');
             $table->timestamps();
         });
->>>>>>> f188e08 (All the helpers migrated, database migrations, and minor improvements)
     }
 
     /**
