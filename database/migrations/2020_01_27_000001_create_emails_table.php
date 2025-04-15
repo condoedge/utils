@@ -15,6 +15,7 @@ return new class extends Migration
     {
         Schema::create('emails', function (Blueprint $table) {
 
+<<<<<<< HEAD
             // addMetaData($table);
             
             // $table->foreignId('team_id')->constrained();
@@ -22,6 +23,15 @@ return new class extends Migration
 
             // $table->integer('type_em')->nullable();
             // $table->string('address_em');
+=======
+            addMetaData($table);
+            
+            $table->foreignId('team_id')->constrained();
+            $table->nullableMorphs('emailable');
+
+            $table->integer('type_em')->nullable();
+            $table->string('address_em');
+>>>>>>> f188e08 (All the helpers migrated, database migrations, and minor improvements)
         });
     }
 
