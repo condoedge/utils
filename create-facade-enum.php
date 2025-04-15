@@ -92,7 +92,7 @@ function createFacadeFile($path, $initialNamespace, $namespace, $enum, $enumSnak
 
 namespace {$initialNamespace}Facades;
 
-use Kompo\Auth\Facades\FacadeEnum;
+use Condoedge\Utils\Facades\FacadeEnum;
 
 /**
  * @mixin \\{$namespace}

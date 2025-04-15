@@ -1,6 +1,6 @@
 <?php
 
-namespace Kompo\Auth\Facades;
+namespace Condoedge\Utils\Facades;
 
 use Illuminate\Support\Facades\Facade;
 

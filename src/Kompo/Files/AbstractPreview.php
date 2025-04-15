@@ -2,7 +2,8 @@
 
 namespace Condoedge\Utils\Kompo\Files;
 
-use Kompo\Auth\Common\Form;
+use Condoedge\Utils\Kompo\Common\Form;
+use Illuminate\Database\Eloquent\Relations\Relation;
 
 class AbstractPreview extends Form
 {

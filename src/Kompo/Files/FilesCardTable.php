@@ -2,8 +2,8 @@
 
 namespace Condoedge\Utils\Kompo\Files;
 
-use Kompo\Auth\Facades\FileModel;
-use Kompo\Query;
+use Condoedge\Utils\Facades\FileModel;
+use Condoedge\Utils\Kompo\Common\Query;
 
 class FilesCardTable extends Query
 {

@@ -2,10 +2,10 @@
 
 namespace Condoedge\Utils\Kompo\ContactInfo\Phone;
 
-use Kompo\Auth\Common\ModalScroll;
-use Kompo\Auth\Models\Phone\Phone;
+use Condoedge\Utils\Kompo\Common\Modal;
+use Condoedge\Utils\Models\ContactInfo\Phone\Phone;
 
-class PhoneForm extends ModalScroll
+class PhoneForm extends Modal
 {
     public $model = Phone::class;
     public $_Title = 'phone-manage-phone';

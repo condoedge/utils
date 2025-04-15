@@ -3,7 +3,7 @@
 namespace Condoedge\Utils\Kompo\Tags;
 
 use Condoedge\Utils\Kompo\Common\Modal;
-use Kompo\Auth\Models\Tags\Tag;
+use Condoedge\Utils\Models\Tags\Tag;
 
 class TagForm extends Modal
 {

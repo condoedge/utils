@@ -2,8 +2,8 @@
 
 namespace Condoedge\Utils\Kompo\ContactInfo\Maps;
 
-use Kompo\Auth\Models\Maps\Address;
-use Kompo\Form;
+use Condoedge\Utils\Kompo\Common\Form;
+use Condoedge\Utils\Models\ContactInfo\Maps\Address;
 
 class SingleAddressCard extends Form
 {

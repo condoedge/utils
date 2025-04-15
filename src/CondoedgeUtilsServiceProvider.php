@@ -2,6 +2,7 @@
 
 namespace Condoedge\Utils;
 
+use Condoedge\Utils\Facades\FileModel;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Route;
@@ -38,6 +39,17 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
 
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
 
+        $this->publishes([
+            __DIR__ . '/../config/global-config.php' => config_path('global-config.php'),
+            __DIR__ . '/../config/kompo-utils.php' => config_path('kompo-utils.php'),
+            __DIR__ . '/../config/kompo-files.php' => config_path('kompo-files.php'),
+            __DIR__ . '/../config/kompo-tags.php' => config_path('kompo-tags.php'),
+        ], 'kompo-utils-config');
+
+        $this->app->bind(FILE_MODEL_KEY, function () {
+            return new (config('kompo-utils.file-model-namespace'));
+        });
+
         $this->loadRelationsMorphMap();
         $this->loadCommands();
 
@@ -53,7 +65,6 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__ . '/../resources/js' => base_path('resources/js/utils'),
         ], 'utils-assets');
-
 
         Query::setPlugins([
             ExportPlugin::class,
@@ -99,12 +110,12 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
             return new $driverClass();
         });
 
-        $this->app->bind('file-model', function () {
-            return new (config('kompo-utils.file-model-namespace'));
-        });
-
         $this->app->bind('note-model', function () {
             return new (config('kompo-utils.note-model-namespace'));
+        });
+
+        $this->app->bind('team-model', function () {
+            return new (config('kompo-utils.team-model-namespace'));
         });
     }
 
@@ -129,6 +140,9 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
         $dirs = [
             'global-config' => __DIR__.'/../config/global-config.php',
             'services' => __DIR__.'/../config/services.php',
+            'kompo-files' => __DIR__.'/../config/kompo-files.php',
+            'kompo-utils' => __DIR__.'/../config/kompo-utils.php',
+            'kompo-tags' => __DIR__.'/../config/kompo-tags.php',
         ];
 
         foreach ($dirs as $key => $path) {
@@ -142,7 +156,7 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
     protected function loadRelationsMorphMap()
     {
         Relation::morphMap([
-
+            'file' => FileModel::getClass(),
         ]);
     }
 

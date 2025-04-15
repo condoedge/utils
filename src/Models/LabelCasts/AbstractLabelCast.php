@@ -2,7 +2,7 @@
 
 namespace Condoedge\Utils\Models\LabelCasts;
 
-use Kompo\Auth\Models\Model;
+use Condoedge\Utils\Models\Model;
 
 abstract class AbstractLabelCast
 {

@@ -2,11 +2,11 @@
 
 namespace Condoedge\Utils\Models\Notes;
 
-use Kompo\Auth\Models\Model;
+use Condoedge\Utils\Models\Model;
 
 class Note extends Model
 {
-    use \Kompo\Auth\Models\Teams\BelongsToTeamTrait;
+    use \Condoedge\Utils\Models\Traits\BelongsToTeamTrait;
 
     protected $casts = [
         'date_nt' => 'datetime',

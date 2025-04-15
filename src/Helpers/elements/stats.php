@@ -26,12 +26,12 @@ function _ResizablePieStat($percentage, $size = 150, $color = '#007EFF', $textSi
     ');
 }
 
-function _ProgressBar($pct, $bgColor = 'bg-level5', $campaignColor = null, $extraStyle = '')
+function _ProgressBar($pct, $bgColor = 'bg-level5', $bgHex = null, $extraStyle = '')
 {
     $progressPct = _Html()->class('rounded')->style('height: 8px; width:'.($pct*100).'%;' . $extraStyle);
 
-    if ($campaignColor) {
-        $progressPct = $progressPct->campaignBg($campaignColor);
+    if ($bgHex) {
+        $progressPct = $progressPct->style('background-color: '.$bgHex.' !important;');
     } else {
         $progressPct = $progressPct->class($bgColor);
     }

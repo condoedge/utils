@@ -2,7 +2,6 @@
 
 namespace Condoedge\Utils\Models\ContactInfo\Maps;
 
-use Kompo\Auth\Models\Maps\Address;
 
 trait MorphManyAddresses
 {

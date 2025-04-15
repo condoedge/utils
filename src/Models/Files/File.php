@@ -3,14 +3,13 @@
 namespace Condoedge\Utils\Models\Files;
 
 use Carbon\Carbon;
-use Kompo\Auth\Files\FileLibraryAttachmentQuery;
-use Kompo\Auth\Models\Contracts\Searchable;
-use Kompo\Auth\Models\Files\FileVisibilityEnum;
-use Kompo\Auth\Models\Model;
-use Kompo\Auth\Models\Tags\MorphToManyTagsTrait;
-use Kompo\Auth\Models\Teams\BelongsToTeamTrait;
-use Kompo\Auth\Models\Traits\BelongsToUserTrait;
-use Kompo\Auth\Models\Traits\HasSearchableNameTrait;
+use Condoedge\Utils\Models\Traits\BelongsToTeamTrait;
+use Condoedge\Utils\Models\Contracts\Searchable;
+use Condoedge\Utils\Models\Files\FileVisibilityEnum;
+use Condoedge\Utils\Models\Model;
+use Condoedge\Utils\Models\Tags\MorphToManyTagsTrait;
+use Condoedge\Utils\Models\Traits\BelongsToUserTrait;
+use Condoedge\Utils\Models\Traits\HasSearchableNameTrait;
 use Kompo\Core\FileHandler;
 use Intervention\Image\Facades\Image;
 

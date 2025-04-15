@@ -2,10 +2,9 @@
 
 namespace Condoedge\Utils\Kompo\Tags;
 
-use Kompo\Auth\Models\Tags\Tag;
-use Kompo\Auth\Models\Tags\TagContextEnum;
-use Kompo\Auth\Tags\TagForm;
-use Kompo\Table;
+use Condoedge\Utils\Kompo\Common\Table;
+use Condoedge\Utils\Models\Tags\Tag;
+use Condoedge\Utils\Models\Tags\TagContextEnum;
 
 class TagsTable extends Table
 {

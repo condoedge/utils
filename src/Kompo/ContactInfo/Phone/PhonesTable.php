@@ -2,8 +2,8 @@
 
 namespace Condoedge\Utils\Kompo\ContactInfo\Phone;
 
-use Kompo\Auth\Models\Phone\Phone;
-use Kompo\Table;
+use Condoedge\Utils\Kompo\Common\Table;
+use Condoedge\Utils\Models\ContactInfo\Phone\Phone;
 
 class PhonesTable extends Table
 {

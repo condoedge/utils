@@ -1,11 +1,11 @@
 <?php
 
-namespace Kompo\Auth\Facades;
+namespace Condoedge\Utils\Facades;
 
 use Kompo\Komponents\Form\KompoModelFacade;
 
 /**
- * @mixin \Kompo\Auth\Models\Files\File
+ * @mixin \Condoedge\Utils\Models\Files\File
  */
 class FileModel extends KompoModelFacade
 {

@@ -2,8 +2,8 @@
 
 namespace Condoedge\Utils\Kompo\ContactInfo\Maps;
 
-use Kompo\Auth\Models\Maps\Address;
-use Kompo\Table;
+use Condoedge\Utils\Kompo\Common\Table;
+use Condoedge\Utils\Models\ContactInfo\Maps\Address;
 
 class AddressesTable extends Table
 {

@@ -2,11 +2,11 @@
 
 namespace Condoedge\Utils\Models\ContactInfo\Email;
 
-use Kompo\Auth\Models\Model;
+use Condoedge\Utils\Models\Model;
 
 class Email extends Model
 {
-    use \Kompo\Auth\Models\Teams\BelongsToTeamTrait;
+    use \Condoedge\Utils\Models\Traits\BelongsToTeamTrait;
 
     public const TYPE_EM_PERSONAL = 1;
     public const TYPE_EM_WORK = 2;

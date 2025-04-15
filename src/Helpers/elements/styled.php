@@ -131,6 +131,16 @@ function _MiniLabel($label)
     return _Html($label)->class('text-level1 opacity-60 text-xs');
 }
 
+if(!function_exists('_Modal')) {
+    function _Modal()
+    {
+        return _Rows(
+            ...func_get_args()
+        )->class('overflow-y-auto mini-scroll')
+        ->style('max-height:95vh;min-width:350px');
+    }
+}
+
 if (!function_exists('_ModalHeader')) {
     function _ModalHeader($els)
     {
@@ -160,4 +170,12 @@ function _ModalTitle($title, $icon = null)
 function _ModalIcon($icon)
 {
     return !$icon ? null : _Sax($icon, 32)->class('mr-1');
+}
+
+/* SEPARATORS */
+if (!function_exists('_SeparatorGray')) {
+    function _SeparatorGray()
+    {
+        return _Html()->class('my-4 border-b border-gray-200');
+    }
 }

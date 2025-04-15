@@ -2,15 +2,9 @@
 
 namespace Condoedge\Utils\Models\Files;
 
-use Kompo\Auth\Files\AudioPreview;
-use Kompo\Auth\Files\ImagePreview;
-use Kompo\Auth\Files\PdfPreview;
-use Kompo\Auth\Files\VideoPreview;
-use PhpOffice\PhpSpreadsheet\Writer\Pdf;
-
 enum FileTypeEnum: int
 {
-    use \Kompo\Auth\Models\Traits\EnumKompo;
+    use \Condoedge\Utils\Models\Traits\EnumKompo;
     
     case IMAGE = 1;
     case PDF = 2;

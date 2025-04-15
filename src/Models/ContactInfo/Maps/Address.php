@@ -1,13 +1,13 @@
 <?php
 
-namespace Kompo\Auth\Models\Maps;
+namespace Condoedge\Utils\Models\ContactInfo\Maps;
 
-use Kompo\Auth\Models\Model;
+use Condoedge\Utils\Models\Model;
 use Kompo\Place;
 
 class Address extends Model
 {
-    use \Kompo\Auth\Models\Teams\BelongsToTeamTrait;
+    use \Condoedge\Utils\Models\Traits\BelongsToTeamTrait;
 
     public const BASE_SEPARATOR = '<br>';
 

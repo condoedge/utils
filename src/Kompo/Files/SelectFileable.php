@@ -2,8 +2,8 @@
 
 namespace Condoedge\Utils\Kompo\Files;
 
+use Condoedge\Utils\Kompo\Common\Form;
 use Illuminate\Database\Eloquent\Relations\Relation;
-use Kompo\Form;
 
 class SelectFileable extends Form
 {

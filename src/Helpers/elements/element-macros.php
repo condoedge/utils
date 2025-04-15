@@ -108,3 +108,22 @@ Field::macro('holdInSession', function() {
             ->post(route('hold-field-in-session', ['field_name' => $this->name, 'item_name' => $itemName]))
         );
 });
+
+
+Kompo\Elements\Layout::macro('applyToAllElements', function ($callback, $exclude = []) {
+	$this->elements = collect($this->elements)->map(function ($el, $i) use ($callback, $exclude) {
+		if (!in_array($i, $exclude)) {
+			return $callback($el);
+		}
+
+		return $el;
+	})->all();
+
+	return $this;
+});
+
+Kompo\Elements\Layout::macro('stopPropagation', function () {
+	return $this->attr([
+		'onclick' => 'event.stopPropagation()',
+	]);
+});

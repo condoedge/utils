@@ -2,8 +2,8 @@
 
 namespace Condoedge\Utils\Kompo\Files;
 
-use Kompo\Auth\Facades\FileModel;
-use Kompo\Table;
+use Condoedge\Utils\Facades\FileModel;
+use Condoedge\Utils\Kompo\Common\Table;
 
 class FilesManagerView extends Table
 {

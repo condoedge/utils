@@ -3,7 +3,7 @@
 namespace Condoedge\Utils\Models\LabelCasts;
 
 /**
- * @param array<string, \Kompo\Auth\Models\LabelCasts\AbstractLabelCast> $labelCasts
+ * @param array<string, \Condoedge\Utils\Models\LabelCasts\AbstractLabelCast> $labelCasts
  */
 trait HasLabelCasts 
 {
@@ -61,8 +61,8 @@ trait HasLabelCasts
         $type = $this->getDefaultTypeOfAttribute($attr, $castedValue);
 
         $defaultTypes = [
-            'enum' => \Kompo\Auth\Models\LabelCasts\EnumLabelCast::class,
-            'relationship' => \Kompo\Auth\Models\LabelCasts\RelationshipLabelCast::class,
+            'enum' => \Condoedge\Utils\Models\LabelCasts\EnumLabelCast::class,
+            'relationship' => \Condoedge\Utils\Models\LabelCasts\RelationshipLabelCast::class,
         ];
 
         return $defaultTypes[$type] ?? null;

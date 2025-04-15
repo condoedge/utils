@@ -2,10 +2,10 @@
 
 namespace Condoedge\Utils\Kompo\ContactInfo\Email;
 
-use Kompo\Auth\Common\ModalScroll;
-use Kompo\Auth\Models\Email\Email;
+use Condoedge\Utils\Kompo\Common\Modal;
+use Condoedge\Utils\Models\ContactInfo\Email\Email;
 
-class EmailForm extends ModalScroll
+class EmailForm extends Modal
 {
     public $model = Email::class;
     public $_Title = 'email-manage-email';

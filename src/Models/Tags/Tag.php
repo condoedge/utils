@@ -2,12 +2,11 @@
 
 namespace Condoedge\Utils\Models\Tags;
 
-use Kompo\Auth\Models\Model;
-use Kompo\Auth\Models\Teams\BelongsToTeamTrait;
+use Condoedge\Utils\Models\Model;
 
 class Tag extends Model
 {
-	use BelongsToTeamTrait;
+	use \Condoedge\Utils\Models\Traits\BelongsToTeamTrait;
 	use \Kompo\Database\HasTranslations;
 
 	const TAG_TYPE_GENERAL = 0;

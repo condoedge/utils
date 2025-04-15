@@ -3,7 +3,7 @@
 namespace Condoedge\Utils\Kompo\Files;
 
 use Condoedge\Utils\Kompo\Common\Modal;
-use Kompo\Auth\Facades\FileModel;
+use Condoedge\Utils\Facades\FileModel;
 
 class FileForm extends Modal
 {

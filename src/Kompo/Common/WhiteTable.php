@@ -1,6 +1,6 @@
 <?php
 
-namespace Kompo\Auth\Common;
+namespace Condoedge\Utils\Kompo\Common;
 
 use Condoedge\Utils\Kompo\Common\Table;
 

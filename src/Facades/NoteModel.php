@@ -1,11 +1,11 @@
 <?php
 
-namespace Kompo\Auth\Facades;
+namespace Condoedge\Utils\Facades;
 
 use Kompo\Komponents\Form\KompoModelFacade;
 
 /**
- * @mixin \Kompo\Auth\Models\Notes\Note
+ * @mixin \Condoedge\Utils\Models\Notes\Note
  */
 class NoteModel extends KompoModelFacade
 {

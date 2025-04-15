@@ -2,7 +2,7 @@
 
 namespace Condoedge\Utils\Models\Tags;
 
-use Kompo\Auth\Models\ModelBase;
+use Condoedge\Utils\Models\ModelBase;
 
 class Taggable extends ModelBase
 {

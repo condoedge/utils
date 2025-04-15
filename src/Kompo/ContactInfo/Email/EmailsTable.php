@@ -2,11 +2,11 @@
 
 namespace Condoedge\Utils\Kompo\ContactInfo\Email;
 
-use Kompo\Auth\Models\Email\Email;
-use Kompo\Auth\Common\ResponsiveTable;
+use Condoedge\Utils\Kompo\Common\Table;
 
-class EmailsTable extends ResponsiveTable
+class EmailsTable extends Table
 {
+	protected $isResponsive = true;
     protected $teamId;
     protected $emailableId;
     protected $emailableType;

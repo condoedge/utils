@@ -2,10 +2,10 @@
 
 namespace Condoedge\Utils\Kompo\ContactInfo\Maps;
 
-use Kompo\Auth\Common\ModalScroll;
-use Kompo\Auth\Models\Maps\Address;
+use Condoedge\Utils\Kompo\Common\Modal;
+use Condoedge\Utils\Models\ContactInfo\Maps\Address;
 
-class AddressForm extends ModalScroll
+class AddressForm extends Modal
 {
     public $model = Address::class;
     public $_Title = 'maps-manage-address';

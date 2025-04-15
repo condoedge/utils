@@ -2,8 +2,8 @@
 
 namespace Condoedge\Utils\Models\Traits;
 
-use Kompo\Auth\Monitoring\ChangeTypeEnum;
-use Kompo\Auth\Monitoring\ModelChangesLog;
+use Condoedge\Utils\Models\ChangeTypeEnum;
+use Condoedge\Utils\Models\ModelChangesLog;
 
 trait HasManyModelChanges 
 {

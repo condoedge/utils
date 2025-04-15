@@ -2,8 +2,8 @@
 
 namespace Condoedge\Utils\Kompo\Files;
 
-use Kompo\Auth\Facades\FileModel;
-use Kompo\Form;
+use Condoedge\Utils\Facades\FileModel;
+use Condoedge\Utils\Kompo\Common\Form;
 
 class FileFileableForm extends Form
 {

@@ -1,10 +1,10 @@
 <?php
 
-namespace Kompo\Auth\Services;
+namespace Condoedge\Utils\Services;
 
+use Condoedge\Utils\Kompo\Files\FileLibraryAttachmentQuery;
+use Condoedge\Utils\Kompo\Files\FilesManagerView;
 use Illuminate\Support\Facades\Route;
-use Kompo\Auth\Files\FileLibraryAttachmentQuery;
-use Kompo\Auth\Files\FilesManagerView;
 
 class FileService 
 {

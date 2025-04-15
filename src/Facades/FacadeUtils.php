@@ -1,5 +1,6 @@
 <?php
-namespace Kompo\Auth\Facades;
+
+namespace Condoedge\Utils\Facades;
 
 trait FacadeUtils
 {

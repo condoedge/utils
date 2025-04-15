@@ -2,7 +2,7 @@
 
 namespace Condoedge\Utils\Kompo\Files;
 
-use Kompo\Auth\Facades\FileModel;
+use Condoedge\Utils\Facades\FileModel;
 
 class FileLibraryAttachmentQuery extends FileLibraryQuery
 {

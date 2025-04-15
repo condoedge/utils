@@ -2,11 +2,11 @@
 
 namespace Condoedge\Utils\Models\ContactInfo\Maps;
 
-use Kompo\Auth\Models\Model;
+use Condoedge\Utils\Models\Model;
 
 class AddressType extends Model
 {
-    use \Kompo\Auth\Models\Teams\BelongsToTeamTrait;
+    use \Condoedge\Utils\Models\Traits\BelongsToTeamTrait;
 
     /* RELATIONSHIPS */
 

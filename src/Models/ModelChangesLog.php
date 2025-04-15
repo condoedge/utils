@@ -2,7 +2,7 @@
 
 namespace Condoedge\Utils\Models;
 
-use Kompo\Auth\Models\User;
+use Condoedge\Utils\Models\User;
 use Kompo\Komponents\Komponent;
 use Kompo\Models\ModelBase;
 
