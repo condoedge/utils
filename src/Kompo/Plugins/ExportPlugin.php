@@ -62,8 +62,8 @@ class ExportPlugin extends ComponentPlugin
 
     protected function getFilename()
     {
-        if (property_exists($this->component, 'filename')) {
-            return $this->component->filename;
+        if ($filename = $this->getComponentProperty('filename')) {
+            return $filename;
         }
 
         return 'exported-file';
