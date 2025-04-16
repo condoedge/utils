@@ -120,3 +120,40 @@ if(!function_exists('_Pill3')) {
         return _Pill($label)->class('bg-level3 text-greenmain');
     }
 }
+
+if(!function_exists('_PillGray')) {
+    function _PillGray($label)
+    {
+        return _Pill($label)->class('bg-gray-200');
+    }
+}
+
+if(!function_exists('_PillInfo')) {
+    function _PillInfo($label)
+    {
+        return _Pill($label)->class('bg-level5 text-white');
+    }
+}
+
+if(!function_exists('_PillWarning')) {
+    function _PillWarning($label)
+    {
+        return _Pill($label)->class('bg-warning text-white');
+    }
+}
+
+/* DYNAMIC TEXTS */
+if (!function_exists('_AccordeonText')) {
+    function _AccordeonText($label, $class = '')
+    {
+        $isExpandable = strlen($label) > 70;
+    
+        return _Rows(
+            _Html($label)->class($class),
+            !$isExpandable ? null : _Sax('arrow-down',30)->class('expandable-icon text-white absolute right-0 bottom-0 opacity-25'),
+        )->class('relative')
+        ->class($isExpandable ? 'cursor-pointer h-10 overflow-hidden text-collapsed' : '')
+        ->toggleClass('h-10 overflow-hidden text-collapsed text-expanded');
+    }
+    
+}

@@ -15,16 +15,6 @@ class CreatePhonesTable extends Migration
     {
         Schema::create('phones', function (Blueprint $table) {
 
-<<<<<<< HEAD
-            // addMetaData($table);
-            
-            // $table->foreignId('team_id')->nullable()->constrained();
-
-            // $table->nullableMorphs('phonable');
-            // $table->tinyInteger('type_ph')->nullable();
-            // $table->string('number_ph');
-            // $table->string('extension_ph')->nullable();
-=======
             addMetaData($table);
             
             $table->foreignId('team_id')->nullable()->constrained();
@@ -33,7 +23,6 @@ class CreatePhonesTable extends Migration
             $table->tinyInteger('type_ph')->nullable();
             $table->string('number_ph');
             $table->string('extension_ph')->nullable();
->>>>>>> f188e08 (All the helpers migrated, database migrations, and minor improvements)
         });
     }
 
