@@ -2,6 +2,11 @@
 
 use Illuminate\Support\Carbon;
 
+function carbonNow()
+{
+	return Carbon::now();
+}
+
 function toDatetime($date)
 {
 	return carbon($date)->translatedFormat('d M Y H:i');

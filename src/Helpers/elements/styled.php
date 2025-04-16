@@ -153,6 +153,15 @@ if (!function_exists('_ModalHeader')) {
     }
 }
 
+if(!function_exists('_ModalBody')) {
+    function _ModalBody()
+    {
+        return _Rows(
+            ...func_get_args(),
+        )->class('p-6');
+    }
+}
+
 function _ModalTitle($title, $icon = null)
 {
     if (!$title && !$icon) {
