@@ -16,6 +16,7 @@ class Modal extends KompoModal
     protected $titleClass = "!text-black !text-xl sm:!text-2xl";
     protected $headerClass = "";
 
+    protected $noHeadersButtons = false;
     protected $hasSubmitButton = true;
 
 
