@@ -5,7 +5,10 @@
     "autoload": {
         "psr-4": {
             "Condoedge\\Utils\\": "src/"
-        }
+        },
+        "files": [
+            "src/Helpers/loader.php"
+        ]
     },
     "minimum-stability": "stable",
     "require": {
