@@ -51,7 +51,7 @@ class ExportPlugin extends ComponentPlugin
 
     protected function getExportableInstance()
     {
-        $exportableInstance = method_exists($this->component, 'getExportableInstance') ? $this->component->getExportableInstance() : $this->component;
+        $exportableInstance = $this->componentHasMethod('getExportableInstance') ? $this->callComponentMethod('getExportableInstance') : $this->component;
 
         if ($exportableInstance instanceof BaseElement) {
             return new ComponentToExportableToExcel($exportableInstance);
