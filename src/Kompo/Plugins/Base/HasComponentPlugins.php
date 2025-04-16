@@ -12,7 +12,7 @@ trait HasComponentPlugins
     protected function getManagableMethods()
     {
         return collect($this->getAllPlugins())->map(function ($plugin) {
-            $pluginInstance = new $plugin($this);
+            $pluginInstance = is_object($plugin) ? $plugin : new $plugin($this);
             if (method_exists($pluginInstance, 'managableMethods')) {
                 return $pluginInstance->managableMethods();
             }
@@ -22,7 +22,7 @@ trait HasComponentPlugins
     public function booted()
     {
         $this->getAllPlugins()->each(function ($plugin) {
-            $pluginInstance = new $plugin($this);
+            $pluginInstance = is_object($plugin) ? $plugin : new $plugin($this);
             if (method_exists($pluginInstance, 'onBoot')) {
                 $pluginInstance->onBoot();
             }
@@ -32,7 +32,7 @@ trait HasComponentPlugins
     public function __call($method, $args)
     {
         foreach ($this->getAllPlugins() as $plugin) {
-            $pluginInstance = new $plugin($this);
+            $pluginInstance = is_object($plugin) ? $plugin : new $plugin($this);
             if (method_exists($pluginInstance, 'managableMethods')) {
                 $methods = $pluginInstance->managableMethods();
                 if (in_array($method, $methods)) {
@@ -62,7 +62,7 @@ trait HasComponentPlugins
     public function authorize()
     {
         foreach ($this->getAllPlugins() as $plugin) {
-            $pluginInstance = app($plugin);
+            $pluginInstance = is_object($plugin) ? $plugin : new $plugin($this);
             if (method_exists($pluginInstance, 'authorize') && $pluginInstance->authorize() === false) {
                 return false;
             }
