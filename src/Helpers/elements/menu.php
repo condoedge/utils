@@ -14,6 +14,10 @@ if (!function_exists('_DropdownDelete')) {
     }
 }
 
+\Kompo\Elements\Element::macro('asTripleDotsDropdownLink', function () {
+    return $this->class('text-sm w-48 px-4 py-2 hover:bg-gray-100');
+});
+
 \Kompo\Elements\Element::macro('asDropdownLink', function(){
     return $this->class('px-6 py-2')
 		->class('whitespace-nowrap'); //controversial
@@ -49,7 +53,7 @@ if (!function_exists('_TripleDotsDropdown')) {
                 _Svg('dots-vertical')->class('text-xl text-gray-400')
             )
             ->submenu(
-                $submenu
+            collect($submenu)->filter()->map(fn($el) => $el->asTripleDotsDropdownLink())
             )
             ->alignUpRight();
     }
