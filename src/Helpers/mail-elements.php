@@ -15,7 +15,7 @@ if (!function_exists('makeAElement')) {
         $bgColor = $bgColor ?? '#003AB3';
         $color = $color ?: '#ffffff';
 
-        return '<a href="'.$url.'" style="border-color: '.$bgColor .'!important;outline: none !important; background-color:'.$bgColor.'; border-radius:10px; border-width:0px; color:'.$color.'; display:inline-block; font-size:16px; font-weight:normal; letter-spacing:0px; line-height:normal; padding:12px 18px 12px 18px; text-align:center; text-decoration:none; border-style:solid;'.$extraStyles.'" class="button button-'.( $color ?? 'primary' ).'" target="_blank" rel="noopener">'.__($label).'</a>';
+        return '<a href="'.$url.'" style="border-color: '.$bgColor .'!important;outline: none !important; background-color:'.$bgColor.'; border-radius:10px; border-width:0px; color:'.$color.' !important; display:inline-block; font-size:16px; font-weight:normal; letter-spacing:0px; line-height:normal; padding:12px 18px 12px 18px; text-align:center; text-decoration:none; border-style:solid;'.$extraStyles.'" class="button button-'.( $color ?? 'primary' ).'" target="_blank" rel="noopener">'.__($label).'</a>';
     }
 }
 
