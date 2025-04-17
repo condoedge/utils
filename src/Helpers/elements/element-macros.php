@@ -64,7 +64,7 @@ Rows::macro('copyImageToClipboard', function ($text, $alertMessage = 'campaign.c
     );
 });
 
-\Kompo\Toggle::macro('fixToggleId', function($divId, $internalToggleId, $patchToggleId = false){
+\Kompo\Toggle::macro('fixToggleId', function($divId, $internalToggleId, $patchToggleId = ''){
     $js = '() => {
         if($("#'. $internalToggleId .'")[0].checked) {
             $("#'. $divId .'").removeClass("hidden")
@@ -72,7 +72,7 @@ Rows::macro('copyImageToClipboard', function ($text, $alertMessage = 'campaign.c
             $("#'. $divId .'").addClass("hidden")
         }
         
-        ' . ($patchToggleId ? '$("#patch_has_matrix").click();' : '') .'
+        ' . ($patchToggleId ? '$("#'.$patchToggleId.'").click();' : '') .'
     }';
 
     return $this->run($js);
