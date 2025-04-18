@@ -71,6 +71,7 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
         ]);
 
         Table::setPlugins([
+            ExportPlugin::class,
             EnableWhiteTableStyle::class,
             EnableResponsiveTable::class,
         ]);
