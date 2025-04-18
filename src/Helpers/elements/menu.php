@@ -29,8 +29,8 @@ if (!function_exists('_Breadcrumbs')) {
         return _Flex4(
             $backLink->icon('arrow-left'),
             _Html('|')->class('text-warning font-thin'),
-            $mainLink->class('text-warning font-medium'),
-        )->class('text-2xl md:text-3xl font-bold');
+            $mainLink->class('font-medium'),
+        )->class('text-2xl md:text-3xl font-semibold');
     }
 }
 
