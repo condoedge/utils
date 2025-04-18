@@ -53,30 +53,46 @@ class ResponsiveTabs extends Rows
         return $this;
     }
 
-    public function tabsClass(string|null $tabsClass)
+    public function tabsClass(string|null $tabsClass, $override = false)
     {
-        $this->tabsClass = $tabsClass;
+        if ($override) {
+            $this->tabsClass = $tabsClass;
+        } else {
+            $this->tabsClass = $this->tabsClass ? $this->tabsClass . ' ' . $tabsClass : $tabsClass;
+        }
 
         return $this;
     }
 
-    public function tabsSelectedClass(string|null $tabsSelectedClass)
+    public function tabsSelectedClass(string|null $tabsSelectedClass, $override = false)
     {
-        $this->tabsSelectedClass = $tabsSelectedClass;
+        if ($override) {
+            $this->tabsSelectedClass = $tabsSelectedClass;
+        } else {
+            $this->tabsSelectedClass = $this->tabsSelectedClass ? $this->tabsSelectedClass . ' ' . $tabsSelectedClass : $tabsSelectedClass;
+        }
 
         return $this;
     }
 
-    public function tabsUnselectedClass(string|null $tabsUnselectedClass)
+    public function tabsUnselectedClass(string|null $tabsUnselectedClass, $override = false)
     {
-        $this->tabsUnselectedClass = $tabsUnselectedClass;
+        if ($override) {
+            $this->tabsUnselectedClass = $tabsUnselectedClass;
+        } else {
+            $this->tabsUnselectedClass = $this->tabsUnselectedClass ? $this->tabsUnselectedClass . ' ' . $tabsUnselectedClass : $tabsUnselectedClass;
+        }
 
         return $this;
     }
 
-    public function tabsCommonClass(string|null $tabsCommonClass)
+    public function tabsCommonClass(string|null $tabsCommonClass, $override = false)
     {
-        $this->tabsCommonClass = $tabsCommonClass;
+        if ($override) {
+            $this->tabsCommonClass = $tabsCommonClass;
+        } else {
+            $this->tabsCommonClass = $this->tabsCommonClass ? $this->tabsCommonClass . ' ' . $tabsCommonClass : $tabsCommonClass;
+        }
 
         return $this;
     }
