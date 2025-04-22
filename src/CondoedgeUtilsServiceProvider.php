@@ -46,6 +46,10 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
             __DIR__ . '/../config/kompo-tags.php' => config_path('kompo-tags.php'),
         ], 'kompo-utils-config');
 
+        $this->publishes([
+            __DIR__ . '/../resources/icons' => public_path('icons'),
+        ], 'kompo-utils-icons');
+
         $this->app->bind(FILE_MODEL_KEY, function () {
             return new (config('kompo-utils.file-model-namespace'));
         });

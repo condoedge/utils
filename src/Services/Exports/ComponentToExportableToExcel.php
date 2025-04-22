@@ -36,6 +36,14 @@ class ComponentToExportableToExcel implements FromArray, WithHeadings, ShouldAut
 
     public function title(): string
     {
+        if (method_exists($this->component, 'title')) {
+            return $this->component->title();
+        }
+
+        if (property_exists($this->component, 'title')) {
+            return $this->component->title;
+        }
+
         return $this->title ?: 'Worksheet';
     }
 
