@@ -271,7 +271,7 @@ class ComponentToExportableToExcel implements FromArray, WithHeadings, ShouldAut
     public function getExportChildClass()
     {
         if (property_exists($this->component, 'exportChildClass')) {
-            return new static($this->component->exportChildClass);
+            return getPrivateProperty($this->component, 'exportChildClass');
         }
     }
 }

@@ -28,15 +28,7 @@ abstract class ComponentPlugin
 
     public function getComponentProperty($property)
     {
-        $reflect = new \ReflectionClass($this->component);
-
-        if ($reflect->hasProperty($property)) {
-            $prop = $reflect->getProperty($property);
-            $prop->setAccessible(true);
-            return $prop->getValue($this->component);
-        }
-
-        return null;
+        return getPrivateProperty($this->component, $property);
     }
 
     public function setComponentProperty($property, $value)
