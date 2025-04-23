@@ -1,3 +1,14 @@
+/* DROPDOWN MACROS */
+.dropdown-with-scroll {
+  --dropdown-max-height: 30rem;
+}
+
+.dropdown-with-scroll .vlDropdownMenu {
+  @apply overflow-y-auto mini-scroll;
+  max-height: var(--dropdown-max-height) !important;
+}
+
+/* SELECTS MACROS */
 .select-over-modal {
   --select-translate: 0px;
   --select-width: 200px;

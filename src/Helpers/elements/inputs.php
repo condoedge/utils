@@ -1,10 +1,11 @@
 <?php
 
 use Condoedge\Utils\Kompo\Elements\NumberRange;
+use Kompo\Dropdown;
 use Kompo\Select;
 
-Select::macro('overModal', function ($id) {
-	return $this->id($id)
+Select::macro('overModal', function ($id = null) {
+	return $this->id($id ?? $this->label)
 	->class('select-over-modal')
 	->onFocus(fn($e) => $e->run('() => {
 		let input =  $("#'. $id .'").closest(".vlTaggableInput");
@@ -19,6 +20,11 @@ Select::macro('overModal', function ($id) {
 
 		selectContainer.attr("style", style);
 	}'));
+});
+
+Dropdown::macro('maxHeightWithScroll', function ($height = '30rem') {
+	return $this->class('dropdown-with-scroll')
+		->addStyle("--dropdown-max-height: $height !important;");
 });
 
 if (!function_exists('_ColorPicker')) {
