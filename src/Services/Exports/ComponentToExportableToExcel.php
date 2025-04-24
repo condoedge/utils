@@ -37,11 +37,11 @@ class ComponentToExportableToExcel implements FromArray, WithHeadings, ShouldAut
     public function title(): string
     {
         if (method_exists($this->component, 'title')) {
-            return $this->component->title();
+            return callPrivateMethod($this->component, 'title');
         }
 
         if (property_exists($this->component, 'title')) {
-            return $this->component->title;
+            return getPrivateProperty($this->component, 'title');
         }
 
         return $this->title ?: 'Worksheet';
@@ -64,7 +64,7 @@ class ComponentToExportableToExcel implements FromArray, WithHeadings, ShouldAut
     public function columnFormats(): array
     {
         if (property_exists($this->component, 'columnFormats')) {
-            return $this->component->columnFormats;
+            return getPrivateProperty($this->component, 'columnFormats');
         }
 
         return $this->columnFormats;
@@ -262,7 +262,7 @@ class ComponentToExportableToExcel implements FromArray, WithHeadings, ShouldAut
     public function getTitle()
     {
         if (property_exists($this->component, 'title')) {
-            return $this->component->title;
+            return getPrivateProperty($this->component, 'title');
         }
 
         return $this->title;

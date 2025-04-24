@@ -12,3 +12,16 @@ function getPrivateProperty($object, $property)
 
     return null;
 }
+
+function callPrivateMethod($object, $method, ...$args)
+{
+    $reflect = new \ReflectionClass($object);
+
+    if ($reflect->hasMethod($method)) {
+        $method = $reflect->getMethod($method);
+        $method->setAccessible(true);
+        return $method->invokeArgs($object, $args);
+    }
+
+    return null;
+}
