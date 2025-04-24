@@ -1,8 +1,10 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
 use Kompo\Elements\Element;
 use Kompo\Elements\Field;
 use Kompo\Rows;
+use Kompo\Elements\Layout;
 
 /* TABS */
 
@@ -100,7 +102,7 @@ Element::macro('when', function ($condition, $callback) {
 });
 
 Field::macro('holdInSession', function() {
-    $routeName = \Route::currentRouteName();
+    $routeName = Route::currentRouteName();
 
     $itemName = $routeName . '_'. $this->name;
 
@@ -128,4 +130,53 @@ Kompo\Elements\Layout::macro('stopPropagation', function () {
 	return $this->attr([
 		'onclick' => 'event.stopPropagation()',
 	]);
+});
+
+Element::macro('decorate', function ($callback) {
+    return $callback($this);
+});
+
+Element::macro('getFieldNames', function () {
+    $fieldsNames = [];
+    $elements = [$this];
+
+    while (count($elements)) {
+        $currentElement = array_shift($elements);
+        if ($currentElement instanceof Layout) {
+            $elements = array_merge($elements, $currentElement->elements);
+        } elseif ($currentElement instanceof Field) {
+            array_push($fieldsNames, $currentElement->name);
+        }
+    }
+
+    return $fieldsNames;
+});
+
+Element::macro('findElementById', function ($id) {
+    $elements = [$this, ...$this->getConfigElements()];
+
+    while (count($elements)) {
+        $currentElement = array_shift($elements);
+        if ($currentElement->id == $id) {
+            return $currentElement;
+        }
+
+        if ($currentElement instanceof Layout) {
+            $elements = array_merge($elements, $currentElement->elements);
+        }
+    }
+
+    return null;
+});
+
+Element::macro('getConfigElements', function () {
+    $elements = [];
+
+    foreach ($this->config as $configItem) {
+        if ($configItem instanceof Element) {
+            $elements[] = $configItem;
+        }
+    }
+
+    return $elements;
 });
