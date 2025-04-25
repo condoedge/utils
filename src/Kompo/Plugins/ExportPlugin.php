@@ -22,6 +22,7 @@ class ExportPlugin extends ComponentPlugin
         return [
             'isCalledFromExport',
             'exportToExcel',
+            'convertThisToExportableInstance',
         ];
     }
 
@@ -31,7 +32,7 @@ class ExportPlugin extends ComponentPlugin
 
         try {
             \Maatwebsite\Excel\Facades\Excel::store(
-                $this->getExportableInstance(),
+                $this->exportableInstance(),
                 $filename,
             );
         } catch (\Exception $e) {
@@ -49,7 +50,12 @@ class ExportPlugin extends ComponentPlugin
         )->class('bg-white rounded-lg p-6');
     }
 
-    protected function getExportableInstance()
+    public function convertThisToExportableInstance()
+    {
+        return new ComponentToExportableToExcel($this->component);
+    }
+
+    protected function exportableInstance()
     {
         $exportableInstance = $this->componentHasMethod('getExportableInstance') ? $this->callComponentMethod('getExportableInstance') : $this->component;
 

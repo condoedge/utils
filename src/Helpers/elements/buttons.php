@@ -153,6 +153,21 @@ if (!function_exists('_BackLink')) {
 	}
 }
 
+if (!function_exists('_BackButton')) {
+	function _BackButton($route = null, $params = [], $label = 'generic.back')
+	{
+		$route = !$route ? null : route($route, $params);
+	
+		return _Link($label)->icon('arrow-left')->class('w-min')->run('() => {
+			if (window.history.length > 1 && window.document.referrer !== window.location.href && window.document.referrer.includes(window.location.origin)) {
+				window.history.back();
+			} else {
+				window.location.href = "' . $route . '";
+			}
+		}');
+	}
+}
+
 /* LAYOUTS */
 if (!function_exists('_TwoColumnsButtons')) {
 	function _TwoColumnsButtons($el1 = null, $el2 = null, $defaultClass = '[&>*]:mt-2 -mt-2')

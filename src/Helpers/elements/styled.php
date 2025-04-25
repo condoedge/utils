@@ -136,8 +136,8 @@ if(!function_exists('_Modal')) {
     {
         return _Rows(
             ...func_get_args()
-        )->class('overflow-y-auto mini-scroll')
-        ->style('max-height:95vh;min-width:350px');
+        )->class('overflow-y-auto mini-scroll Modal')
+        ->style('max-height:95vh;min-width:350px ');
     }
 }
 
@@ -147,7 +147,7 @@ if (!function_exists('_ModalHeader')) {
         return _FlexBetween(
             $els,
         )
-            ->class('px-8 pt-6 pb-4 rounded-t-2xl text-level2 bg-white')
+            ->class('px-8 pt-6 pb-4 rounded-t-2xl text-level2 bg-white ModalHeader')
             ->class('flex-col items-start md:flex-row md:items-center')
             ->alignStart();
     }
@@ -158,7 +158,7 @@ if(!function_exists('_ModalBody')) {
     {
         return _Rows(
             ...func_get_args(),
-        )->class('p-6');
+        )->class('p-6 ModalBody');
     }
 }
 
@@ -172,7 +172,7 @@ function _ModalTitle($title, $icon = null)
         ->icon(_ModalIcon($icon))
         ->class('text-2xl sm:text-3xl font-semibold text-level2')
         ->class('mb-4 md:mb-0')
-        ->class('flex items-center');
+        ->class('flex items-center ModalTitle');
 }
 
 
