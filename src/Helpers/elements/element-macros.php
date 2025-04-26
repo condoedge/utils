@@ -3,8 +3,10 @@
 use Illuminate\Support\Facades\Route;
 use Kompo\Elements\Element;
 use Kompo\Elements\Field;
+use Kompo\Interactions\Action;
 use Kompo\Rows;
 use Kompo\Elements\Layout;
+use Kompo\Interactions\Interaction;
 
 /* TABS */
 
@@ -59,6 +61,19 @@ use Kompo\Elements\Layout;
         'text' => $message,
     ], $successCb);    
 });
+
+Kompo\Elements\Trigger::macro('panelLoading', function ($id) {
+ 	Interaction::appendToWithAction($this, new Action($this, 'run', ['() => {
+ 		const panel = document.getElementById("' . $id . '");
+ 
+ 		if(panel) {
+ 			panel.innerHTML = "<div></div>" + panel.innerHTML;
+ 			panel.classList.add("vlPanelLoading");
+ 		}
+ 	}']));
+ 
+ 	return $this;
+ });
 
 Rows::macro('copyImageToClipboard', function ($text, $alertMessage = 'campaign.copied-to-clipboard') {
     return $this->onClick(fn($e) => $e->run('() => {copyImageToClipboard(`'. $text .'`)}') &&
