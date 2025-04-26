@@ -55,7 +55,7 @@ if (!function_exists('_TripleDotsDropdown')) {
             ->submenu(
             collect($submenu)->filter()->map(fn($el) => $el->asTripleDotsDropdownLink())
             )
-            ->alignUpRight();
+            ->alignRight();
     }
 }
 
