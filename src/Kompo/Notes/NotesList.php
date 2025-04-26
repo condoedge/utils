@@ -2,6 +2,7 @@
 
 namespace Condoedge\Utils\Kompo\Notes;
 
+use Condoedge\Utils\Facades\NoteModel;
 use Condoedge\Utils\Kompo\Common\Query;
 
 class NotesList extends Query
