@@ -22,19 +22,17 @@ class ExportPlugin extends ComponentPlugin
         return [
             'isCalledFromExport',
             'exportToExcel',
+            'exportToExcelRaw',
             'convertThisToExportableInstance',
         ];
     }
 
     public function exportToExcel()
     {
-        $filename = $this->getFilename() . '-' . uniqid() . '.xlsx';
+        $filename = '';
 
         try {
-            \Maatwebsite\Excel\Facades\Excel::store(
-                $this->exportableInstance(),
-                $filename,
-            );
+            $filename = $this->exportToExcelRaw();
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['class' => static::class, 'trace' => $e->getTraceAsString(), 'user' => auth()->user()]);
 
@@ -48,6 +46,24 @@ class ExportPlugin extends ComponentPlugin
             _Link('utils.reports-download-file')->outlined()->toggleClass('hidden')->class('mt-4')
                 ->href($url),
         )->class('bg-white rounded-lg p-6');
+    }
+
+    public function exportToExcelRaw()
+    {
+        $filename = $this->getFilename() . '-' . uniqid() . '.xlsx';
+
+        try {
+            \Maatwebsite\Excel\Facades\Excel::store(
+                $this->exportableInstance(),
+                $filename,
+            );
+        } catch (\Exception $e) {
+            Log::error($e->getMessage(), ['class' => static::class, 'trace' => $e->getTraceAsString(), 'user' => auth()->user(), 'campaign' => currentCampaign()]);
+ 
+            throw new \Exception(__('translate.error-exporting-excel-file'));
+        }
+
+        return $filename;
     }
 
     public function convertThisToExportableInstance()

@@ -4,6 +4,12 @@ namespace Condoedge\Utils\Services\Exports\Traits;
 
 use Illuminate\Support\Facades\Log;
 
+// !DEPRECATED!
+/**
+ * @deprecated This trait is deprecated and will be removed in future versions. Use the ExportPlugin instead.
+ * 
+ * @see \Condoedge\Utils\Kompo\Plugins\ExportPlugin
+ */
 trait ExportableUtilsTrait 
 {
     protected function getExportableInstance()

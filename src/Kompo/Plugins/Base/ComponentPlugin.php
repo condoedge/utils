@@ -39,6 +39,9 @@ abstract class ComponentPlugin
             $prop = $reflect->getProperty($property);
             $prop->setAccessible(true);
             $prop->setValue($this->component, $value);
+        } else {
+            // Add the property if it doesn't exist as public
+            $this->component->{$property} = $value;
         }
     }
 

@@ -3,6 +3,15 @@
   --dropdown-max-height: 30rem;
 }
 
+.mini-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-color) transparent;
+  &::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+}
+
 .dropdown-with-scroll .vlDropdownMenu {
   @apply overflow-y-auto mini-scroll;
   max-height: var(--dropdown-max-height) !important;
@@ -65,5 +74,18 @@
 
   100% {
     transform: rotate(360deg);
+  }
+}
+
+// TABLES
+.TableWithoutRowsBorders {
+  &>.vlTable {
+    thead {
+      border-bottom: 1px solid var(--table-border-color);
+    }
+
+    td {
+      border: none !important;
+    }
   }
 }

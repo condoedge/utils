@@ -10,6 +10,6 @@ class EnableWhiteTableStyle extends \Condoedge\Utils\Kompo\Plugins\Base\Componen
             return;
         }
 
-        $this->prependComponentProperty('itemsWrapperClass', 'bg-white rounded-2xl border border-greenmain');
+        $this->prependComponentProperty('itemsWrapperClass', ' bg-white rounded-2xl border-2 border-gray-300 WhiteTable ');
     }
 }

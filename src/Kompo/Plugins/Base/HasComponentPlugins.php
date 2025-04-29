@@ -73,7 +73,7 @@ trait HasComponentPlugins
 
     public function getAllPlugins()
     {
-        return collect(array_merge($this->getLocalPlugins(), app(PluginsManager::class)->getPlugins(static::class)));
+        return collect(array_merge($this->getLocalPlugins(), app(PluginsManager::class)->getPlugins(static::class)))->unique();
     }
 
     public static function setPlugins($plugins, $override = false)
