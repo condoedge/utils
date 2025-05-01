@@ -60,7 +60,7 @@ class ExportPlugin extends ComponentPlugin
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['class' => static::class, 'trace' => $e->getTraceAsString(), 'user' => auth()->user(), 'campaign' => currentCampaign()]);
  
-            throw new \Exception(__('translate.error-exporting-excel-file'));
+            throw new \Exception(__('error.error-exporting-excel-file'));
         }
 
         return $filename;
