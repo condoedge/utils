@@ -3,6 +3,7 @@
 namespace Condoedge\Utils;
 
 use Condoedge\Utils\Facades\FileModel;
+use Condoedge\Utils\Kompo\Common\Form;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Route;
@@ -17,6 +18,8 @@ use Illuminate\Database\Eloquent\Relations\Relation;
 use Condoedge\Utils\Kompo\Plugins\Base\PluginsManager;
 use Condoedge\Utils\Kompo\Plugins\EnableResponsiveTable;
 use Condoedge\Utils\Kompo\Plugins\EnableWhiteTableStyle;
+use Condoedge\Utils\Kompo\Plugins\FormCanHaveTableWithFields;
+use Condoedge\Utils\Kompo\Plugins\TableIntoFormSetValuesPlugin;
 use Condoedge\Utils\Services\GlobalConfig\GlobalConfigServiceContract;
 
 class CondoedgeUtilsServiceProvider extends ServiceProvider
@@ -78,10 +81,16 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
             ExportPlugin::class,
             EnableWhiteTableStyle::class,
             EnableResponsiveTable::class,
+            TableIntoFormSetValuesPlugin::class,
+        ]);
+
+        Form::setPlugins([
+            FormCanHaveTableWithFields::class,
         ]);
 
         Modal::setPlugins([
             HasScroll::class,
+            FormCanHaveTableWithFields::class,
         ]);
     }
 

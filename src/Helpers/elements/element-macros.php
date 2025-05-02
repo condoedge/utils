@@ -195,3 +195,9 @@ Element::macro('getConfigElements', function () {
 
     return $elements;
 });
+
+Field::macro('shareToParentForm', function() {
+    return $this->selfPost('pluginMethod', [
+        'method' => 'setInputValue',
+    ]); 
+});

@@ -29,6 +29,26 @@ trait HasComponentPlugins
         });
     }
 
+    public function createdDisplay()
+    {
+        $this->getAllPlugins()->each(function ($plugin) {
+            $pluginInstance = is_object($plugin) ? $plugin : new $plugin($this);
+            if (method_exists($pluginInstance, 'onCreatedDisplay')) {
+                $pluginInstance->onCreatedDisplay();
+            }
+        });
+    }
+
+    public function createdAction()
+    {
+        $this->getAllPlugins()->each(function ($plugin) {
+            $pluginInstance = is_object($plugin) ? $plugin : new $plugin($this);
+            if (method_exists($pluginInstance, 'onCreatedAction')) {
+                $pluginInstance->onCreatedAction();
+            }
+        });
+    }
+
     public function __call($method, $args)
     {
         foreach ($this->getAllPlugins() as $plugin) {

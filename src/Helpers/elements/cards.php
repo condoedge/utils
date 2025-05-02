@@ -2,6 +2,10 @@
 
 use \Kompo\Elements\Element;
 
+Element::macro('iconWarning', fn() => $this->icon(
+	_Svg('info-circle')->class('text-3xl mr-4')
+));
+
 /* ALMOST CARDS */
 if (!function_exists("_DashedBox")) {
 	function _DashedBox($label, $varClass = 'py-32 text-2xl')
@@ -48,9 +52,8 @@ if (!function_exists("_CardWarning")) {
 		return _Card(
 			func_get_args()
 		)->class('bg-danger bg-opacity-30 text-danger p-4')
-		->icon(
-			_Sax('info-circle')->class('text-3xl mr-4')
-		)->alignCenter();
+		->iconWarning()
+		->alignCenter();
 	}
 }
 
