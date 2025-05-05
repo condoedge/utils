@@ -104,18 +104,18 @@ class Address extends Model
         $this->addressable_id = $model->id;
     }
 
-    public static function createMainForFromRequest($addressable, $addressMaps)
+    public static function createMainForFromRequest($addressable, $addressData)
     {
         // Calling place we initialize de key => value mapping in places.
         _Place();
-        $addressMaps = Place::placeToDB($addressMaps);
+        $addressData = is_string($addressData) ? Place::placeToDB($addressData) : $addressData;
 
-        if ($addressable->addresses()->where('address1', $addressMaps['address1'])->exists()) {
+        if ($addressable->addresses()->where('address1', $addressData['address1'])->exists()) {
             return;
         }
 
         $address = new static;
-        $address->fill($addressMaps);
+        $address->fill($addressData);
         $address->addressable_id = $addressable->id;
         $address->addressable_type = $addressable->getMorphClass();
         $address->save();
