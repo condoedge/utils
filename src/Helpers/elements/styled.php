@@ -147,9 +147,7 @@ if (!function_exists('_ModalHeader')) {
         return _FlexBetween(
             $els,
         )
-            ->class('px-8 pt-6 pb-4 rounded-t-2xl text-level2 bg-white ModalHeader')
-            ->class('flex-col items-start md:flex-row md:items-center')
-            ->alignStart();
+            ->class('justify-between items-start border-b border-gray-200 py-4 px-6 rounded-t-xl bg-white ModalHeader');
     }
 }
 

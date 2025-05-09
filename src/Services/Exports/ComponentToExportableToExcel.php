@@ -7,13 +7,14 @@ use Illuminate\Support\Facades\Log;
 use Condoedge\Utils\Services\Exports\Traits\ExportableUtilsTrait;
 use Maatwebsite\Excel\Concerns\FromArray;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithColumnFormatting;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use Maatwebsite\Excel\Concerns\WithTitle;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
-class ComponentToExportableToExcel implements FromArray, WithHeadings, ShouldAutoSize, WithColumnFormatting, WithTitle, WithStyles
+class ComponentToExportableToExcel implements FromArray, WithHeadings, ShouldAutoSize, WithColumnFormatting, WithTitle, WithStyles, WithChunkReading
 {
     use ExportableUtilsTrait;
 
@@ -21,19 +22,23 @@ class ComponentToExportableToExcel implements FromArray, WithHeadings, ShouldAut
     public const REGEX_CURRENCY_FR = '/^-?\d{1,3}(.\d{3})*(\,\d{2})?\s*\$$/';
 
     protected $component;
-
     protected $filename;
-    protected $title;
-
+    protected $title;    
     protected $columnFormats = [];
     protected $boldColumns = [1];
     protected $pastCountOfItems = 1; // Just needed to child classes
+    protected $chunkSize = 1000; // Default chunk size
 
     public function __construct($component)
     {
         $this->component = $component;
     }
 
+    public function chunkSize(): int
+    {
+        return $this->chunkSize;
+    }    
+    
     public function title(): string
     {
         if (method_exists($this->component, 'title')) {
@@ -90,38 +95,70 @@ class ComponentToExportableToExcel implements FromArray, WithHeadings, ShouldAut
     public function array(): array
     {
         if ($this->getExportChildClass()) {
-            $itemsGroups = collect($this->getItems())->map(function ($item) {
+            $itemsGroups = [];
+            $boldColumn = collect($this->boldColumns)->last();
+              // Process one item at a time to save memory
+            foreach ($this->getItems() as $index => $item) {
                 $childInstance = $this->component->render($item)->findByComponent($this->getExportChildClass());
-
-                $items = collect($this->getItems($childInstance));
-
-                // Adding a separator between each child with a bold column
-                $boldColumn = collect($this->boldColumns)->last() + $this->pastCountOfItems;
-                $this->pastCountOfItems = ($items->count() ?: 1) + 1;
-                $this->boldColumns[] = $boldColumn;
-
-                $items->prepend([$childInstance->exportableSeparator()]);
-
-                return ['items' => $items, 'component' => $childInstance];
-            });
-
-
-            return $itemsGroups->map(function($itemsGroup) {
-                if ($itemsGroup['items']->count() == 1) {
-                    return [...$itemsGroup['items'], ['No items found.']];
+                
+                if (!$childInstance) {
+                    continue;
                 }
-
-                return $itemsGroup['items']->map(function($item, $i) use ($itemsGroup) {
-                    if ($i === 0) {
-                        return $item;
+                
+                $childItems = $this->getItems($childInstance);
+                  // Add separator
+                $boldColumn += $this->pastCountOfItems;
+                $this->pastCountOfItems = (count($childItems) ?: 1) + 1;
+                $this->boldColumns[] = $boldColumn;
+                
+                // Use native array instead of collection to reduce overhead
+                $groupItems = [[$childInstance->exportableSeparator()]];
+                
+                if (empty($childItems)) {
+                    $groupItems[] = ['No items found.'];
+                } else {
+                    foreach ($childItems as $childItem) {
+                        $formattedItem = $this->formatItemToExport($childItem, $childInstance);
+                        if ($formattedItem) {
+                            $groupItems[] = $formattedItem;
+                        }
                     }
-
-                    return $this->formatItemToExport($item, $itemsGroup['component']);
-                });
-            })->flatten(1)->all();
+                }
+                
+                foreach ($groupItems as $groupItem) {
+                    $itemsGroups[] = $groupItem;
+                }
+                  // Free memory
+                unset($childItems);
+                unset($groupItems);
+                
+                // Force memory cleanup if needed in large batches
+                if ($index > 0 && $index % 500 === 0) {
+                    gc_collect_cycles();
+                }
+            }
+            
+            return $itemsGroups;
         }
 
-        return collect($this->getItems())->map(fn($item) => $this->formatItemToExport($item))->all();
+        $result = [];
+          // Process elements in batches to save memory
+        $items = $this->getItems();
+        foreach ($items as $index => $item) {
+            $formattedItem = $this->formatItemToExport($item);
+            if ($formattedItem) {
+                $result[] = $formattedItem;
+            }
+            
+            // Free memory periodically
+            if ($index > 0 && $index % 500 === 0) {
+                gc_collect_cycles();
+            }
+        }
+
+        unset($items); // Free memory
+        
+        return $result;
     }
 
     /* PARSING METHODS */
@@ -135,11 +172,14 @@ class ComponentToExportableToExcel implements FromArray, WithHeadings, ShouldAut
             return [];
         }
 
-        return collect($renderedItem->elements)
-        ->filter(fn($el) => $el && !property_exists($el, 'class') || !str_contains($el->class, 'exclude-export'))
-        ->map(function ($element, $i) {
+        $result = [];
+        // Using foreach instead of collect to reduce overhead
+        foreach ($renderedItem->elements as $i => $element) {
+            if (!$element || (property_exists($element, 'class') && str_contains($element->class, 'exclude-export'))) {
+                continue;
+            }
+            
             $letter = chr(65 + $i);
-
             $text = $this->getLabelsFromComponent($element);
 
             $format = $this->getCurrencyFormat($text);
@@ -148,8 +188,12 @@ class ComponentToExportableToExcel implements FromArray, WithHeadings, ShouldAut
                 $this->columnFormats[strtoupper($letter)] = $format;
             }
 
-            return $this->sanatizeText($text);
-        })->all();
+            $result[] = $this->sanatizeText($text);
+        }
+        
+        unset($renderedItem); // Free memory
+        
+        return $result;
     }
 
     protected function parseHeaders($ths)
@@ -164,10 +208,18 @@ class ComponentToExportableToExcel implements FromArray, WithHeadings, ShouldAut
 
     protected function getLabelsFromComponent($el)
     {
-        if (property_exists($el, 'elements')) {
+        if (property_exists($el, 'elements') && !empty($el->elements)) {
             $implodeUnion = (str_contains($el->bladeComponent, 'Flex') || str_contains($el->bladeComponent, 'Columns')) ? ' | ' : "\r\n ";
 
-            return collect($el->elements)->map(fn($el) => $this->getLabelsFromComponent($el))->filter()->implode($implodeUnion);
+            $labels = [];
+            foreach ($el->elements as $childElement) {
+                $label = $this->getLabelsFromComponent($childElement);
+                if (!empty($label)) {
+                    $labels[] = $label;
+                }
+            }
+            
+            return implode($implodeUnion, $labels);
         }
 
         if (property_exists($el, 'label')) {
@@ -186,12 +238,39 @@ class ComponentToExportableToExcel implements FromArray, WithHeadings, ShouldAut
         $fromInstance = $fromInstance ?? $this->component;
 
         $prevPerPage = $fromInstance->perPage;
-        $fromInstance->perPage = $perPage ?? 1000000;
+        $fromInstance->perPage = $perPage ?? $this->chunkSize();
 
         $items = $fromInstance->query();
 
         if ($items instanceof Builder) {
-            $items = $items->take($perPage ?? 1000000)->get();
+            if ($perPage > $this->chunkSize()) {
+                // Batch processing for large datasets
+                $result = [];
+                $page = 1;
+                $chunkSize = $this->chunkSize();
+                
+                do {
+                    $chunk = $items->forPage($page, $chunkSize)->get();
+                    if ($chunk->isEmpty()) {
+                        break;
+                    }
+                    
+                    foreach ($chunk as $item) {
+                        $result[] = $item;
+                    }
+                      unset($chunk); // Free memory
+                    $page++;
+                    
+                    // Exit if we have enough records
+                    if (count($result) >= $perPage) {
+                        break;
+                    }
+                } while (true);
+                  $items = collect($result);
+                    unset($result); // Free memory
+            } else {
+                $items = $items->take($perPage)->get();
+            }
         }
 
         $fromInstance->perPage = $prevPerPage;
@@ -230,31 +309,41 @@ class ComponentToExportableToExcel implements FromArray, WithHeadings, ShouldAut
     }
 
     protected function convertHtmlToPlainText($html)
-    {
+    {   
         $dom = new \DOMDocument;
         $html = preg_replace('/&(?!amp)/', '&amp;', $html);
-        try{
+        
+        try {
+            $internalErrors = libxml_use_internal_errors(true);
             $encodingMetaHtml = '<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />';
             $dom->loadHTML($encodingMetaHtml . $html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+            libxml_clear_errors();
+            libxml_use_internal_errors($internalErrors);
         } catch (\Exception $e) {
             Log::error($e->getMessage(), ['class' => static::class, 'html' => $html, 'trace' => $e->getTraceAsString(), 'user' => auth()->user()]);
 
-            return preg_replace("/\n+/", "\n", strip_tags($html));;
+            return preg_replace("/\n+/", "\n", strip_tags($html));
         }
 
         $xpath = new \DOMXPath($dom);
-
         $nodes = $xpath->query('//text()');
 
         $texts = [];
         foreach ($nodes as $node) {
-            $texts[] = trim($node->nodeValue);
+            $text = trim($node->nodeValue);
+            if (!empty($text)) {
+                $texts[] = $text;
+            }
         }
 
-        $texts = array_filter($texts);
-
         $text = implode(" \n", $texts);
-
+        
+        // Free memory
+        unset($dom);
+        unset($xpath);
+        unset($nodes);
+        unset($texts);
+        
         return \Lang::has($text) ? __($text) : $text;
     }
 
@@ -273,5 +362,29 @@ class ComponentToExportableToExcel implements FromArray, WithHeadings, ShouldAut
         if (property_exists($this->component, 'exportChildClass')) {
             return getPrivateProperty($this->component, 'exportChildClass');
         }
+    }
+
+    public function getHeavinessLevel()
+    {
+        if (property_exists($this->component, 'heavinessLevel')) {
+            return getPrivateProperty($this->component, 'heavinessLevel');
+        }
+
+        // Very complicated to know the quantity of total records if it has a child class so we just put a intermediate level
+        if ($this->getExportChildClass()) {
+            return ExportableHeaviness::MEDIUM;
+        }
+
+        $count = $this->component->query()->count();
+
+        if ($count < 300) {
+            return ExportableHeaviness::LIGHT;
+        }
+
+        if ($count < 5000) {
+            return ExportableHeaviness::MEDIUM;
+        }
+
+        return ExportableHeaviness::HEAVY;
     }
 }

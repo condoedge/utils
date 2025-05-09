@@ -60,6 +60,8 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
         $this->loadRelationsMorphMap();
         $this->loadCommands();
 
+        $this->loadViewsFrom(__DIR__.'/../resources/views', 'kompo-utils');
+
         // This will log the missing translation keys in the log file
         app('translator')->handleMissingKeysUsing(function ($key) {
             $hasTranslatableSyntax = preg_match('/^([a-zA-Z]*\.[a-zA-Z]*)+$/', $key);
