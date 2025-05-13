@@ -67,7 +67,7 @@ class ExportPlugin extends ComponentPlugin
     public function exportToExcelViaEmail()
     {
         if (!request('export_email')) {
-            return throwValidationError('export_email', __('translate.email-is-required'));
+            return throwValidationError('export_email', __('utils.email-is-required'));
         }
 
         $exportableInstance = $this->exportableInstance();
@@ -82,8 +82,8 @@ class ExportPlugin extends ComponentPlugin
         SendExportViaEmail::dispatch($exportableInstance, request('export_email'), $this->getFilename() . '-' . uniqid() . '.xlsx');    
 
         return _Rows(
-            _Html('translate.utils.request-for-export-done')->icon('icon-check')->class('text-lg font-semibold'),
-            _Html('translate.wait-for-the-email-to-download-your-file'),
+            _Html('utils.request-for-export-done')->icon('icon-check')->class('text-lg font-semibold'),
+            _Html('utils.wait-for-the-email-to-download-your-file'),
         )->class('bg-white rounded-lg p-6');
     }
 
@@ -96,25 +96,26 @@ class ExportPlugin extends ComponentPlugin
     {
         return _Panel(
             _Rows(
-                _Html('translate.this-report-can-take-some-time-select-the-option')->class('mb-2 text-center text-lg'),
-
-                _Rows($this->sendExportViaEmailEls()),
-
-                _Html('translate.or')->class('my-4 text-center text-lg'),
-                
-                _Button('translate.direct-export')->class('w-full')
-                    ->selfPost('pluginMethod', [
-                        'method' => 'directExportToExcel',
-                    ])
-                    ->inPanel('export-options'),
-            )->class('p-6'),
+                _Html('utils.this-report-can-take-some-time-select-the-option')->class('mb-6 text-center text-lg'),
+                _CardGray100(
+                    _Rows($this->sendExportViaEmailEls()),
+                )->class('px-6 py-4'),
+                _Html('utils.or')->class('mt-2 mb-6 text-center text-lg'),
+                _CardWhite(
+                    _Button('utils.direct-export')->class('w-full')
+                        ->selfPost('pluginMethod', [
+                            'method' => 'directExportToExcel',
+                        ])
+                        ->inPanel('export-options'),
+                )->class('px-6 mb-2'),
+            )->class('p-6 max-w-md'),
         )->id('export-options');
     }
 
     protected function sendExportViaEmailEls()
     {
         return [
-           _InputEmail('translate.email')->id('export-email-visual')->name('export_email', false)
+           _InputEmail('utils.export-will-be-sent-to-thi-email')->id('export-email-visual')->name('export_email', false)
                 ->run('() => {
                     const value = $("#export-email-visual").val();
 
@@ -123,7 +124,7 @@ class ExportPlugin extends ComponentPlugin
                     $("#export-email-patch").get(0).dispatchEvent(new Event("input"))
                 }'),
 
-            _ButtonOutlined('translate.export-via-email')
+            _ButtonOutlined('utils.export-via-email')
                 ->selfPost('pluginMethod', [
                     'method' => 'exportToExcelViaEmail',
                 ])
@@ -149,10 +150,10 @@ class ExportPlugin extends ComponentPlugin
         $url = \URL::signedRoute('report.download', ['filename' => $filename]);
 
         return _Rows(
-            _Html('utils.reports-export-completed')->icon('icon-check')->class('text-lg font-semibold'),
-            _Link('utils.reports-download-file')->outlined()->toggleClass('hidden')->class('mt-4')
+            _Html('utils.reports-export-completed')->icon('icon-check')->class('text-lg font-semibold mb-6'),
+            _Link('utils.direct-export')->button()->toggleClass('hidden')->class('mt-4')
                 ->href($url),
-        )->class('bg-white rounded-lg p-6');
+        )->class('text-center bg-white rounded-lg p-6 max-w-md');
     }
 
     // GETTERS

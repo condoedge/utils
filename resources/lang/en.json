@@ -1,4 +1,16 @@
 {
-	"utils.reports-download-file": "Reports download file",
-	"utils.reports-export-completed": "Report export completed !"
+	"auth.copied-to-clipboard": "Copied to clipboard !",
+	"utils.direct-export": "Export report here",
+	"utils.email-is-required": "Email is required",
+	"utils.export-ready": "Excel export is ready",
+	"utils.export-ready-button": "Download report",
+	"utils.export-ready-message": "Your Coolecto export is ready!",
+	"utils.export-via-email": "Export to my email",
+	"utils.export-will-be-sent-to-thi-email": "Export will be sent to this email",
+	"utils.or": "or",
+	"utils.reports-download-file": "Download report file",
+	"utils.reports-export-completed": "Report export completed !",
+	"utils.request-for-export-done": "Request for export done !",
+	"utils.this-report-can-take-some-time-select-the-option": "This report can take some time to generate. Select your option.",
+	"utils.wait-for-the-email-to-download-your-file": "Check your email to view your report"
 }

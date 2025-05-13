@@ -18,7 +18,7 @@ class ExportReady extends Mailable
     public function build()
     {
         return $this->markdown('kompo-utils::emails.export-ready')
-            ->subject(__('translate.utils.export-ready'))
+            ->subject(__('utils.export-ready'))
             ->with([
                 'downloadUrl' => $this->url,
                 'filename' => $this->filename,
