@@ -13,12 +13,15 @@ use Kompo\Query;
 
 class ExportPlugin extends ComponentPlugin
 {
+    protected $componentId;
+
     public function onBoot()
     {
         if (!($this->component instanceof Query) && !method_exists($this->component, 'getExportableInstance')) {
             throw new \Exception('ExportPlugin can only be used with Query components or has getExportableInstance method.');
         }
 
+        $this->setComponentId();
         $this->patchToSendEmailValue();
     }
 
@@ -114,14 +117,18 @@ class ExportPlugin extends ComponentPlugin
 
     protected function sendExportViaEmailEls()
     {
+        $this->setComponentId();
+        
         return [
            _InputEmail('utils.export-will-be-sent-to-thi-email')->id('export-email-visual')->name('export_email', false)
                 ->run('() => {
                     const value = $("#export-email-visual").val();
 
-                    $("#export-email-patch").val(value);
+                    const patchId = "#export-email-patch" + "' . $this->componentId . '";
 
-                    $("#export-email-patch").get(0).dispatchEvent(new Event("input"))
+                    $(patchId).val(value);
+
+                    $(patchId).get(0).dispatchEvent(new Event("input"))
                 }'),
 
             _ButtonOutlined('utils.export-via-email')
@@ -205,6 +212,11 @@ class ExportPlugin extends ComponentPlugin
 	}
 
     // PATCHES
+    protected function setComponentId()
+    {
+        $this->componentId = $this->getComponentProperty('id') ?? $this->getComponentProperty('config')['X-Kompo-Id'] ?? '';
+    }
+
     protected function patchToSendEmailValue()
     {
         if (!($this->component instanceof Query)) {
@@ -212,7 +224,7 @@ class ExportPlugin extends ComponentPlugin
         }
 
         $filtersTop = $this->component->filters['top'];
-        $emailEl = _Input()->name('export_email', false)->id('export-email-patch')->class('opacity-0 absolute -z-10 bottom-0 left-0');
+        $emailEl = _Input()->name('export_email', false)->id('export-email-patch' . $this->componentId)->class('opacity-0 absolute -z-10 bottom-0 left-0');
 
         if (!$filtersTop || (is_array($filtersTop) && count($filtersTop) == 0)) {
             $this->component->filters['top'] = [
