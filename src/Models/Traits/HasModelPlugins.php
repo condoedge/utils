@@ -50,4 +50,28 @@ trait HasModelPlugins
     }
 
 
+    protected function getManagableMethods()
+    {
+        return collect($this->getPlugins())->map(function ($plugin) {
+            $pluginInstance = is_object($plugin) ? $plugin : new $plugin($this);
+            if (method_exists($pluginInstance, 'managableMethods')) {
+                return $pluginInstance->managableMethods();
+            }
+        })->flatten()->unique()->all();
+    }
+
+    public function __call($method, $args)
+    {
+        foreach ($this->getPlugins() as $plugin) {
+            $pluginInstance = is_object($plugin) ? $plugin : new $plugin($this);
+            if (method_exists($pluginInstance, 'managableMethods')) {
+                $methods = $pluginInstance->managableMethods();
+                if (in_array($method, $methods)) {
+                    return $pluginInstance->$method($this, ...$args);
+                }
+            }
+        }
+
+        return is_callable(['parent', '__call']) ? parent::__call($method, $args) : null;
+    }
 }
