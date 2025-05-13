@@ -3,6 +3,7 @@
 namespace Condoedge\Utils\Models\Files;
 
 use Carbon\Carbon;
+use Condoedge\Utils\Kompo\Files\FileLibraryAttachmentQuery;
 use Condoedge\Utils\Models\Traits\BelongsToTeamTrait;
 use Condoedge\Utils\Models\Contracts\Searchable;
 use Condoedge\Utils\Models\Files\FileVisibilityEnum;
