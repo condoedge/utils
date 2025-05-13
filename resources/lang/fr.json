@@ -1,4 +1,16 @@
 {
-	"utils.reports-download-file": "Fichier de téléchargement des rapports",
-	"utils.reports-export-completed": "Export du rapport terminé !"
+	"auth.copied-to-clipboard": "Copié dans le presse-papiers !",
+	"utils.direct-export": "Exporter le rapport ici",
+	"utils.email-is-required": "Courriel requis",
+	"utils.export-ready": "L'export Excel est prêt",
+	"utils.export-ready-button": "Télécharger mon rapport",
+	"utils.export-ready-message": "Votre export Coolecto est prêt !",
+	"utils.export-via-email": "Exporter à mon courriel",
+	"utils.export-will-be-sent-to-thi-email": "L'export sera envoyée à ce courriel",
+	"utils.or": "ou",
+	"utils.reports-download-file": "Télécharger le fichier du rapport",
+	"utils.reports-export-completed": "Export du rapport terminé !",
+	"utils.request-for-export-done": "Demande d'exportation effectuée !",
+	"utils.this-report-can-take-some-time-select-the-option": "La génération de ce rapport peut prendre un certain temps. Effectuez votre choix.",
+	"utils.wait-for-the-email-to-download-your-file": "Consultez vos courriels pour visualiser votre rapport"
 }

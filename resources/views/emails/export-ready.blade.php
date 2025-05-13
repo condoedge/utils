@@ -1,7 +1,7 @@
 @component('mail::message')
 
-<p>{!! __('translate.export-ready-message') !!}</p>
+<p>{!! __('utils.export-ready-message') !!}</p>
 
-<p>{!! makeMailButton(__('translate.export-ready-button'), $downloadUrl) !!}</p>
+<p>{!! makeMailButton(__('utils.export-ready-button'), $downloadUrl) !!}</p>
 
 @endcomponent
