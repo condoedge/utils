@@ -79,6 +79,7 @@ class ComponentToExportableToExcel implements FromArray, WithHeadings, ShouldAut
     {
         if ($this->getExportChildClass()) {
             $childInstance = $this->component->render(collect($this->getItems(null, 1))->first())->findByComponent($this->getExportChildClass());
+            $childInstance->bootForAction();
 
             return $this->parseHeaders($childInstance->headers());
         }
@@ -100,7 +101,8 @@ class ComponentToExportableToExcel implements FromArray, WithHeadings, ShouldAut
               // Process one item at a time to save memory
             foreach ($this->getItems() as $index => $item) {
                 $childInstance = $this->component->render($item)->findByComponent($this->getExportChildClass());
-                
+                $childInstance->bootForAction();
+
                 if (!$childInstance) {
                     continue;
                 }
