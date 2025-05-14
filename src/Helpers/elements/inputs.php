@@ -2,6 +2,7 @@
 
 use Condoedge\Utils\Kompo\Elements\NumberRange;
 use Kompo\Dropdown;
+use Kompo\Rows;
 use Kompo\Select;
 
 Select::macro('overModal', function ($id = null) {
@@ -25,6 +26,21 @@ Select::macro('overModal', function ($id = null) {
 Dropdown::macro('maxHeightWithScroll', function ($height = '30rem') {
 	return $this->class('dropdown-with-scroll')
 		->addStyle("--dropdown-max-height: $height !important;");
+});
+
+Rows::macro('balloonOver', function ($id = null) {
+	$id = $id ?? (class_basename($this) . \Str::random(5));
+
+	$balloonPatchEl = _Hidden()->onLoad(fn($e) => $e->run('() => {
+			let balloonContainer = document.querySelector("#'. $id .'");
+			
+			' . file_get_contents(__DIR__ . '/../../../resources/js/balloon-patch.js') .'
+	}'));
+
+	$this->elements = array_merge($this->elements ?? [], [$balloonPatchEl]);
+	
+	return $this->class('balloon-patch')
+		->id($id);
 });
 
 if (!function_exists('_ColorPicker')) {

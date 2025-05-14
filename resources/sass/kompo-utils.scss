@@ -89,3 +89,8 @@
     }
   }
 }
+
+.balloon-patch::after {
+  opacity: 0 !important;
+  transition: opacity 0s !important;
+}
