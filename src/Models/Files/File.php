@@ -11,6 +11,7 @@ use Condoedge\Utils\Models\Model;
 use Condoedge\Utils\Models\Tags\MorphToManyTagsTrait;
 use Condoedge\Utils\Models\Traits\BelongsToUserTrait;
 use Condoedge\Utils\Models\Traits\HasSearchableNameTrait;
+use Illuminate\Support\Facades\Schema;
 use Kompo\Core\FileHandler;
 use Intervention\Image\Facades\Image;
 
@@ -192,6 +193,25 @@ class File extends Model implements Searchable
 
         \Storage::disk($this->disk ?? 'public')->put($this->path, $image);
         \Storage::disk($this->disk ?? 'public')->setVisibility($this->path, 'public');
+    }
+
+    /* SCOPES */
+    public function scopeUserOwnedRecords($query)
+    {
+        return $query->whereIn('fileable_type', config('kompo-utils.morphables-contact-associated-to-user', []))
+            ->whereHas('fileable', function ($q) {
+                $q->where(function($subquery) {
+                    $model = $subquery->getModel();
+
+                    if (Schema::hasColumn($model->getTable(), 'user_id')) {
+                        $subquery->where('user_id', auth()->id());
+                    } elseif (method_exists($model, 'user')) {
+                        $subquery->whereHas('user', function($userQuery) {
+                            $userQuery->where('id', auth()->id());
+                        });
+                    }
+                });
+            });
     }
 
     /* ELEMENTS */

@@ -28,7 +28,7 @@ trait MorphManyEmails
 
     public function getFirstValidEmail()
     {
-        return $this->primaryEmail ?: $this->email()->first();
+        return $this->primaryEmail ?: $this->email;
     }
 
     public function getFirstValidEmailLabel()

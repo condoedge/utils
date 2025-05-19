@@ -35,7 +35,7 @@ trait MorphManyPhones
 
     public function getFirstValidPhone()
     {
-        return $this->primaryPhone ?: $this->phone()->first();
+        return $this->primaryPhone ?: $this->phone;
     }
 
     public function getFirstValidPhoneLabel()

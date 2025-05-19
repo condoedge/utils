@@ -29,7 +29,7 @@ trait MorphManyAddresses
     /* CALCULATED FIELDS */
     public function getPrimaryAddressLabel(): string
     {
-        $pa = $this->primaryBillingAddress;
+        $pa = $this->address;
         if (!$pa) {
             return '';
         }
@@ -39,7 +39,7 @@ trait MorphManyAddresses
 
     public function getFirstValidAddress()
     {
-        return $this->primaryBillingAddress ?: $this->address()->first();
+        return $this->address ?: $this->address()->first();
     }
 
     public function getFirstValidAddressLabel()

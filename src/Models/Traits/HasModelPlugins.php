@@ -19,12 +19,28 @@ trait HasModelPlugins
         });
     }
 
+    protected function getRelationshipFromMethod($method)
+    {
+        foreach ($this->getPlugins() as $plugin) {
+            $pluginInstance = is_object($plugin) ? $plugin : new $plugin($this);
+            if (method_exists($pluginInstance, 'getRelationshipFromMethod')) {
+                $value = $pluginInstance->getRelationshipFromMethod($this, $method);
+
+                if ($value !== false) {
+                    return $value;
+                }
+            }
+        }
+
+        return parent::getRelationshipFromMethod($method);
+    }
+
     public static function getPlugins()
     {
         return collect(array_merge(
             static::$globalPlugins ?? [],
             app(PluginsManager::class)->getPlugins(static::class)
-        ));
+        ))->unique();
     }
 
     public static function setPlugins(array $plugins, $override = false)

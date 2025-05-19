@@ -3,6 +3,7 @@
 namespace Condoedge\Utils\Models\ContactInfo\Phone;
 
 use Condoedge\Utils\Models\Model;
+use Illuminate\Support\Facades\Schema;
 
 class Phone extends Model
 {
@@ -44,6 +45,24 @@ class Phone extends Model
     public function scopeMatchNumber($query, $phoneNumber)
     {
         $query->where('number_ph', $phoneNumber);
+    }
+
+    public function scopeUserOwnedRecords($query)
+    {
+        return $query->whereIn('phoneable_type', config('kompo-utils.morphables-contact-associated-to-user', []))
+            ->whereHas('phoneable', function ($q) {
+                $q->where(function($subquery) {
+                    $model = $subquery->getModel();
+
+                    if (Schema::hasColumn($model->getTable(), 'user_id')) {
+                        $subquery->where('user_id', auth()->id());
+                    } elseif (method_exists($model, 'user')) {
+                        $subquery->whereHas('user', function($userQuery) {
+                            $userQuery->where('id', auth()->id());
+                        });
+                    }
+                });
+            });
     }
 
     /* CALCULATED FIELDS */

@@ -3,6 +3,7 @@
 namespace Condoedge\Utils\Models\ContactInfo\Email;
 
 use Condoedge\Utils\Models\Model;
+use Illuminate\Support\Facades\Schema;
 
 class Email extends Model
 {
@@ -48,6 +49,25 @@ class Email extends Model
     public function isSameAddress($address)
     {
         return $this->getEmailLabel() == $address;
+    }
+
+    /* SCOPES */
+    public function scopeUserOwnedRecords($query)
+    {
+        return $query->whereIn('emailable_type', config('kompo-utils.morphables-contact-associated-to-user', []))
+            ->whereHas('emailable', function ($q) {
+                $q->where(function($subquery) {
+                    $model = $subquery->getModel();
+
+                    if (Schema::hasColumn($model->getTable(), 'user_id')) {
+                        $subquery->where('user_id', auth()->id());
+                    } elseif (method_exists($model, 'user')) {
+                        $subquery->whereHas('user', function($userQuery) {
+                            $userQuery->where('id', auth()->id());
+                        });
+                    }
+                });
+            });
     }
 
     /* ACTIONS */
