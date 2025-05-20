@@ -13,3 +13,11 @@ function refresh()
 		return redirect()->back();
 	}
 }
+
+
+if(!function_exists('getReferrerRoute')) {
+	function getReferrerRoute()
+	{
+		return app('router')->getRoutes()->match(app('request')->create(url()->previous()))->getName();
+	}
+}
