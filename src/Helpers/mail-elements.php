@@ -271,6 +271,27 @@ if (!function_exists('mailTableCard')) {
     }
 }
 
+if (!function_exists('mailThead')) {
+    function mailThead($innerHtml, $style = '')
+    {
+        return '<thead style="'.$style.'">'.$innerHtml.'</thead>';
+    }
+}
+
+if (!function_exists('mailTbody')) {
+    function mailTbody($innerHtml, $style = '')
+    {
+        return '<tbody style="'.$style.'">'.$innerHtml.'</tbody>';
+    }
+}
+
+if (!function_exists('mailTh')) {
+    function mailTh($innerHtml, $colspan = null, $style = '', $defautStyle = 'font-size:0.9rem;color:rgb(5, 21, 61);padding:0.5rem 0.5rem')
+    {
+    	return '<th style="'.$style.$defautStyle.'"'.($colspan ? (' colspan="'.$colspan.'"') : '').'>'.$innerHtml.'</th>';
+    }
+}
+
 if (!function_exists('mailTr')) {
     function mailTr($innerHtml, $style = '')
     {
