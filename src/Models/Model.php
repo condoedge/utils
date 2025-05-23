@@ -3,7 +3,7 @@
 namespace Condoedge\Utils\Models;
 
 use Condoedge\Utils\Models\ModelBase;
-use Kompo\Models\Traits\HasAddedModifiedByTrait;
+use Condoedge\Utils\Models\Traits\HasAddedModifiedByTrait;
 
 class Model extends ModelBase
 {
