@@ -22,6 +22,8 @@ use Condoedge\Utils\Kompo\Plugins\FormCanHaveTableWithFields;
 use Condoedge\Utils\Kompo\Plugins\TableIntoFormSetValuesPlugin;
 use Condoedge\Utils\Services\GlobalConfig\GlobalConfigServiceContract;
 
+use App\Models\User;
+
 class CondoedgeUtilsServiceProvider extends ServiceProvider
 {
     use \Kompo\Routing\Mixins\ExtendsRoutingTrait;
@@ -132,6 +134,10 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
 
         $this->app->bind('team-model', function () {
             return new (config('kompo-utils.team-model-namespace'));
+        });
+
+        $this->app->bind('user-model', function () {
+            return new (config('kompo-auth.user-model', config('kompo-utils.user-model-namespace', User::class)));
         });
     }
 

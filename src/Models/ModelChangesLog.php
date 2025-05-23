@@ -6,6 +6,9 @@ use Condoedge\Utils\Models\User;
 use Kompo\Komponents\Komponent;
 use Kompo\Models\ModelBase;
 
+use App\Models\User;
+use Condoedge\Utils\Facades\UserModel;
+
 class ModelChangesLog extends ModelBase
 {
     // TODO Consider putting this to true, but we already have changed_at and this record in only for creating, not updating
@@ -34,7 +37,7 @@ class ModelChangesLog extends ModelBase
     // RELATIONSHIPS
     public function changedBy()
     {
-        return $this->belongsTo(User::class, 'changed_by');
+        return $this->belongsTo(UserModel::getClass(), 'changed_by');
     }
 
     public function changeable()
