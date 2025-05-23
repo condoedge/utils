@@ -34,6 +34,10 @@ class Phone extends Model
     }
 
     /* RELATIONS */
+    public function phonable()
+    {
+        return $this->morphTo();
+    }
 
     /* ATTRIBUTES */
     public function getTypePhLabelAttribute()
@@ -49,8 +53,8 @@ class Phone extends Model
 
     public function scopeUserOwnedRecords($query)
     {
-        return $query->whereIn('phoneable_type', config('kompo-utils.morphables-contact-associated-to-user', []))
-            ->whereHas('phoneable', function ($q) {
+        return $query->whereIn('phonable_type', config('kompo-utils.morphables-contact-associated-to-user', []))
+            ->whereHas('phonable', function ($q) {
                 $q->where(function($subquery) {
                     $model = $subquery->getModel();
 

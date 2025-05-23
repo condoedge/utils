@@ -13,7 +13,8 @@
     "minimum-stability": "stable",
     "require": {
         "php": "^8.0",
-        "laravel/framework": ">=5.6.0"
+        "laravel/framework": ">=5.6.0",
+        "kompo/kompo": "*"
     },
     "extra": {
         "laravel": {
@@ -28,5 +29,8 @@
             "@php scripts/add-js-loader.php"
         ]
     },
-    "prefer-stable": true
+    "prefer-stable": true,
+    "require-dev": {
+        "orchestra/testbench": "*"
+    }
 }
