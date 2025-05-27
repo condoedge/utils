@@ -2,11 +2,9 @@
 
 namespace Condoedge\Utils\Models;
 
-use Condoedge\Utils\Models\User;
 use Kompo\Komponents\Komponent;
 use Kompo\Models\ModelBase;
 
-use App\Models\User;
 use Condoedge\Utils\Facades\UserModel;
 
 class ModelChangesLog extends ModelBase
