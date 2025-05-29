@@ -15,7 +15,7 @@
   --intro-js-image-tooltip: url("../images/intro-js-tooltip.png");
   --intro-js-font-family: "Helvetica Neue", Inter, ui-sans-serif, "Apple Color Emoji", Helvetica, Arial, sans-serif;
   --intro-js-background-color-9: #08c;
-  --intro-js-background-color-10: rgba(31, 31, 31, 0.24);
+  --intro-js-background-color-10: rgba(1, 0, 0, 0.24);
 }
 
 /*
@@ -224,7 +224,7 @@ tr.introjs-showElement {
   padding-left: 140px;
   font-size: 18px;
   font-weight: 400;
-  color: #164F63;
+  color: var(--intro-js-secondary);
 
 }
 
@@ -235,7 +235,7 @@ tr.introjs-showElement {
   font-weight: 700;
   float: left;
   line-height: 40px;
-  color: #164F63;
+  color: var(--intro-js-secondary);
 }
 
 .introjs-tooltip-header {
@@ -278,7 +278,7 @@ tr.introjs-showElement {
   border: 1px solid #164F63;
   text-decoration: none;
   font-size: 14px;
-  color: #164F63;
+  color: var(--intro-js-secondary);
   white-space: nowrap;
   cursor: pointer;
   outline: none;
@@ -290,7 +290,7 @@ tr.introjs-showElement {
   &:hover {
     outline: none;
     text-decoration: none;
-    border-color: #164F63;
+    border-color: var(--intro-js-secondary);
     background-color: var(--intro-js-primary);
     color: var(--intro-js-primary-dark);
   }
@@ -301,15 +301,15 @@ tr.introjs-showElement {
     background-color: var(--intro-js-primary);
     box-shadow: 0 0 0 0.2rem rgba(var(--intro-js-primary-dark), 0.5);
     border: 1px solid #164F63;
-    color: #164F63;
+    color: var(--intro-js-secondary);
   }
 
   &:active {
     outline: none;
     text-decoration: none;
     background-color: var(--intro-js-primary);
-    border-color: #164F63;
-    color: #164F63;
+    border-color: var(--intro-js-secondary);
+    color: var(--intro-js-secondary);
   }
 
   &::-moz-focus-inner {
