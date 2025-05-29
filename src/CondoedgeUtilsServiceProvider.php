@@ -23,6 +23,7 @@ use Condoedge\Utils\Kompo\Plugins\TableIntoFormSetValuesPlugin;
 use Condoedge\Utils\Services\GlobalConfig\GlobalConfigServiceContract;
 
 use App\Models\User;
+use Condoedge\Utils\Kompo\Plugins\DebugReload;
 
 class CondoedgeUtilsServiceProvider extends ServiceProvider
 {
@@ -89,11 +90,13 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
         ]);
 
         Form::setPlugins([
+            DebugReload::class,
             FormCanHaveTableWithFields::class,
         ]);
 
         Modal::setPlugins([
             HasScroll::class,
+            DebugReload::class,
             FormCanHaveTableWithFields::class,
         ]);
     }
