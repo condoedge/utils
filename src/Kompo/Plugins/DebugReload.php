@@ -8,7 +8,7 @@ class DebugReload extends ComponentPlugin
 {
     public function onBoot()
     {
-        if (!config('app.debug')) {
+        if (!config('app.debug') || env('DISABLE_DEBUG_RELOAD', false)) {
             return;
         }
 
