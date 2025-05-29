@@ -1,5 +1,8 @@
 <?php
 
+use Condoedge\Utils\Facades\UserModel;
+use Condoedge\Utils\Models\Traits\HasUserSettings;
+use Illuminate\Support\Str;
 use Kompo\Elements\Element;
 
 if (!function_exists('getAppClass')) {
@@ -72,5 +75,43 @@ if (!function_exists('isKompoEl')) {
 	function isKompoEl($el)
 	{
 		return $el instanceof Element;
+	}
+}
+
+if (!function_exists('componentIntroViewedKey')) {
+	function componentIntroViewedKey($component)
+	{
+		$componentName = Str::slug(camelToSnake(class_basename($component)));
+		return $componentName . '_intro_viewed';
+	}
+}
+
+if (!function_exists('componentIntroViewed')) {
+	function componentIntroViewed($component)
+	{
+		$componentKey = componentIntroViewedKey($component);
+
+		if (!in_array(HasUserSettings::class, class_uses(UserModel::getClass()))) {
+			\Log::error('The component must implement HasUserSettings trait to use componentIntroViewed function. If you are not using it you can disable the plugin using `excludePlugins` method');
+			return false;
+		}
+
+		return auth()->user()?->getSettingValue($componentKey);
+	}
+}
+
+if (!function_exists('getTutorialAnimationButton')) {
+	function getTutorialAnimationButton($iconSize = 30)
+	{
+		if (!componentIntroViewed(getCurrentComponentPage())) {
+			return null;
+		}
+
+		return _Link()->icon(_Sax('info-circle', $iconSize))->class('text-gray-800 text-2xl')
+			->onClick(fn($e) => $e->run('() => {window.utils.setLoadingScreen()}')
+				&& $e->post(route('forget-intro-component', [
+					'intro_key' => componentIntroViewedKey(getCurrentComponentPage()),
+				]))->redirect(url()->full())
+			);
 	}
 }

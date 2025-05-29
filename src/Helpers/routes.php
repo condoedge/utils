@@ -21,3 +21,10 @@ if(!function_exists('getReferrerRoute')) {
 		return app('router')->getRoutes()->match(app('request')->create(url()->previous()))->getName();
 	}
 }
+
+if(!function_exists('getReferrerUrl')) {
+	function getCurrentComponentPage()
+	{
+		return request()->route()->controller::class;
+	}
+}

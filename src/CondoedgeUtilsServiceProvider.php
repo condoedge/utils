@@ -24,6 +24,7 @@ use Condoedge\Utils\Services\GlobalConfig\GlobalConfigServiceContract;
 
 use App\Models\User;
 use Condoedge\Utils\Kompo\Plugins\DebugReload;
+use Condoedge\Utils\Kompo\Plugins\HasIntroAnimation;
 
 class CondoedgeUtilsServiceProvider extends ServiceProvider
 {
@@ -80,6 +81,7 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
 
         Query::setPlugins([
             ExportPlugin::class,
+            HasIntroAnimation::class,
         ]);
 
         Table::setPlugins([
@@ -87,17 +89,20 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
             EnableWhiteTableStyle::class,
             EnableResponsiveTable::class,
             TableIntoFormSetValuesPlugin::class,
+            HasIntroAnimation::class,
         ]);
 
         Form::setPlugins([
             DebugReload::class,
             FormCanHaveTableWithFields::class,
+            HasIntroAnimation::class,
         ]);
 
         Modal::setPlugins([
             HasScroll::class,
             DebugReload::class,
             FormCanHaveTableWithFields::class,
+            HasIntroAnimation::class,
         ]);
     }
 
@@ -108,6 +113,11 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
      */
     public function register()
     {
+        $this->booted(function () {
+            \Route::middleware('web')->group(__DIR__.'/../routes/files.php');
+            \Route::middleware('web')->group(__DIR__.'/../routes/utils.php');
+        });
+
         $this->app->singleton(PluginsManager::class, function ($app) {
             return new PluginsManager();
         });

@@ -53,6 +53,17 @@ trait HasModelPlugins
         static::$globalPlugins = array_merge(static::$globalPlugins ?? [], $plugins);
     }
 
+    public static function excludePlugins(array $plugins)
+    {
+        if (is_string($plugins)) {
+            $plugins = [$plugins];
+        }
+
+        static::$globalPlugins = array_filter(static::$globalPlugins ?? [], function ($plugin) use ($plugins) {
+            return !in_array($plugin, $plugins);
+        });
+    }
+
     public static function getGlobalPlugins()
     {
         return property_exists(static::class, 'globalPlugins') ?

@@ -55,3 +55,30 @@ function toggleYesNo(name) {
 		$('#' + name + '-on-input').hide();
 	}  
 }
+
+function setLoadingScreen()
+{
+    const loadingInnerHtml = `
+        <div class="loading-screen">
+            <div class="spinner">
+                
+            </div>    
+        </div>
+    `;
+
+    $('body').append(loadingInnerHtml);
+}
+
+import introJs from 'intro.js';
+window.introJs = introJs;
+
+window.utils = {
+	getYesNoValue: getYesNoValue,
+	getToggle: getToggle,
+	getToggleValue: getToggleValue,
+	toggleYesNo: toggleYesNo,
+	introJs: introJs,
+	setLoadingScreen: setLoadingScreen,
+};
+
+export default window.utils;

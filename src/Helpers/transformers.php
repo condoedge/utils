@@ -78,3 +78,11 @@ if (!function_exists('sizeAsKb')) {
 		return round($size / 1024, 2) . ' KB';
 	}
 }
+
+if (!function_exists('camelToSnake')) {
+	function camelToSnake($camelCase) { 
+		$pattern = '/(?<=\\w)(?=[A-Z])|(?<=[a-z])(?=[0-9])/'; 
+		$snakeCase = preg_replace($pattern, '_', $camelCase); 
+		return strtolower($snakeCase); 
+	} 
+}
