@@ -55,6 +55,12 @@ php artisan vendor:publish --provider="CondoEdge\Utils\UtilsServiceProvider" --t
 @use "../../vendor/condoedge/utils/resources/sass/kompo-utils";
 ```
 
+### Install intro.js
+
+```bash
+npm install intro.js --save
+```
+
 ### Load scripts
 
 ```javascript
