@@ -19,11 +19,12 @@ class HasIntroAnimation extends ComponentPlugin
     public function js()
     {
         $skipIntro = $this->componentHasMethod('skipIntroAnimation') ? $this->callComponentMethod('skipIntroAnimation') : false;
-        $prefixForSpecificUser = $this->componentHasMethod('prefixForSpecificUser') ? $this->callComponentMethod('prefixForSpecificUser') : '';
-        $prefixForSpecificUser = $prefixForSpecificUser ? ($prefixForSpecificUser . '-') : '';
-
+        $prefixForSpecificUser = $this->getPrefixFile();
+        
         $componentName = Str::slug(camelToSnake(class_basename($this->component)));
         $filePath = resource_path("views/scripts/intro-{$prefixForSpecificUser}{$componentName}.js");
+        $filePath = !file_exists($filePath) && !$this->getComponentProperty('strictByUser') ? 
+            resource_path("views/scripts/intro-{$componentName}.js") : $filePath; 
 
         if (!file_exists($filePath)) {
             return;
@@ -43,6 +44,19 @@ class HasIntroAnimation extends ComponentPlugin
         }
 
         return '';
+    }
+
+    protected function getPrefixFile()
+    {
+        $prefixForSpecificUser = $this->componentHasMethod('prefixForSpecificUser') ? $this->callComponentMethod('prefixForSpecificUser') : '';
+
+        if (!$prefixForSpecificUser && app()->has('prefixIntroJsByUserType')) {
+            $prefixForSpecificUser = app('prefixIntroJsByUserType')();
+        }
+
+        $prefixForSpecificUser = $prefixForSpecificUser ? ($prefixForSpecificUser . '-') : '';
+
+        return $prefixForSpecificUser;
     }
 
     public function translateContent($content)
