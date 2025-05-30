@@ -20,6 +20,7 @@ class HasIntroAnimation extends ComponentPlugin
     {
         $skipIntro = $this->componentHasMethod('skipIntroAnimation') ? $this->callComponentMethod('skipIntroAnimation') : false;
         $prefixForSpecificUser = $this->componentHasMethod('prefixForSpecificUser') ? $this->callComponentMethod('prefixForSpecificUser') : '';
+        $prefixForSpecificUser = $prefixForSpecificUser ? ($prefixForSpecificUser . '-') : '';
 
         $componentName = Str::slug(camelToSnake(class_basename($this->component)));
         $filePath = resource_path("views/scripts/intro-{$prefixForSpecificUser}{$componentName}.js");
