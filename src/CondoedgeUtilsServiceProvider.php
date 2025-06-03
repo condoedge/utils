@@ -94,14 +94,12 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
 
         Form::setPlugins([
             DebugReload::class,
-            FormCanHaveTableWithFields::class,
             HasIntroAnimation::class,
         ]);
 
         Modal::setPlugins([
             HasScroll::class,
             DebugReload::class,
-            FormCanHaveTableWithFields::class,
             HasIntroAnimation::class,
         ]);
     }
