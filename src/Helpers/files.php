@@ -1,38 +1,38 @@
-<?php 
+<?php
 
 /* FILE UTILITIES METHODS */
 if (!function_exists('appendBeforeExtension')) {
-	function appendBeforeExtension($path, $appendText)
-	{
-	    return substr($path, 0, strrpos($path, '.')).$appendText.'.'.substr($path, strrpos($path, '.') + 1);
-	}
+    function appendBeforeExtension($path, $appendText)
+    {
+        return substr($path, 0, strrpos($path, '.')) . $appendText . '.' . substr($path, strrpos($path, '.') + 1);
+    }
 }
 
 /* STORAGE METHODS */
 if (!function_exists('publicUrlFromPath')) {
-	function publicUrlFromPath($path, $defaultUrl = null)
-	{
-		if (\Storage::disk('public')->exists($path)) {
-			return \Storage::disk('public')->url($path);
-		}
+    function publicUrlFromPath($path, $defaultUrl = null)
+    {
+        if (\Storage::disk('public')->exists($path)) {
+            return \Storage::disk('public')->url($path);
+        }
 
-		return $defaultUrl;
-	}
+        return $defaultUrl;
+    }
 }
 
 if (!function_exists('publicUrlFromFileModel')) {
-	function publicUrlFromFileModel($file, $defaultUrl = null)
-	{
-		if ($file->path ?? false) {
-			if ($file->disk) {
-				return \Storage::disk($file->disk)->url($file->path);
-			}
+    function publicUrlFromFileModel($file, $defaultUrl = null)
+    {
+        if ($file->path ?? false) {
+            if ($file->disk) {
+                return \Storage::disk($file->disk)->url($file->path);
+            }
 
-			return publicUrlFromPath($file->path, $defaultUrl);
-		}
+            return publicUrlFromPath($file->path, $defaultUrl);
+        }
 
-		return $defaultUrl;
-	}
+        return $defaultUrl;
+    }
 }
 
 
@@ -50,9 +50,9 @@ if (!function_exists('thumbStyle')) {
 if (!function_exists('_ThumbWrapper')) {
     function _ThumbWrapper($arrayEls, $width = '8rem')
     {
-    	return _Rows($arrayEls)
-    		->class('group2 cursor-pointer dashboard-card mr-2')
-    	    ->style('flex:0 0 '.$width.';max-width:'.$width);
+        return _Rows($arrayEls)
+            ->class('group2 cursor-pointer dashboard-card mr-2')
+            ->style('flex:0 0 ' . $width . ';max-width:' . $width);
     }
 }
 
@@ -60,14 +60,14 @@ if (!function_exists('_ThumbWrapper')) {
 if (!function_exists('getReadableSize')) {
     function getReadableSize($sizeBytes)
     {
-        if ($sizeBytes >= 1073741824){
+        if ($sizeBytes >= 1073741824) {
             return number_format($sizeBytes / 1073741824, 1) . ' GB';
-        }elseif ($sizeBytes >= 1048576){
+        } elseif ($sizeBytes >= 1048576) {
             return number_format($sizeBytes / 1048576, 1) . ' MB';
-        }elseif ($sizeBytes >= 1024){
+        } elseif ($sizeBytes >= 1024) {
             return number_format($sizeBytes / 1024, 1) . ' KB';
-        }else{
-        	return $sizeBytes.' bytes';
+        } else {
+            return $sizeBytes . ' bytes';
         }
     }
 }
@@ -92,7 +92,7 @@ if (!function_exists('getIconFromMimeType')) {
     function getIconFromMimeType($mimeType)
     {
         foreach (iconMimeTypes() as $iconClass => $mimeTypes) {
-            if(in_array($mimeType, $mimeTypes))
+            if (in_array($mimeType, $mimeTypes))
                 return $iconClass;
         }
 

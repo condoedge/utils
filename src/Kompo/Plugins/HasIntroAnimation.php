@@ -86,7 +86,7 @@ class HasIntroAnimation extends ComponentPlugin
     {
         return [
             'user_first_name' => explode(' ', auth()->user()?->name ?: '')[0] ?: '',
-            'user_last_name' => explode(' ', auth()->user()?->name ?: '')[1] ?: '',
+            'user_last_name' => explode(' ', auth()->user()?->name ?: '')[1] ?? '',
             'user_name' => auth()->user()?->name ?: '',
         ];
     }

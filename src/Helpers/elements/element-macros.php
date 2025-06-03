@@ -6,6 +6,7 @@ use Kompo\Elements\Field;
 use Kompo\Interactions\Action;
 use Kompo\Rows;
 use Kompo\Elements\Layout;
+use Kompo\Img;
 use Kompo\Interactions\Interaction;
 
 /* TABS */
@@ -200,4 +201,10 @@ Field::macro('shareToParentForm', function() {
     return $this->selfPost('pluginMethod', [
         'method' => 'setInputValue',
     ]); 
+});
+
+Img::macro('directSrc', function($src) {
+    $this->src = $src;
+    
+    return $this;
 });
