@@ -48,7 +48,7 @@ abstract class ComponentPlugin
     public function prependComponentProperty($property, $value)
     {
         $currentValue = $this->getComponentProperty($property);
-dd(getPrivateProperty($this->component, 'class'));
+
         $type = gettype($currentValue);
 
         if ($type === 'array') {
