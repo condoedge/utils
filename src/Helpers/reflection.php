@@ -10,6 +10,11 @@ function getPrivateProperty($object, $property)
         return $prop->getValue($object);
     }
 
+    if (property_exists($object, $property)) {
+        // If the property exists but is not private, return its value
+        return $object->{$property};
+    }
+
     return null;
 }
 
@@ -34,6 +39,11 @@ function setPrivateProperty($object, $property, $value)
         $prop = $reflect->getProperty($property);
         $prop->setAccessible(true);
         $prop->setValue($object, $value);
+    }
+
+    if (property_exists($object, $property)) {
+        // If the property exists but is not private, set its value
+        $object->{$property} = $value;
     }
 }
 
