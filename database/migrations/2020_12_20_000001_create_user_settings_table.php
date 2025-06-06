@@ -17,7 +17,7 @@ class CreateUserSettingsTable extends Migration
         {
             addMetaData($table);
 
-            $table->foreignId('user_id')->constrained();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('name');
             $table->string('value')->nullable();
         });
