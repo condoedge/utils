@@ -12,6 +12,11 @@ trait HasUserSettings
         return $this->hasOne(UserSetting::class)->where('name', $name);
     }
 
+    public function settings()
+    {
+        return $this->hasMany(UserSetting::class);
+    }
+
     /* ACTIONS */
     public function saveSetting($name, $value)
     {
