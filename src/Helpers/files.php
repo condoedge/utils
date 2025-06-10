@@ -35,6 +35,20 @@ if (!function_exists('publicUrlFromFileModel')) {
     }
 }
 
+/* UTILITIES */
+if (!function_exists('avatarFromText')) {
+    function avatarFromText($text)
+    {
+        return 'https://ui-avatars.com/api/?name='.urlencode($text).'&color=7F9CF5&background=EBF4FF';
+    }
+}
+
+if (!function_exists('_ImgFromText')) {
+    function _ImgFromText($text)
+    {
+        return _Img(avatarFromText($text));
+    }
+}
 
 /* ELS & STYLES */
 if (!function_exists('thumbStyle')) {
