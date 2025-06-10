@@ -15,6 +15,8 @@ class SendExportViaEmail implements ShouldQueue
     protected $filename;
     protected $userId;
 
+    protected $request;
+
     /**
      * Create a new job instance.
      */
@@ -24,6 +26,8 @@ class SendExportViaEmail implements ShouldQueue
         $this->email = $email;
         $this->userId = auth()->id();
         $this->filename = $filename ?? 'export-' . uniqid() . '.xlsx';
+
+        $this->request = request()->all();
     }
 
     /**
@@ -34,6 +38,8 @@ class SendExportViaEmail implements ShouldQueue
         if ($this->userId && $user = UserModel::find($this->userId)) {
             auth()->login($user);
         }
+
+        request()->merge($this->request);
 
         $exportableInstance = $this->exportableInstance;
         $component = getPrivateProperty($exportableInstance, 'component');

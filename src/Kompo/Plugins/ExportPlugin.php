@@ -109,6 +109,7 @@ class ExportPlugin extends ComponentPlugin
                         ->selfPost('pluginMethod', [
                             'method' => 'directExportToExcel',
                         ])
+                        ->withAllFormValues()
                         ->inPanel('export-options'),
                 )->class('px-6 mb-2'),
             )->class('p-6 max-w-md'),
@@ -118,7 +119,7 @@ class ExportPlugin extends ComponentPlugin
     protected function sendExportViaEmailEls()
     {
         $this->setComponentId();
-        
+
         return [
            _InputEmail('utils.export-will-be-sent-to-thi-email')->id('export-email-visual')->name('export_email', false)
                 ->run('() => {
