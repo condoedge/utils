@@ -20,7 +20,7 @@ trait MorphManyFilesTrait
     /* CALCULATED FIELDS */
     protected function defaultImageUrl()
     {
-        return 'https://ui-avatars.com/api/?name=' . urlencode($this->getNameDisplay()) . '&color=7F9CF5&background=EBF4FF';
+        return avatarFromText($this->getNameDisplay());
     }
 
     public function getMainImageUrl()
