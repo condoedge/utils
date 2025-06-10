@@ -5,6 +5,7 @@ namespace Condoedge\Utils\Jobs;
 use Condoedge\Utils\Facades\UserModel;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Http\Request as HttpRequest;
 
 class SendExportViaEmail implements ShouldQueue
 {
@@ -15,7 +16,9 @@ class SendExportViaEmail implements ShouldQueue
     protected $filename;
     protected $userId;
 
-    protected $request;
+    protected $requestData;
+    protected $routeName;
+    protected $routeParameters = [];
 
     /**
      * Create a new job instance.
@@ -27,7 +30,11 @@ class SendExportViaEmail implements ShouldQueue
         $this->userId = auth()->id();
         $this->filename = $filename ?? 'export-' . uniqid() . '.xlsx';
 
-        $this->request = request()->all();
+        $this->requestData = request()->all();
+
+        $route = request()->route();
+        $this->routeName       = $route?->getName();
+        $this->routeParameters = $route?->parameters() ?: [];
     }
 
     /**
@@ -35,11 +42,11 @@ class SendExportViaEmail implements ShouldQueue
      */
     public function handle(): void
     {
+        $this->setOriginalRequest();
+
         if ($this->userId && $user = UserModel::find($this->userId)) {
             auth()->login($user);
         }
-
-        request()->merge($this->request);
 
         $exportableInstance = $this->exportableInstance;
         $component = getPrivateProperty($exportableInstance, 'component');
@@ -56,5 +63,20 @@ class SendExportViaEmail implements ShouldQueue
         $url = \URL::signedRoute('report.download', ['filename' => $this->filename]);
 
         \Mail::to($this->email)->send(new \Condoedge\Utils\Mail\ExportReady($url, $this->filename));
+    }
+
+    protected function setOriginalRequest()
+    {
+        $route = app('router')->getRoutes()->getByName($this->routeName);
+        
+        $req = HttpRequest::create(
+            $route->uri(),
+            $route->methods()[0] ?? 'GET',
+            $this->requestData
+        );
+
+        $req->setRouteResolver(fn() => $route);
+
+        app()->instance('request', $req);
     }
 }
