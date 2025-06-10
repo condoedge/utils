@@ -16,7 +16,7 @@ class SendExportViaEmail implements ShouldQueue
     protected $filename;
     protected $userId;
 
-    protected $requestData;
+    protected $requestData = [];
     protected $routeName;
 
     /**
@@ -65,6 +65,11 @@ class SendExportViaEmail implements ShouldQueue
     protected function setOriginalRequest()
     {
         $route = app('router')->getRoutes()->getByName($this->routeName);
+
+        if (!$route) {
+            request()->merge($this->requestData);
+            return;
+        }
 
         $req = HttpRequest::create(
             $route->uri(),
