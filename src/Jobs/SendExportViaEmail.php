@@ -2,6 +2,7 @@
 
 namespace Condoedge\Utils\Jobs;
 
+use Condoedge\Utils\Facades\UserModel;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 
@@ -12,14 +13,16 @@ class SendExportViaEmail implements ShouldQueue
     protected $exportableInstance;
     protected $email;
     protected $filename;
+    protected $userId;
 
     /**
      * Create a new job instance.
      */
-    public function __construct($exportableInstance, $email, $filename = null)
+    public function __construct($exportableInstance, $email, $filename = null, $userId = null)
     {
         $this->exportableInstance = $exportableInstance;
         $this->email = $email;
+        $this->userId = auth()->id();
         $this->filename = $filename ?? 'export-' . uniqid() . '.xlsx';
     }
 
@@ -28,6 +31,10 @@ class SendExportViaEmail implements ShouldQueue
      */
     public function handle(): void
     {
+        if ($this->userId && $user = UserModel::find($this->userId)) {
+            auth()->login($user);
+        }
+
         $exportableInstance = $this->exportableInstance;
         $component = getPrivateProperty($exportableInstance, 'component');
 
