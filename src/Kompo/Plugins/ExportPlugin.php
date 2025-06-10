@@ -108,6 +108,7 @@ class ExportPlugin extends ComponentPlugin
                     _Button('utils.direct-export')->class('w-full')
                         ->selfPost('pluginMethod', [
                             'method' => 'directExportToExcel',
+                            'from_route' => request('from_route'),
                         ])
                         ->withAllFormValues()
                         ->inPanel('export-options'),
@@ -135,6 +136,7 @@ class ExportPlugin extends ComponentPlugin
             _ButtonOutlined('utils.export-via-email')
                 ->selfPost('pluginMethod', [
                     'method' => 'exportToExcelViaEmail',
+                    'from_route' => request('from_route'),
                 ])
                 ->withAllFormValues()
                 ->inPanel('export-options'),

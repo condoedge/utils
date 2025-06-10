@@ -18,7 +18,6 @@ class SendExportViaEmail implements ShouldQueue
 
     protected $requestData;
     protected $routeName;
-    protected $routeParameters = [];
 
     /**
      * Create a new job instance.
@@ -32,9 +31,7 @@ class SendExportViaEmail implements ShouldQueue
 
         $this->requestData = request()->all();
 
-        $route = request()->route();
-        $this->routeName       = $route?->getName();
-        $this->routeParameters = $route?->parameters() ?: [];
+        $this->routeName = request('from_route') ?? request()->route()?->getName();
     }
 
     /**
@@ -68,14 +65,15 @@ class SendExportViaEmail implements ShouldQueue
     protected function setOriginalRequest()
     {
         $route = app('router')->getRoutes()->getByName($this->routeName);
-        
+
         $req = HttpRequest::create(
             $route->uri(),
             $route->methods()[0] ?? 'GET',
             $this->requestData
         );
 
-        $req->setRouteResolver(fn() => $route);
+        $boundRoute = $route->bind($req);
+        $req->setRouteResolver(fn() => $boundRoute);
 
         app()->instance('request', $req);
     }
