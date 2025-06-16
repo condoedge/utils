@@ -125,6 +125,11 @@ class File extends Model implements Searchable
         return \Storage::url($this->path);
     }
 
+    public function viewableForUser()
+    {
+        return $this->visibility == FileVisibilityEnum::PUBLIC || ($this->visibility == FileVisibilityEnum::PRIVATE && $this->user_id == auth()->id());
+    }
+
 
     /* ACTIONS */
     public function delete()

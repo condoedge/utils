@@ -18,6 +18,8 @@ class SendExportViaEmail implements ShouldQueue
 
     protected $requestData = [];
     protected $routeName;
+    
+    protected $signedUrl;
 
     /**
      * Create a new job instance.
@@ -32,6 +34,8 @@ class SendExportViaEmail implements ShouldQueue
         $this->requestData = request()->all();
 
         $this->routeName = request('from_route') ?? request()->route()?->getName();
+
+        $this->signedUrl = \URL::signedRoute('report.download', ['filename' => $this->filename]);
     }
 
     /**
@@ -57,9 +61,7 @@ class SendExportViaEmail implements ShouldQueue
             $this->filename,
         );
 
-        $url = \URL::signedRoute('report.download', ['filename' => $this->filename]);
-
-        \Mail::to($this->email)->send(new \Condoedge\Utils\Mail\ExportReady($url, $this->filename));
+        \Mail::to($this->email)->send(new \Condoedge\Utils\Mail\ExportReady($this->signedUrl, $this->filename));
     }
 
     protected function setOriginalRequest()
