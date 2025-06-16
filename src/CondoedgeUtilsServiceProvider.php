@@ -82,6 +82,7 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
         Query::setPlugins([
             ExportPlugin::class,
             HasIntroAnimation::class,
+            EnableWhiteTableStyle::class,
         ]);
 
         Table::setPlugins([

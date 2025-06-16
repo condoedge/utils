@@ -282,7 +282,7 @@ class File extends Model implements Searchable
         );
     }
 
-    protected static function yearlyMonthlyLinkGroup()
+    public static function yearlyMonthlyLinkGroup()
     {
         if ($year = request('year')) {
             return _Flex4(
