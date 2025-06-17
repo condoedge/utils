@@ -1,5 +1,9 @@
 {
 	"auth.copied-to-clipboard": "Copied to clipboard !",
+	"files.attach-files": "Attach files",
+	"files.browse-files": "Browse files",
+	"files.or": "or",
+	"files.your-files-exceed-max-size": "Your files exceed max size allowed",
 	"utils.direct-export": "Export report here",
 	"utils.email-is-required": "Email is required",
 	"utils.export-ready": "Excel export is ready",

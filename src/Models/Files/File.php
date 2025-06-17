@@ -353,7 +353,7 @@ class File extends Model implements Searchable
 
             _Flex(
                 _Link()->icon(_Sax('paperclip-2'))->class('text-greenmain text-2xl')
-                    ->balloon('files-attach-files', 'up')
+                    ->balloon('files.attach-files', 'up')
                     ->toggleId($panelId, $toggleOnLoad),
                 _Html()->class('text-xs text-gray-600 font-semibold')->id('file-size-div')
             ),
@@ -365,7 +365,7 @@ class File extends Model implements Searchable
                             'team_id' => currentTeam()->id,
                         ])->class('mb-0 w-full md:w-5/12')
                         ->id('email-attachments-input')->run('calculateTotalFileSize'),
-                    _Html('or')
+                    _Html('files.or')
                         ->class('text-sm text-gray-600 my-2 md:my-0'),
                     FileLibraryAttachmentQuery::libraryFilesPanel($fileIds)
                         ->class('w-full md:w-5/12'),

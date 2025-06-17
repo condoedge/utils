@@ -1,5 +1,9 @@
 {
 	"auth.copied-to-clipboard": "Copié dans le presse-papiers !",
+	"files.attach-files": "Joindre des fichiers",
+	"files.browse-files": "Parcourir les fichiers",
+	"files.or": "ou",
+	"files.your-files-exceed-max-size": "Vos fichiers dépassent la taille maximale autorisée",
 	"utils.direct-export": "Exporter le rapport ici",
 	"utils.email-is-required": "Courriel requis",
 	"utils.export-ready": "L'export Excel est prêt",
