@@ -58,6 +58,52 @@ function unsetPrivateProperty($object, $property)
     }
 }
 
+function setPrivatePropertyIncludingParent($object, $property, $value)
+{
+    $reflection = new \ReflectionClass($object);
+    $currentClass = $reflection;
+
+    while ($currentClass) {
+        if ($currentClass->hasProperty($property)) {
+            $prop = $currentClass->getProperty($property);
+            $prop->setAccessible(true);
+            $prop->setValue($object, $value);
+            return;
+        }
+        $currentClass = $currentClass->getParentClass();
+    }
+
+    // If we reach here, the property was not found in the class hierarchy
+    throw new \Exception("Property '$property' not found in class hierarchy.");
+}
+
+function getAllPropertiesIncludingParent($object): array
+{
+    $reflection = new \ReflectionClass($object);
+
+    $allProperties = [];
+    $currentClass = $reflection;
+
+    while ($currentClass) {
+        foreach ($currentClass->getProperties() as $property) {
+            $property->setAccessible(true);
+            
+            try {
+                if ($property->isInitialized($object)) {
+                    $allProperties[$property->getName()] = $property->getValue($object);
+                }
+            } catch (\Error $e) {
+                // If the property is not accessible or not initialized, we skip it
+                continue;
+            }
+        }
+
+        $currentClass = $currentClass->getParentClass();
+    }
+
+    return $allProperties;
+}
+
 function findClosures($object, $path = '', array &$visited = []): array {
     $closures = [];
 

@@ -64,7 +64,7 @@ class FileLibraryAttachmentQuery extends FileLibraryQuery
 				->class('mb-0'),
 			_Button('files-add-from-library')
 				->class('text-sm vlBtn vlBtnOutlined')->icon('icon-plus')
-				->get('file-add-attachment.modal', [
+				->get('file-add-attachment.modal-with-table', [
 					'checked_items' => json_encode($selectedIds),
 				])->inModal(),
 		);

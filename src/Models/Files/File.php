@@ -125,6 +125,11 @@ class File extends Model implements Searchable
         return \Storage::url($this->path);
     }
 
+    public function viewableForUser()
+    {
+        return $this->visibility == FileVisibilityEnum::PUBLIC || ($this->visibility == FileVisibilityEnum::PRIVATE && $this->user_id == auth()->id());
+    }
+
 
     /* ACTIONS */
     public function delete()
@@ -277,7 +282,7 @@ class File extends Model implements Searchable
         );
     }
 
-    protected static function yearlyMonthlyLinkGroup()
+    public static function yearlyMonthlyLinkGroup()
     {
         if ($year = request('year')) {
             return _Flex4(
@@ -347,35 +352,22 @@ class File extends Model implements Searchable
 
     public static function fileUploadLinkAndBox($name, $toggleOnLoad = true, $fileIds = [])
     {
-        $panelId = 'file-upload-'.uniqid();
+        return _FileUploadLinkAndBox($name, $toggleOnLoad, $fileIds, static::getMaxFilesSize());
+    }
+
+    public static function attachmentsRules()
+    {
+        $maxFilesSize = static::getMaxFilesSize();
 
         return [
+			'attachments.*' => 'max:' . $maxFilesSize . '|mimes:' . implode(',', attachmentsValidTypes()),
+			'attachments' => [new \Condoedge\Utils\Rule\FilesTotalUploadSize($maxFilesSize), 'max:20'],
+		];
+    }
 
-            _Flex(
-                _Link()->icon(_Sax('paperclip-2'))->class('text-greenmain text-2xl')
-                    ->balloon('files.attach-files', 'up')
-                    ->toggleId($panelId, $toggleOnLoad),
-                _Html()->class('text-xs text-gray-600 font-semibold')->id('file-size-div')
-            ),
-
-            _Rows(
-                _FlexBetween(
-                    _MultiFile()->placeholder('files-browse-files')->name($name)
-                        ->extraAttributes([
-                            'team_id' => currentTeam()->id,
-                        ])->class('mb-0 w-full md:w-5/12')
-                        ->id('email-attachments-input')->run('calculateTotalFileSize'),
-                    _Html('files.or')
-                        ->class('text-sm text-gray-600 my-2 md:my-0'),
-                    FileLibraryAttachmentQuery::libraryFilesPanel($fileIds)
-                        ->class('w-full md:w-5/12'),
-                )->class('flex-wrap'),
-                _Html('files-your-files-exceed-max-size')
-                    ->class('hidden text-danger text-xs')->id('file-size-message')
-            )->class('mx-2 dashboard-card p-2 space-x-2')
-            ->id($panelId)
-
-        ];
+    public static function getMaxFilesSize()
+    {
+        return config('kompo-utils.max-files-size', 20000);
     }
 
     public function linkEl()
