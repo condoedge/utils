@@ -16,8 +16,8 @@ class FileLibraryAttachmentTable extends FileLibraryAttachmentQuery
     public function headers()
     {
         return [
-            _Th('translate.date'),
-            _Th('translate.file'),
+            _Th('files.date'),
+            _Th('files.file'),
         ];
     }
 

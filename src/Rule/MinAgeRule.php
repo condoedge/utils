@@ -24,7 +24,7 @@ class MinAgeRule implements ValidationRule
     public function validate(string $attribute, mixed $value, \Closure $fail): void
     {
         if (Carbon::parse($value)->age < $this->minAge) {
-            $fail(__('translate.error.must-be-at-least') . ' ' . $this->minAge . ' ' . __('translate.error.years-old'));
+            $fail(__('error.must-be-at-least') . ' ' . $this->minAge . ' ' . __('error.years-old'));
         }
     }
 }
