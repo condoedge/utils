@@ -28,7 +28,7 @@ if (!function_exists('_FileUploadLinkAndBox')) {
                     _Rows(
                         _MultiFile()->placeholder('messaging-browse-files')->name($name)->class('mb-0')
                             ->id('email-attachments-input')->run('calculateTotalFileSize'),
-                        !$maxFilesSize ? null : _Html(__('translate.with-values.max-files-size-is', [
+                        !$maxFilesSize ? null : _Html(__('files.with-values-max-files-size-is', [
                             'size' => $maxFilesSize
                         ]))->class('text-xs text-gray-500 absolute -bottom-5'),
                     )->class('relative w-full md:w-5/12'),
