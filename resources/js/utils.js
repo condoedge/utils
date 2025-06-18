@@ -69,6 +69,11 @@ function setLoadingScreen()
     $('body').append(loadingInnerHtml);
 }
 
+function removeLoadingScreen()
+{
+	$('.loading-screen').remove();
+}
+
 import introJs from 'intro.js';
 window.introJs = introJs;
 
@@ -79,6 +84,7 @@ window.utils = {
 	toggleYesNo: toggleYesNo,
 	introJs: introJs,
 	setLoadingScreen: setLoadingScreen,
+	removeLoadingScreen: removeLoadingScreen
 };
 
 export default window.utils;
