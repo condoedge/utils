@@ -17,6 +17,13 @@ if (!function_exists('_CheckSingleItem')) {
     }
 }
 
+if (!function_exists('_DragIcon')) {
+    function _DragIcon()
+    {
+        return _Html()->icon(_Svg('selector')->class('w-8 h-8 text-gray-400'))->class('cursor-move');
+    }
+}
+
 if (!function_exists('_CheckButton')) {
     function _CheckButton($label = '')
     {
