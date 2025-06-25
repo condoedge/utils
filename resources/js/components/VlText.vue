@@ -35,7 +35,7 @@ export default {
             return content;
         },
         showMoreBtn() {
-            return (this.maxLines != null || this.maxChars != null) && 
+            return (this.showMoreText || this.showLessText) && (this.maxLines != null || this.maxChars != null) &&
                 (this.$_config('content').length != this.content.length || this.showingMore);
         }
     },

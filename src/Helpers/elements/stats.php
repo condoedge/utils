@@ -47,3 +47,26 @@ function _ProgressBarHtml($pct, $color)
             '<div style="background:'.$color.';height:100%;width:'.$pct.'%"></div>'.
         '</div>';
 }
+
+function _BoxLabelNum($icon, $label, $value)
+{
+    return _BoxWithIcon($icon, _LabelForBox($label, $value));
+}
+
+function _LabelForBox($label, $value)
+{
+    return _Rows(
+        _Html($label)
+            ->class('text-sm leading-5 font-medium'),
+        $value
+            ->class('mt-1 text-3xl leading-9 font-bold whitespace-nowrap box-label-val')
+    )->class('text-right rounded-2xl');
+}
+
+function _BoxWithIcon($icon, ...$els)
+{
+    return _FlexBetween(
+        _Html()->icon(_Sax($icon, 60)->class('!opacity-50')),
+        ...$els,
+    )->class('h-24 rounded-2xl text-white p-8 mb-4');
+}
