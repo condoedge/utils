@@ -7,6 +7,8 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Http\Request as HttpRequest;
 
+use function PHPUnit\Framework\throwException;
+
 class SendExportViaEmail implements ShouldQueue
 {
     use Queueable;

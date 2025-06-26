@@ -137,6 +137,7 @@ class ExportPlugin extends ComponentPlugin
                 ->selfPost('pluginMethod', [
                     'method' => 'exportToExcelViaEmail',
                     'from_route' => request('from_route'),
+                    ...request()->all()
                 ])
                 ->withAllFormValues()
                 ->inPanel('export-options'),
