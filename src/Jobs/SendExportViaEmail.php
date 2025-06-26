@@ -47,6 +47,8 @@ class SendExportViaEmail implements ShouldQueue
      */
     public function handle(): void
     {
+        app()->instance('bootFlag', true);
+        
         $this->setOriginalRequest();
 
         if ($this->userId && $user = UserModel::find($this->userId)) {
