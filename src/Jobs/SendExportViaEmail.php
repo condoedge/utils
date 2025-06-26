@@ -23,6 +23,8 @@ class SendExportViaEmail implements ShouldQueue
     
     protected $signedUrl;
 
+    public $timeout = 0; // Disable timeout for this job to allow long-running exports
+
     /**
      * Create a new job instance.
      */
