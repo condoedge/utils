@@ -65,7 +65,7 @@ if (!function_exists('_ThumbWrapper')) {
     function _ThumbWrapper($arrayEls, $width = '8rem')
     {
         return _Rows($arrayEls)
-            ->class('group2 cursor-pointer dashboard-card mr-2')
+            ->class('group2 cursor-pointer bg-white rounded-xl mr-2 mt-2')
             ->style('flex:0 0 ' . $width . ';max-width:' . $width);
     }
 }
@@ -160,6 +160,6 @@ if (!function_exists('audioMimeTypes')) {
 if (!function_exists('videoMimeTypes')) {
     function videoMimeTypes()
     {
-        return ['video/avi', 'video/x-msvideo', 'video/mpeg', 'video/ogg'];
+        return ['video/avi', 'video/x-msvideo', 'video/mpeg', 'video/ogg', 'video/x-matroska', 'video/quicktime', 'video/webm', 'video/mp4'];
     }
 }

@@ -39,7 +39,7 @@ if (!function_exists('_FileUploadLinkAndBox')) {
                 )->class('flex-wrap'),
                 _Html('messaging-your-files-exceed-max-size')
                     ->class('hidden text-danger text-xs')->id('file-size-message')
-            )->class('mx-2 dashboard-card p-2 space-x-2')
+            )->class('mx-2 bg-white p-2 space-x-2')
             ->id($panelId)
 
         ];

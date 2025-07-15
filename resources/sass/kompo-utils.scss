@@ -119,3 +119,12 @@
   opacity: 0 !important;
   transition: opacity 0s !important;
 }
+
+//Group hover
+.group2:hover .group2-hover\:hidden{
+  display: none;
+}
+
+.group2:hover .group2-hover\:flex{
+  display: flex;
+}

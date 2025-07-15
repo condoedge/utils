@@ -33,13 +33,13 @@ enum FileTypeEnum: int
     public function mimeTypes()
     {
         return match ($this) {
-            self::IMAGE => ['image/jpeg', 'image/gif', 'image/png', 'image/bmp', 'image/svg+xml', 'image/webp'],
-            self::PDF => ['application/pdf'],
+            self::IMAGE => imageMimeTypes(),
+            self::PDF => pdfMimeTypes(),
             self::COMPRESSED => ['application/x-rar-compressed', 'application/zip', 'application/x-gzip', 'application/gzip', 'application/vnd.rar', 'application/x-7z-compressed'],
             self::DOCUMENT => ['text/plain', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
             self::SPREADSHEET => ['application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
             self::AUDIO => ['audio/basic', 'audio/aiff', 'audio/mpeg', 'audio/midi', 'audio/wave', 'audio/ogg'],
-            self::VIDEO => ['video/avi', 'video/x-msvideo', 'video/mpeg', 'video/ogg', 'video/x-matroska'],
+            self::VIDEO => videoMimeTypes(),
             default => [],
         };
     }
