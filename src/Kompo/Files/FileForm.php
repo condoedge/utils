@@ -29,7 +29,7 @@ class FileForm extends Modal
 		return [
 			_Columns(
                 _MultiFile()->name('files')->placeholder('files-upload-one-multiple-files')
-                    ->class('text-gray-600 large-file-upload'),
+                    ->class('text-gray-600'),
 			),
 		];
 	}

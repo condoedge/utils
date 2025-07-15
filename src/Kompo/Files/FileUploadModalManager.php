@@ -31,8 +31,12 @@ class FileUploadModalManager extends Modal
 	public function body()
 	{
 		return _Rows(
-            $this->model->id ? null : _MultiFile()->name('files')->placeholder('files-upload-one-multiple-files')
-                ->class('text-gray-600 large-file-upload mb-10'),
+            $this->model->id ? null : 
+                _MultiFileWithJs()->name('files')->placeholder('files-upload-one-multiple-files')->class('text-gray-600 large-file-upload mb-0'),
+            _Flex4(
+                _MaxFileSizeMessage(),
+                _MultiFileSizeCalculationDiv(),
+            )->class('mb-10'),
             _Rows(
                 _TagsMultiSelect()->class('mb-10'),
             ),
@@ -49,9 +53,6 @@ class FileUploadModalManager extends Modal
         if($this->model->id) {
             return [];
         }
-
-		return [
-			'files' => 'required',
-        ];
+        return FileModel::attachmentsRules('files');
 	}
 }

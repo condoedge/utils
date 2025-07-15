@@ -61,7 +61,6 @@ class FilesManagerView extends Table
 	public function headers()
 	{
 		return [
-			_Th()->class('w-20'),
 			_Th('general-name')->sort('name')->class('w-60'),
             _Th('general-type')->sort('type')->class('w-20'),
 			_Th('general-date')->sort('created_at')->class('w-20'),
@@ -71,13 +70,14 @@ class FilesManagerView extends Table
 
 	public function render($file)
 	{
-        // dd(              );
+		$fileable = $file->fileable;
+		$canView = auth()->user()->can('viewFileOf', $fileable);
+
 		return _TableRow(
-            _Html()->class('w-20'),
             _Html($file->name),
             _Html(ucfirst($file->fileable_type ?: '-')),
 			$file->uploadedAt(),
-            _Columns(
+            !$canView ? _Html() : _Columns(
                 _Link()->class('mt-1 -mr-2')->col('col-md-3')
                     ->icon('arrow-down')
                     ->href($file->link)

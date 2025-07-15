@@ -70,6 +70,30 @@ if (!function_exists('_ThumbWrapper')) {
     }
 }
 
+if (!function_exists('_MultiFileWithJs')) {
+    function _MultiFileWithJs()
+    {
+        return _MultiFile()->id('email-attachments-input')->run('calculateTotalFileSize');
+    }
+}
+
+if (!function_exists('_MultiFileSizeCalculationDiv')) {
+    function _MultiFileSizeCalculationDiv()
+    {
+        return _Rows(
+            _Html()->class('text-xs text-gray-700 font-semibold')->id('file-size-div'),
+            _Html('messaging-your-files-exceed-max-size')->class('hidden text-danger text-xs')->id('file-size-message'),
+        );
+    }
+}
+
+if (!function_exists('_MaxFileSizeMessage')) {
+    function _MaxFileSizeMessage($maxFileSizeInMb = 20)
+    {
+        return _Html(__('files.with-values-max-files-size-is', ['size' => $maxFileSizeInMb]))->class('text-xs text-gray-500');
+    }
+}
+
 /* SIZE */
 if (!function_exists('getReadableSize')) {
     function getReadableSize($sizeBytes)
