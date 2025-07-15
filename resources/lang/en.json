@@ -2,7 +2,7 @@
 	"auth.copied-to-clipboard": "Copied to clipboard !",
 	"error.must-be-at-least": "Must be at least",
 	"error.years-old": "years old",
-	"files.attach-files": "Attach files",
+	"files-attach-files": "Attach files",
 	"files.browse-files": "Browse files",
 	"files.or": "or",
 	"files.with-values-max-files-size-is": "Max total size of files :sizeMb",

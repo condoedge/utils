@@ -18,7 +18,9 @@ if (!function_exists('_FileUploadLinkAndBox')) {
 
             _Flex(
                 _Link()->icon(_Sax('paperclip-2'))->class('text-level1 text-2xl')
-                    ->balloon('attach-files', 'up')
+                    ->balloon('files-attach-files', 'up')->attr([
+                        'data-balloon-length' => 'medium',
+                    ])
                     ->toggleId($panelId, $toggleOnLoad),
                 _MultiFileSizeCalculationDiv(),
             ),
