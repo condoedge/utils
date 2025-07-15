@@ -13,6 +13,27 @@ trait FileActionsKomponents
         return $this->title ?: $this->name;
     }
 
+    public function getIsPreviewableAttribute()
+    {
+        return $this->is_image || $this->is_pdf || $this->is_video;
+    }
+
+    public function getIsImageAttribute()
+    {
+        //based on Laravel's image validator method
+        return in_array($this->mime_type, imageMimeTypes());
+    }
+
+    public function getIsPdfAttribute()
+    {
+        return in_array($this->mime_type, pdfMimeTypes());
+    }
+
+    public function getIsVideoAttribute()
+    {
+        return in_array($this->mime_type, videoMimeTypes());
+    }
+
     /* CALCULATED FIELDS */
     public function storageDisk()
     {
@@ -121,7 +142,7 @@ trait FileActionsKomponents
                                     ($this->is_pdf ? 
                                         $previewLink->href(fileRoute($this->getMorphClass(), $this->id))->inNewTab() :
                                         
-                                        $previewLink->get($this->is_pdf ? 'pdf.preview' : 'image.preview', [
+                                        $previewLink->get($this->is_video ? 'video.preview' : 'image.preview', [
                                             'id' => $this->id, 'type' => $this->getMorphClass()
                                         ])->inModal()
                                     ),

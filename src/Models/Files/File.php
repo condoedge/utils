@@ -3,17 +3,17 @@
 namespace Condoedge\Utils\Models\Files;
 
 use Carbon\Carbon;
-use Condoedge\Utils\Kompo\Files\FileLibraryAttachmentQuery;
-use Condoedge\Utils\Models\Traits\BelongsToTeamTrait;
 use Condoedge\Utils\Models\Contracts\Searchable;
 use Condoedge\Utils\Models\Files\FileVisibilityEnum;
+use Condoedge\Utils\Models\Files\FileableFile;
 use Condoedge\Utils\Models\Model;
 use Condoedge\Utils\Models\Tags\MorphToManyTagsTrait;
+use Condoedge\Utils\Models\Traits\BelongsToTeamTrait;
 use Condoedge\Utils\Models\Traits\BelongsToUserTrait;
 use Condoedge\Utils\Models\Traits\HasSearchableNameTrait;
 use Illuminate\Support\Facades\Schema;
-use Kompo\Core\FileHandler;
 use Intervention\Image\Facades\Image;
+use Kompo\Core\FileHandler;
 
 class File extends Model implements Searchable
 {
@@ -45,6 +45,11 @@ class File extends Model implements Searchable
     public function fileable()
     {
         return $this->morphTo();
+    }
+
+    public function fileableFiles()
+    {
+        return $this->hasMany(FileableFile::class, 'file_id');
     }
 
     /* SCOPES */
@@ -134,6 +139,7 @@ class File extends Model implements Searchable
     /* ACTIONS */
     public function delete()
     {
+        $this->fileableFiles()->delete();
 
         parent::delete();
     }

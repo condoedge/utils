@@ -3,10 +3,16 @@
 namespace Condoedge\Utils\Kompo\Files;
 
 use Condoedge\Utils\Facades\FileModel;
+use Condoedge\Utils\Kompo\Common\Query;
 
-class FileLibraryAttachmentQuery extends FileLibraryQuery
+class FileLibraryAttachmentQuery extends Query
 {
+    public $layout = 'Table';
 	public $activeClass = 'ring-2 ring-level3 border-level3 rounded-xl';
+    public $isWhiteTable = true;
+    public $paginationType = 'Scroll';
+    public $itemsWrapperClass = 'p-4 mb-8 overflow-y-auto mini-scroll w-max-4xl';
+    public $itemsWrapperStyle = 'max-height: 300px';
 
 	public $checkedItemIds;
 
@@ -15,6 +21,16 @@ class FileLibraryAttachmentQuery extends FileLibraryQuery
 		$this->checkedItemIds = json_decode($this->parameter('checked_items'), true);
 
 		$this->itemsWrapperClass = $this->itemsWrapperClass.' mx-4 px-6 pb-8';
+	}
+
+	public function query()
+	{
+		return FileModel::getLibrary([
+            'filename' => request('name'),
+            'fileable_type' => request('parent_type_bis'),
+            'year' => request('year'),
+            'month' => request('month'),
+        ]);
 	}
 
 	public function top()
@@ -37,15 +53,27 @@ class FileLibraryAttachmentQuery extends FileLibraryQuery
 			->class('flex-col items-start md:flex-row md:items-center')
 			->alignStart(),
 			_Rows(
-				parent::top()
+				FileModel::fileFilters(
+					_MiniTitle('files-link-from-library'),
+				)
 			)->class('px-6 py-4'),
 		);
 	}
 
+    public function headers()
+    {
+        return [
+            _Th('files.date'),
+            _Th('files.file'),
+        ];
+    }
+
 	public function render($file)
 	{
-		return $file->linkEl()->class('mr-4')
-			->emit('checkItemId', ['id' => $file->id]);
+		return _TableRow(
+            _HtmlDate($file->created_at),
+            _Html($file->name)->class('word-break-all'),
+        )->emit('checkItemId', ['id' => $file->id])->class('cursor-pointer');
 	}
 
 	public function confirmSelection($selectedIds)
@@ -64,7 +92,7 @@ class FileLibraryAttachmentQuery extends FileLibraryQuery
 				->class('mb-0'),
 			_Button('files-add-from-library')
 				->class('text-sm vlBtn vlBtnOutlined')->icon('icon-plus')
-				->get('file-add-attachment.modal-with-table', [
+				->get('file-add-attachment.modal', [
 					'checked_items' => json_encode($selectedIds),
 				])->inModal(),
 		);
@@ -75,5 +103,10 @@ class FileLibraryAttachmentQuery extends FileLibraryQuery
 		return _Panel(
             static::selectedFiles($selectedIds)
         )->id('linked-attachments');
+	}
+
+	public function getYearsMonthsFilter()
+	{
+		return FileModel::yearlyMonthlyLinkGroup();
 	}
 }
