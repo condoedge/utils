@@ -361,19 +361,19 @@ class File extends Model implements Searchable
         return _FileUploadLinkAndBox($name, $toggleOnLoad, $fileIds, static::getMaxFilesSize());
     }
 
-    public static function attachmentsRules()
+    public static function attachmentsRules($defaultKey = 'attachments')
     {
-        $maxFilesSize = static::getMaxFilesSize();
+        $maxFilesSize = static::getMaxFilesSize() * 1000;
 
         return [
-			'attachments.*' => 'max:' . $maxFilesSize . '|mimes:' . implode(',', attachmentsValidTypes()),
-			'attachments' => [new \Condoedge\Utils\Rule\FilesTotalUploadSize($maxFilesSize), 'max:20'],
+			$defaultKey.'.*' => ['max:' . $maxFilesSize, new \Condoedge\Utils\Rule\FileMimeTypeRule()],
+			$defaultKey => [new \Condoedge\Utils\Rule\FilesTotalUploadSize($maxFilesSize), 'max:20'],
 		];
     }
 
     public static function getMaxFilesSize()
     {
-        return config('kompo-utils.max-files-size', 20000);
+        return config('kompo-utils.max-files-size', 20);
     }
 
     public function linkEl()

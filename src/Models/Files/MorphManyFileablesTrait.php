@@ -31,15 +31,7 @@ trait MorphManyFileablesTrait
     /* ACTIONS */
     public function deleteFileables()
     {
-        $this->fileables->each(function($fileable){
-            $file = $fileable->file;
-
-            if ($file->fileableFiles()->count() > 1) {
-                $fileable->delete();
-            } else {
-                $file->delete(); //will delete fileableFiles too
-            }
-        });
+        $this->fileables()->delete();
     }
 
     public function associateFile($file)

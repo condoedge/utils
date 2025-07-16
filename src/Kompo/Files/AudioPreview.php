@@ -7,6 +7,6 @@ class AudioPreview extends AbstractPreview
 
 	public function render()
 	{
-		return _Audio(fileRoute($this->model->fileType, $this->model->id));
+		return _Audio(fileRoute($this->fileType, $this->model->id));
 	}
 }

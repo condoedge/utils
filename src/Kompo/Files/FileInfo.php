@@ -19,7 +19,7 @@ class FileInfo extends Form
                 $this->model->uploadedAt()->class('!text-sm !text-black'),
             )->class('gap-2'),
             $this->fileableInfo(),
-            _Button('files-edit-form')
+            !auth()->user()->can('viewFileOf', $this->model->fileable) ? null : _Button('files-edit-form')
                 ->selfGet('getFileForm', ['id' => $this->model->id])->inModal()
                 ->class('mt-4'),
             // _Html(__('file.file-uploaded-by') . ': ' . $file->uploadedBy())->class('text-sm'),
