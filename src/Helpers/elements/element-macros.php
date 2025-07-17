@@ -208,3 +208,7 @@ Img::macro('directSrc', function($src) {
     
     return $this;
 });
+
+Element::macro('ajaxPayload', function($payload = []) {
+    return $this->config(['ajaxPayload' => $payload]);
+});
