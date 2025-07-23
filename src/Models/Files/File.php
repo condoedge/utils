@@ -127,7 +127,7 @@ class File extends Model implements Searchable
 
     public function getLinkAttribute()
     {
-        return \Storage::url($this->path);
+        return \Storage::disk($this->disk)->url($this->path);
     }
 
     public function viewableForUser()
