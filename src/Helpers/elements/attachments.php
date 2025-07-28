@@ -29,7 +29,7 @@ if (!function_exists('_FileUploadLinkAndBox')) {
                         _MultiFile()->placeholder('messaging-browse-files')->name($name)->class('mb-0')
                             ->id('email-attachments-input')->run('calculateTotalFileSize'),
                         !$maxFilesSize ? null : _Html(__('files.with-values-max-files-size-is', [
-                            'size' => $maxFilesSize
+                            'size' => $maxFilesSize/1000
                         ]))->class('text-xs text-gray-500 absolute -bottom-5'),
                     )->class('relative w-full md:w-5/12'),
                     _Html('messaging-or')
