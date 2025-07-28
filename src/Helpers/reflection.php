@@ -39,11 +39,15 @@ function setPrivateProperty($object, $property, $value)
         $prop = $reflect->getProperty($property);
         $prop->setAccessible(true);
         $prop->setValue($object, $value);
+
+        return;
     }
 
     if (property_exists($object, $property)) {
-        // If the property exists but is not private, set its value
-        $object->{$property} = $value;
+        try {
+            // If the property exists but is not private, set its value
+            $object->{$property} = $value;
+        } catch (\Error $e) {}
     }
 }
 

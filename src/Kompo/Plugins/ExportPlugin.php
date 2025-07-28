@@ -106,11 +106,10 @@ class ExportPlugin extends ComponentPlugin
                 _Html('utils.or')->class('mt-2 mb-6 text-center text-lg'),
                 _CardWhite(
                     _Button('utils.direct-export')->class('w-full')
-                        ->selfPost('pluginMethod', [
+                        ->selfPost('pluginMethod', array_merge(request()->all(), [
                             'method' => 'directExportToExcel',
                             'from_route' => request('from_route'),
-                            ...request()->all()
-                        ])
+                        ]))
                         ->withAllFormValues()
                         ->inPanel('export-options'),
                 )->class('px-6 mb-2'),
@@ -135,11 +134,10 @@ class ExportPlugin extends ComponentPlugin
                 }'),
 
             _ButtonOutlined('utils.export-via-email')
-                ->selfPost('pluginMethod', [
+                ->selfPost('pluginMethod', array_merge(request()->all(), [
                     'method' => 'exportToExcelViaEmail',
-                    'from_route' => request('from_route'),
-                    ...request()->all()
-                ])
+                    'from_route' => request('from_route')
+                ]))
                 ->withAllFormValues()
                 ->inPanel('export-options'),
         ];

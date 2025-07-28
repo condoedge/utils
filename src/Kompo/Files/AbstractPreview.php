@@ -9,9 +9,13 @@ class AbstractPreview extends Form
 {
     public $model;
 
+    protected $fileType;
+
     public function created()
     {
-        $model = Relation::morphMap()[request('type')];
+        $this->fileType = request('type');
+
+        $model = Relation::morphMap()[$this->fileType];
 
     	$this->model($model::findOrFail(request('id')));
     }

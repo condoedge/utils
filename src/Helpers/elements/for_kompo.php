@@ -10,7 +10,7 @@ if (!function_exists("_CheckAllItems")) {
 if (!function_exists('_CheckSingleItem')) {
     function _CheckSingleItem($itemId)
     {
-        return _Checkbox()->class('mb-0 child-checkbox')->emit('checkItemId', ['id' => $itemId])
+        return _Rows(_Checkbox()->class('mb-0 child-checkbox')->emit('checkItemId', ['id' => $itemId]))
             ->attr([
                 'onclick' => 'event.stopPropagation()',
             ]);

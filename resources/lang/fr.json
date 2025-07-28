@@ -2,7 +2,7 @@
 	"auth.copied-to-clipboard": "Copié dans le presse-papiers !",
 	"error.must-be-at-least": "Doit avoir au moins",
 	"error.years-old": "ans",
-	"files.attach-files": "Joindre des fichiers",
+	"files-attach-files": "Joindre des fichiers",
 	"files.browse-files": "Parcourir les fichiers",
 	"files.or": "ou",
 	"files.with-values-max-files-size-is": "Taille totale maximale des fichiers est de :size Mo",

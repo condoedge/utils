@@ -65,8 +65,32 @@ if (!function_exists('_ThumbWrapper')) {
     function _ThumbWrapper($arrayEls, $width = '8rem')
     {
         return _Rows($arrayEls)
-            ->class('group2 cursor-pointer dashboard-card mr-2')
+            ->class('group2 cursor-pointer bg-white rounded-xl mr-2 mt-2')
             ->style('flex:0 0 ' . $width . ';max-width:' . $width);
+    }
+}
+
+if (!function_exists('_MultiFileWithJs')) {
+    function _MultiFileWithJs()
+    {
+        return _MultiFile()->id('email-attachments-input')->run('calculateTotalFileSize');
+    }
+}
+
+if (!function_exists('_MultiFileSizeCalculationDiv')) {
+    function _MultiFileSizeCalculationDiv()
+    {
+        return _Rows(
+            _Html()->class('text-xs text-gray-700 font-semibold')->id('file-size-div'),
+            _Html('messaging-your-files-exceed-max-size')->class('hidden text-danger text-xs')->id('file-size-message'),
+        );
+    }
+}
+
+if (!function_exists('_MaxFileSizeMessage')) {
+    function _MaxFileSizeMessage($maxFileSizeInMb = 20)
+    {
+        return _Html(__('files.with-values-max-files-size-is', ['size' => $maxFileSizeInMb]))->class('text-xs text-gray-500');
     }
 }
 
@@ -160,6 +184,6 @@ if (!function_exists('audioMimeTypes')) {
 if (!function_exists('videoMimeTypes')) {
     function videoMimeTypes()
     {
-        return ['video/avi', 'video/x-msvideo', 'video/mpeg', 'video/ogg'];
+        return ['video/avi', 'video/x-msvideo', 'video/mpeg', 'video/ogg', 'video/x-matroska', 'video/quicktime', 'video/webm', 'video/mp4'];
     }
 }
