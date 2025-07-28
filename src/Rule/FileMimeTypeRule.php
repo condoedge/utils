@@ -45,6 +45,6 @@ class FileMimeTypeRule implements Rule
      */
     public function message()
     {
-        return __('translate.The file must be one of these types').' '.implode(',', attachmentsValidTypes());
+        return __('utils.the-file-must-be-one-of-these-types').' '.implode(',', attachmentsValidTypes());
     }
 }

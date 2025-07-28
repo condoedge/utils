@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<babeledit_project be_version="5.4.1" version="1.3">
+<babeledit_project be_version="5.5.0" version="1.3">
 	<!--
 
     BabelEdit project file
@@ -78,21 +78,6 @@
 						<name>files</name>
 						<children>
 							<concept_node>
-								<name>attach-files</name>
-								<description/>
-								<comment/>
-								<translations>
-									<translation>
-										<language>en-US</language>
-										<approved>false</approved>
-									</translation>
-									<translation>
-										<language>fr-FR</language>
-										<approved>false</approved>
-									</translation>
-								</translations>
-							</concept_node>
-							<concept_node>
 								<name>browse-files</name>
 								<description/>
 								<comment/>
@@ -154,6 +139,21 @@
 							</concept_node>
 						</children>
 					</folder_node>
+					<concept_node>
+						<name>files-attach-files</name>
+						<description/>
+						<comment/>
+						<translations>
+							<translation>
+								<language>en-US</language>
+								<approved>false</approved>
+							</translation>
+							<translation>
+								<language>fr-FR</language>
+								<approved>false</approved>
+							</translation>
+						</translations>
+					</concept_node>
 					<folder_node>
 						<name>utils</name>
 						<children>
@@ -278,6 +278,21 @@
 								</translations>
 							</concept_node>
 							<concept_node>
+								<name>phone</name>
+								<description/>
+								<comment/>
+								<translations>
+									<translation>
+										<language>en-US</language>
+										<approved>false</approved>
+									</translation>
+									<translation>
+										<language>fr-FR</language>
+										<approved>false</approved>
+									</translation>
+								</translations>
+							</concept_node>
+							<concept_node>
 								<name>reports-download-file</name>
 								<description/>
 								<comment/>
@@ -309,6 +324,21 @@
 							</concept_node>
 							<concept_node>
 								<name>request-for-export-done</name>
+								<description/>
+								<comment/>
+								<translations>
+									<translation>
+										<language>en-US</language>
+										<approved>false</approved>
+									</translation>
+									<translation>
+										<language>fr-FR</language>
+										<approved>false</approved>
+									</translation>
+								</translations>
+							</concept_node>
+							<concept_node>
+								<name>the-file-must-be-one-of-these-types</name>
 								<description/>
 								<comment/>
 								<translations>
