@@ -65,7 +65,7 @@ if (!function_exists('_NumberRange')) {
 }
 
 if (!function_exists('_InputPhone')) {
-	function _InputPhone($label = 'translate.phone')
+	function _InputPhone($label = 'utils.phone')
 	{
 		return _ValidatedInput($label)
 			->type('tel')
