@@ -136,8 +136,7 @@ if(!function_exists('_Modal')) {
     {
         return _Rows(
             ...func_get_args()
-        )->class('overflow-y-auto mini-scroll Modal')
-        ->style('max-height:95vh;min-width:350px ');
+        )->class('Modal');
     }
 }
 
