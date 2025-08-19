@@ -35,7 +35,7 @@ if (!function_exists('_CalendarWithIcon')) {
 if (!function_exists('_LabelWithIcon')) {
     function _LabelWithIcon($icon, $label)
     {
-    	$label = isKompoEl($label) ? $label : _Html($label);
+    	$label = isKompoEl($label) ? $label : _Html($label)->class('relative -top-[0.175rem]');
 
         return _Flex2(
             _Sax($icon, 18)->class('text-greenmain opacity-50'),
