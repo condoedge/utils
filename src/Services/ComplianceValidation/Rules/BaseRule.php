@@ -2,61 +2,61 @@
 
 namespace Condoedge\Utils\Services\ComplianceValidation\Rules;
 
-use Condoedge\Utils\Models\ComplianceValidation\ComplianceErrorTypesEnum;
-use Condoedge\Utils\Models\ComplianceValidation\ComplianceValidation;
+use Condoedge\Utils\Models\ComplianceValidation\ComplianceIssueTypeEnum;
+use Condoedge\Utils\Models\ComplianceValidation\ComplianceIssue;
 use Condoedge\Utils\Models\ComplianceValidation\ValidationExecution;
 use Condoedge\Utils\Services\ComplianceValidation\ValidatableContract;
 use Kompo\Elements\Element;
 
 abstract class BaseRule implements RuleContract
 {
-    public function handle(): ValidationExecution
+    public function runValidation(): ValidationExecution
     {
         $startedAt = now();
 
-        [$failingValidatables, $testedCount] = $this->execute();
+        [$failingValidatables, $testedCount] = $this->findViolations();
 
         $now = now()->format('Y-m-d H:i:s');
         
-        $notComplianceValidatable = collect($failingValidatables)
+        $complianceIssues = collect($failingValidatables)
             ->map(function (ValidatableContract $validatable) use ($now) {
-                $notComplianceValidatable = $validatable->getFailedValidationObject();
-                $notComplianceValidatable->failed_at = $now;
-                $notComplianceValidatable->type = $this->getTypeError($validatable)->value;
-                $notComplianceValidatable->back_to_valid_at = null;
-                $notComplianceValidatable->rule_code = static::class;
-                $notComplianceValidatable->detail_message = $this->detailMessage($validatable);
+                $complianceIssue = $validatable->getFailedValidationObject();
+                $complianceIssue->detected_at = $now;
+                $complianceIssue->type = $this->getIssueType($validatable)->value;
+                $complianceIssue->resolved_at = null;
+                $complianceIssue->rule_code = static::class;
+                $complianceIssue->detail_message = $this->getIssueDescription($validatable);
 
-                $data = $notComplianceValidatable->toArray();
+                $data = $complianceIssue->toArray();
                 $data['created_at'] = $now;
                 $data['updated_at'] = $now;
                 
                 return $data;
             });
 
-        $existingKeys = ComplianceValidation::where('rule_code', static::class)
-            ->whereIn('validatable_id', $notComplianceValidatable->pluck('validatable_id'))
-            ->whereIn('validatable_type', $notComplianceValidatable->pluck('validatable_type'))
-            ->whereNull('back_to_valid_at')
+        $existingKeys = ComplianceIssue::where('rule_code', static::class)
+            ->whereIn('validatable_id', $complianceIssues->pluck('validatable_id'))
+            ->whereIn('validatable_type', $complianceIssues->pluck('validatable_type'))
+            ->whereNull('resolved_at')
             ->get(['validatable_id', 'validatable_type'])
             ->map(fn($item) => $item->validatable_type . '_' . $item->validatable_id)
             ->toArray();
 
-        $newValidations = $notComplianceValidatable
-            ->filter(function($validation) use ($existingKeys) {
-                $key = $validation['validatable_type'] . '_' . $validation['validatable_id'];
+        $newComplianceIssues = $complianceIssues
+            ->filter(function($issue) use ($existingKeys) {
+                $key = $issue['validatable_type'] . '_' . $issue['validatable_id'];
                 return !in_array($key, $existingKeys);
             })
             ->toArray();
 
-        if (!empty($newValidations)) {
-            ComplianceValidation::insert($newValidations);
+        if (!empty($newComplianceIssues)) {
+            ComplianceIssue::insert($newComplianceIssues);
         }
 
-        ComplianceValidation::where('rule_code', static::class)
-            ->whereNull('back_to_valid_at')
+        ComplianceIssue::where('rule_code', static::class)
+            ->whereNull('resolved_at')
             ->whereNotIn('validatable_id', collect($failingValidatables)->pluck('validatable_id'))
-            ->update(['back_to_valid_at' => now()]);
+            ->update(['resolved_at' => now()]);
 
         $execution = new ValidationExecution();
         $execution->rule_code = static::class;
@@ -69,10 +69,10 @@ abstract class BaseRule implements RuleContract
         return $execution;
     }
 
-    abstract protected function detailMessage(ValidatableContract $validatable): string;
-    abstract protected function getTypeError(ValidatableContract $validatable): ComplianceErrorTypesEnum;
+    abstract protected function getIssueDescription(ValidatableContract $validatable): string;
+    abstract protected function getIssueType(ValidatableContract $validatable): ComplianceIssueTypeEnum;
 
-    abstract protected function execute();
+    abstract protected function findViolations();
 
     public function individualValidationDetails(ValidatableContract $validatable): Element
     {

@@ -19,7 +19,7 @@ class ValidationService
                 $rule = app($rule);
             }
 
-            $rule->handle();
+            $rule->runValidation();
         }
     }
 }

@@ -6,7 +6,7 @@ use Condoedge\Utils\Services\ComplianceValidation\ValidatableContract;
 
 abstract class CodeBaseRule extends BaseRule implements RuleContract
 {
-    public function execute(): array
+    public function findViolations(): array
     {
         $validatables = $this->getValidatables();
 

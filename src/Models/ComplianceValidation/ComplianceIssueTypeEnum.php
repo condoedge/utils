@@ -2,7 +2,7 @@
 
 namespace Condoedge\Utils\Models\ComplianceValidation;
 
-enum ComplianceErrorTypesEnum: int
+enum ComplianceIssueTypeEnum: int
 {
     case WARNING = 1;
     case ERROR = 2;

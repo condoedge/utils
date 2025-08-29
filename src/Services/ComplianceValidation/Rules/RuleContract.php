@@ -8,7 +8,7 @@ use Kompo\Elements\Element;
 
 interface RuleContract
 {
-    public function handle(): ValidationExecution;
+    public function runValidation(): ValidationExecution;
 
     public function individualValidationDetails(ValidatableContract $validatable): Element;
 }

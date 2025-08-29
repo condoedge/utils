@@ -5,10 +5,12 @@ namespace Condoedge\Utils\Models\ComplianceValidation;
 use Condoedge\Utils\Models\Model;
 use Condoedge\Utils\Services\ComplianceValidation\ValidatableContract;
 
-class ComplianceValidation extends Model
+class ComplianceIssue extends Model
 {
+    protected $table = 'compliance_issues';
+    
     protected $fillable = [
-        'back_to_valid_at',
+        'resolved_at',
     ];
 
     public function setValidatable(ValidatableContract $validatable)
