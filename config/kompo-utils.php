@@ -8,5 +8,7 @@ return [
 
     'morphables-contact-associated-to-user' => [
         'person',
-    ]
+    ],
+
+    'compliance-validation-rules' => [],
 ];

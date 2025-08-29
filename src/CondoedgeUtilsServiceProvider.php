@@ -23,6 +23,7 @@ use Condoedge\Utils\Kompo\Plugins\TableIntoFormSetValuesPlugin;
 use Condoedge\Utils\Services\GlobalConfig\GlobalConfigServiceContract;
 
 use App\Models\User;
+use Condoedge\Utils\Command\RunComplianceValidationCommand;
 use Condoedge\Utils\Kompo\Plugins\DebugReload;
 use Condoedge\Utils\Kompo\Plugins\HasIntroAnimation;
 
@@ -198,7 +199,7 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
     {
         if ($this->app->runningInConsole()) {
             $this->commands([
-                
+                RunComplianceValidationCommand::class,
             ]);
         }
     }
