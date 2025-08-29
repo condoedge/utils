@@ -75,10 +75,10 @@ class ComplianceIssue extends Model
     public function statusEl()
     {
         if ($this->resolved_at) {
-            return _Html('✓ ' . __('translate.resolved'))->class('text-green-600');
+            return _Html('✓ ' . __('compliance.resolved'))->class('text-green-600');
         }
 
-        return _Html('● ' . __('translate.unresolved'))->class('text-red-600');
+        return _Html('● ' . __('compliance.unresolved'))->class('text-red-600');
     }
 
     public function moreDetailsElement()

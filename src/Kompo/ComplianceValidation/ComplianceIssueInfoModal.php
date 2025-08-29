@@ -11,7 +11,7 @@ class ComplianceIssueInfoModal extends Modal
     public $id = self::ID;
 
     public $model = ComplianceIssue::class;
-    protected $_Title = 'translate.compliance.issue-details';
+    protected $_Title = 'compliance.issue-details';
 
     protected $noHeaderButtons = true;
 
@@ -21,11 +21,11 @@ class ComplianceIssueInfoModal extends Modal
 
         if ($resolved) {
             return _Rows(
-                _Html('translate.compliance.issue-resolved')->class('text-green-600 font-bold text-lg mb-3'),
+                _Html('compliance.issue-resolved')->class('text-positive font-semibold text-lg mb-3'),
 
                 _Text($this->model->detail_message)->maxChars(150)->class('mb-2'),
 
-                _Button('translate.close')->closeModal(),
+                _Button('compliance.close')->closeModal(),
             )->class('space-y-4');
         }
 
@@ -34,7 +34,7 @@ class ComplianceIssueInfoModal extends Modal
 
             _Text($this->model->detail_message)->maxChars(150)->class('mb-2'),
 
-            _Button('translate.close')->closeModal(),
+            _Button('compliance.close')->closeModal(),
         )->class('space-y-4');
     }
 }

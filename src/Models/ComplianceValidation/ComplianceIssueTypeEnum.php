@@ -13,8 +13,8 @@ enum ComplianceIssueTypeEnum: int
     {
         // Assuming ComplianceIssueTypeEnum has these values
         return match($this) {
-            self::WARNING => __('translate.warning'),
-            self::ERROR => __('translate.error'),
+            self::WARNING => __('compliance.warning'),
+            self::ERROR => __('compliance.error'),
         };
     }
 

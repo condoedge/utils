@@ -47,7 +47,7 @@ class EnsureMaxPersonsPerRoleRule extends DBBaseRule
 {
     // What is this rule called?
     public function getName(): string {
-        return __('translate.exceeding-maximum-persons-per-role');
+        return __('compliance.exceeding-maximum-persons-per-role');
     }
     
     // Which entities violate this rule?
@@ -57,7 +57,7 @@ class EnsureMaxPersonsPerRoleRule extends DBBaseRule
     
     // Why did this specific entity fail?
     public function getIssueDescription(ValidatableContract $validatable): string {
-        return __('translate.with-values.all-the-following-roles-exceed...', [
+        return __('compliance.with-values-all-the-following-roles-exceed', [
             'roles' => $validatable->violating_roles,
         ]);
     }
