@@ -21,18 +21,18 @@ trait BelongsToTeamTrait
     /* ACTIONS */
     public function setTeamId($teamId = null)
     {
-        $this->team_id = $teamId ?: currentTeamId();
+        $this->team_id = $teamId ?: safeCurrentTeamId();
     }
 
     /* SCOPES */
     public function scopeForTeam($query, $teamIdOrIds = null)
     {
-        scopeWhereBelongsTo($query, 'team_id', $teamIdOrIds, currentTeamId());
+        scopeWhereBelongsTo($query, 'team_id', $teamIdOrIds, safeCurrentTeamId());
     }
 
     public function deletable()
     {
-        return isSuperAdmin() || $this->team_id == currentTeamId();
+        return safeIsSuperAdmin() || $this->team_id == safesafeCurrentTeamId();
     }
 
 }

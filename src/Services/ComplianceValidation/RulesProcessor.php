@@ -6,7 +6,7 @@ use Condoedge\Utils\Models\ComplianceValidation\ValidationExecution;
 use Condoedge\Utils\Services\ComplianceValidation\Rules\RuleContract;
 use Illuminate\Support\Collection;
 
-class ValidationService
+class RulesProcessor
 {
     protected ComplianceIssueRepository $repository;
 
@@ -16,29 +16,9 @@ class ValidationService
     }
 
     /**
-     * Validate the given rules.
-     * @param RuleContract[]|string[] $rules
-     * @return ValidationExecution[]
-     */
-    public function validate(array $rules): array
-    {
-        $executions = [];
-        
-        foreach ($rules as $rule) {
-            if (gettype($rule) == 'string') {
-                $rule = app($rule);
-            }
-
-            $executions[] = $this->processRule($rule);
-        }
-        
-        return $executions;
-    }
-
-    /**
      * Process a single rule: detect violations, persist issues, track execution
      */
-    protected function processRule(RuleContract $rule): ValidationExecution
+    public function processRule(RuleContract $rule): ValidationExecution
     {
         $startedAt = now();
         [$failingValidatables, $testedCount] = $rule->findViolations();

@@ -115,3 +115,20 @@ if (!function_exists('getTutorialAnimationButton')) {
 			);
 	}
 }
+
+if (!function_exists('secureCall')) {
+	function secureCall($functionName, ...$params)
+	{
+		try {
+			if (function_exists($functionName)) {
+				return $functionName(...$params);
+			} elseif (method_exists($params[0], $functionName)) {
+				$object = array_shift($params);
+				return $object->$functionName(...$params);
+			} 
+		} catch (\Exception $e) {
+			\Log::error('Error in secureCall: ' . $e->getMessage());
+			return null;
+		}
+	}
+}

@@ -28,7 +28,7 @@ class TagForm extends Modal
     {
         $this->model->tag_type = $this->tagType;
         $this->model->context = $this->tagContext;
-        $this->model->team_id = currentTeamId();
+        $this->model->team_id = safeCurrentTeamId();
     }
 
     public function body()

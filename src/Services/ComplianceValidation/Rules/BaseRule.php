@@ -2,9 +2,11 @@
 
 namespace Condoedge\Utils\Services\ComplianceValidation\Rules;
 
+use Condoedge\Utils\Models\ComplianceValidation\ComplianceIssue;
 use Condoedge\Utils\Models\ComplianceValidation\ComplianceIssueTypeEnum;
 use Condoedge\Utils\Services\ComplianceValidation\ValidatableContract;
 use Illuminate\Support\Str;
+use Kompo\Elements\BaseElement;
 use Kompo\Elements\Element;
 
 abstract class BaseRule implements RuleContract
@@ -33,8 +35,20 @@ abstract class BaseRule implements RuleContract
      */
     abstract public function getIssueType(ValidatableContract $validatable): ComplianceIssueTypeEnum;
 
-    public function individualValidationDetails(ValidatableContract $validatable): Element
+    abstract public function individualRevalidate(ComplianceIssue $complianceIssue): bool;
+
+    public function runIndividualRevalidation(ComplianceIssue $complianceIssue): bool
     {
-        throw new \Exception('Not available for this rule type.');
+        if ($this->individualRevalidate($complianceIssue)) {
+            $complianceIssue->markAsResolved();
+            return true;
+        }
+
+        return false;
+    }
+
+    public function individualValidationDetailsComponent(ComplianceIssue $complianceIssue): ?BaseElement
+    {
+        return _Rows();
     }
 }

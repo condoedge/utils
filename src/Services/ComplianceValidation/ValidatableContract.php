@@ -7,6 +7,8 @@ use Condoedge\Utils\Models\ComplianceValidation\ComplianceIssue;
 interface ValidatableContract
 {
     public function getFailedValidationObject(): ComplianceIssue;
+    public function scopeSearch($query, $term);
+    public function validatableDisplayName(): string;
 
     // Model-specific methods that ensure it's a model
     public function getKey();

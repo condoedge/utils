@@ -15,7 +15,7 @@ class FilesCardTable extends Query
 
     public function created()
     {
-        $this->teamId = currentTeamId();
+        $this->teamId = safeCurrentTeamId();
         $this->fileableId = $this->prop('fileable_id');
         $this->fileableType = $this->prop('fileable_type');
 

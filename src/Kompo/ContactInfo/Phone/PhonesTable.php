@@ -15,7 +15,7 @@ class PhonesTable extends Table
 
     public function created()
     {
-        $this->teamId = currentTeamId();
+        $this->teamId = safeCurrentTeamId();
         $this->phonableId = $this->prop('phonable_id');
         $this->phonableType = $this->prop('phonable_type');
 

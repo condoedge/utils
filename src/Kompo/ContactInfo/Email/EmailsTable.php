@@ -15,7 +15,7 @@ class EmailsTable extends Table
 
     public function created()
     {
-        $this->teamId = currentTeamId();
+        $this->teamId = safeCurrentTeamId();
         $this->emailableId = $this->prop('emailable_id');
         $this->emailableType = $this->prop('emailable_type');
 

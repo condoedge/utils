@@ -24,7 +24,7 @@ class SelectFileable extends Form
 
         return _Select()->placeholder('files-type-fileable')
             ->options(
-                $model->forTeam(currentTeamId())->get()->mapWithKeys(
+                $model->forTeam(safeCurrentTeamId())->get()->mapWithKeys(
                     fn ($model) => [$model->id => $model->display]
                 )
             )->default($this->fileableId)

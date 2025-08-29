@@ -2,7 +2,7 @@
 
 namespace Condoedge\Utils\Command;
 
-use Condoedge\Utils\Services\ComplianceValidation\ValidationService;
+use Condoedge\Utils\Services\ComplianceValidation\ComplianceValidationService;
 use Illuminate\Console\Command;
 
 class RunComplianceValidationCommand extends Command
@@ -13,7 +13,7 @@ class RunComplianceValidationCommand extends Command
 
     public function handle()
     {
-        $allRules = config('kompo-utils.compliance-validation-rules', []);
+        $allRules = complianceService()->getAllDefaultRules();
         $requestedRuleCodes = $this->option('rules');
         
         // Filter rules if specific codes were requested
@@ -31,8 +31,7 @@ class RunComplianceValidationCommand extends Command
             $this->info('Running all ' . count($rules) . ' configured rules.');
         }
 
-        $validationService = app(ValidationService::class);
-        $executions = $validationService->validate($rules);
+        $executions = complianceService()->validate($rules);
         
         $this->info('Validation completed. ' . count($executions) . ' rule(s) executed.');
     }

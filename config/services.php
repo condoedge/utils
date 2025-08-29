@@ -1,5 +1,6 @@
 <?php
 
+use Condoedge\Utils\Services\ComplianceValidation\ComplianceValidationService;
 use Condoedge\Utils\Services\GlobalConfig\DbGlobalConfigService;
 use Condoedge\Utils\Services\GlobalConfig\FileGlobalConfigService;
 
@@ -14,5 +15,7 @@ return [
                 'class' => DbGlobalConfigService::class,
             ],
         ],
-    ]
+    ],
+
+    'compliance-validation-service' => ComplianceValidationService::class,
 ];

@@ -5,7 +5,7 @@ if (!function_exists('_TagsMultiSelect')) {
     {
         return _TagsMultiSelectEmpty($label, $relatedToModel)
             ->options(
-                currentTeam()->tags()->get()->sortBy('name')->mapWithKeys(
+                safeCurrentTeam()->tags()->get()->sortBy('name')->mapWithKeys(
                     fn($tag) => [$tag->id => $tag->name]
                 )
             );

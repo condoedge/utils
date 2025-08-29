@@ -36,19 +36,19 @@ class Note extends Model
 
 	public function scopeForTeam($query, $team = null)
     {
-        return $query->where('team_id', $team?->id ?? currentTeamId());
+        return $query->where('team_id', $team?->id ?? safeCurrentTeamId());
     }
 
     /* ACTIONS */
     public function save(array $options = [])
     {
-        $this->team_id = currentTeamId();
+        $this->team_id = safeCurrentTeamId();
 
         return parent::save($options);
     }
 
     public function deletable()
     {
-        return $this->added_by == auth()->id() || auth()->user()->isSuperAdmin();
+        return $this->added_by == auth()->id() || safeIsSuperAdmin();
     }
 }

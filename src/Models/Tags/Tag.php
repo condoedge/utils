@@ -36,7 +36,7 @@ class Tag extends Model
 	/* SCOPES */
 	public function scopeVisibleForTeam($query)
 	{
-		return $query->where(fn($q) => $q->where('team_id', currentTeamId())->orWhere('context', TagContextEnum::ALL));
+		return $query->where(fn($q) => $q->where('team_id', safeCurrentTeamId())->orWhere('context', TagContextEnum::ALL));
 	}
 
 	public function scopeOfType($query, $type)

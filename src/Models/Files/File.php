@@ -67,7 +67,7 @@ class File extends Model implements Searchable
 
     public function scopeGetLibrary($query, $filters = [])
     {
-        $query = $query->with('fileable')->where('team_id', currentTeamId())->orderByDesc('created_at');
+        $query = $query->with('fileable')->where('team_id', safeCurrentTeamId())->orderByDesc('created_at');
 
         if(array_key_exists('fileable_type', $filters) && $fileableType = $filters['fileable_type']) {
             $query = $query->where('fileable_type', $fileableType);
@@ -182,7 +182,7 @@ class File extends Model implements Searchable
                 $file->fileable_type = $fileableType;
             }
 
-            $file->team_id = currentTeam()->id;
+            $file->team_id = safeCurrentTeam()->id;
 
             $file->save();
 
@@ -321,7 +321,7 @@ class File extends Model implements Searchable
     {
         $labelFunc = $year ? 'LEFT(created_at,7)' : 'YEAR(created_at)';
 
-        $query = static::selectRaw($labelFunc.' as label, COUNT(*) as cn')->where('team_id', currentTeam()?->id)
+        $query = static::selectRaw($labelFunc.' as label, COUNT(*) as cn')->where('team_id', safeCurrentTeam()?->id)
             ->groupByRaw($labelFunc)->orderByRaw($labelFunc.' DESC');
 
         return ($year ? $query->whereRaw('YEAR(created_at) = ?', [$year]) : $query )->get();
@@ -385,7 +385,7 @@ class File extends Model implements Searchable
     /* SEARCHS */
     public function scopeSearch($query, $search)
     {
-        return $query->forTeam(currentTeamId())
+        return $query->forTeam(safeCurrentTeamId())
             ->searchName($search);
     }
 

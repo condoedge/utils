@@ -17,7 +17,7 @@ class SingleAddressCard extends Form
 
     public function created()
     {
-        $this->teamId = currentTeamId();
+        $this->teamId = safeCurrentTeamId();
         $this->addressableId = $this->prop('addressable_id');
         $this->addressableType = $this->prop('addressable_type');
 
