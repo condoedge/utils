@@ -25,6 +25,11 @@ class Address extends Model
         'external_id',
     ];
 
+    protected $casts = [
+        'lat' => 'float',
+        'lng' => 'float',
+    ];
+
     public function save(array $options = [])
     {
         $this->setTeamId();
