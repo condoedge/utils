@@ -12,7 +12,7 @@ class TeamComplianceIssuesTable extends AbstractComplianceIssuesTable
             _Rows(parent::top()),
 
             _FlexEnd(
-                _Toggle('translate.include-related-entities')
+                _Toggle('compliance.include-related-entities')
                     ->name('include_related_entities', false)
                     ->filter(),
             ),
