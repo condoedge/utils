@@ -64,6 +64,7 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
 
         $this->loadRelationsMorphMap();
         $this->loadCommands();
+        $this->scheduleCommands();
 
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'kompo-utils');
 
@@ -202,5 +203,14 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
                 RunComplianceValidationCommand::class,
             ]);
         }
+    }
+
+    public function scheduleCommands()
+    {
+        $this->app->booted(function () {
+            $schedule = app(\Illuminate\Console\Scheduling\Schedule::class);
+
+            $schedule->command('condoedge-utils:run-compliance-validation')->dailyAt('02:00');
+        });
     }
 }

@@ -39,12 +39,19 @@ class ComplianceIssueRepository
     }
 
     /**
-     * Insert new compliance issues in bulk
+     * Insert new compliance issues in bulk with batching to avoid placeholder limit
      */
     protected function insertNewIssues(array $newIssues): void
     {
-        if (!empty($newIssues)) {
-            ComplianceIssue::insert($newIssues);
+        if (empty($newIssues)) {
+            return;
+        }
+
+        // MySQL prepared statement limit is 65,535 placeholders. We must do it in batch or we'll get an error
+        $batchSize = 5000;
+        
+        foreach (array_chunk($newIssues, $batchSize) as $batch) {
+            ComplianceIssue::insert($batch);
         }
     }
 

@@ -3,7 +3,7 @@
 if (!function_exists('safeIsSuperAdmin')) {
     function safeIsSuperAdmin(): bool
     {
-        return secureCall('safeIsSuperAdmin') ?? false;
+        return secureCall('isSuperAdmin') ?? false;
     }
 }
 
