@@ -61,6 +61,17 @@ class Address extends Model
         return null;
     }
 
+    // SETTERS
+    public function setLatAttribute($value)
+    {
+        $this->attributes['lat'] = $value === '' || $value === null ? null : $value;
+    }
+
+    public function setLngAttribute($value)
+    {
+        $this->attributes['lng'] = $value === '' || $value === null ? null : $value;
+    }
+
     /* CALCULATED FIELDS */
     public function getAddressLabel($full = false)
     {
