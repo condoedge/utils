@@ -23,9 +23,11 @@ use Condoedge\Utils\Kompo\Plugins\TableIntoFormSetValuesPlugin;
 use Condoedge\Utils\Services\GlobalConfig\GlobalConfigServiceContract;
 
 use App\Models\User;
+use Condoedge\Utils\Command\FixIncompleteAddressesCommand;
 use Condoedge\Utils\Command\RunComplianceValidationCommand;
 use Condoedge\Utils\Kompo\Plugins\DebugReload;
 use Condoedge\Utils\Kompo\Plugins\HasIntroAnimation;
+use Condoedge\Utils\Services\Maps\GoogleMapsService;
 
 class CondoedgeUtilsServiceProvider extends ServiceProvider
 {
@@ -153,6 +155,16 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
         $this->app->bind('user-model', function () {
             return new (config('kompo-auth.user-model', config('kompo-utils.user-model-namespace', User::class)));
         });
+
+        $this->app->singleton(GoogleMapsService::class, function ($app) {
+            return new GoogleMapsService(
+                apiKey: config('services.google_maps.api_key')
+            );
+        });
+
+        $this->app->bind(\Condoedge\Utils\Services\Maps\GeocodingService::class, function ($app) {
+            return $app->make(GoogleMapsService::class);
+        });
     }
 
     protected function loadHelpers()
@@ -201,6 +213,7 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 RunComplianceValidationCommand::class,
+                FixIncompleteAddressesCommand::class,
             ]);
         }
     }

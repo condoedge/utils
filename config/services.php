@@ -18,4 +18,9 @@ return [
     ],
 
     'compliance-validation-service' => ComplianceValidationService::class,
+
+    'google_maps' => [
+        'base_url' => env('GOOGLE_MAPS_BASE_URL', 'https://maps.googleapis.com/maps/api'),
+        'api_key' => env('GOOGLE_MAPS_API_KEY', env('MIX_GOOGLE_MAPS_API_KEY')),
+    ],
 ];
