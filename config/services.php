@@ -23,4 +23,8 @@ return [
         'base_url' => env('GOOGLE_MAPS_BASE_URL', 'https://maps.googleapis.com/maps/api'),
         'api_key' => env('GOOGLE_MAPS_API_KEY', env('MIX_GOOGLE_MAPS_API_KEY')),
     ],
+
+    'nominatim' => [
+        'base_url' => env('NOMINATIM_BASE_URL', 'http://localhost:7070'),
+    ],
 ];
