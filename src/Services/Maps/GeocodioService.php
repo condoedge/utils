@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Log;
 class GeocodioService extends AbstractApiClientService implements GeocodingBatchService
 {
     protected $addressesCache = [];
-    protected $qtyLimitPerMonth = 2500;
+    protected $qtyLimitPerDay = 2500;
 
     protected function getBaseUrl()
     {
@@ -70,6 +70,8 @@ class GeocodioService extends AbstractApiClientService implements GeocodingBatch
             return [];
         })->filter()->toArray();
 
+        $this->incrementUsage(count($addresses));
+
         return $results;
     }
 
@@ -80,7 +82,7 @@ class GeocodioService extends AbstractApiClientService implements GeocodingBatch
 
     protected function getUsageKey(): string
     {
-        return 'geocodio_api_usage_' . date('Y_m');
+        return 'geocodio_api_usage_' . date('Y_m_d');
     }
 
     protected function getUsage(): int
@@ -90,14 +92,14 @@ class GeocodioService extends AbstractApiClientService implements GeocodingBatch
         return cache()->get($cacheKey, 0);
     }
 
-    protected function incrementUsage(): void
+    protected function incrementUsage($by = 1): void
     {
         $cacheKey = $this->getUsageKey();
-        cache()->increment($cacheKey);
+        cache()->increment($cacheKey, $by);
     }
 
     protected function canMakeRequest($qty = 1): bool
     {
-        return ($this->getUsage() + $qty) <= $this->qtyLimitPerMonth;
+        return ($this->getUsage() + $qty) <= $this->qtyLimitPerDay;
     }
 }
