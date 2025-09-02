@@ -78,7 +78,7 @@ if (!function_exists('loadFormattedLabel')) {
         $address->setRawAttributes(array_filter([
             'address_label' => $address->getAddressInline(),
             ...$value->all(),
-            ...$address->getAttributes()
+            // ...$address->getAttributes()
         ]));
 
         return $address;
