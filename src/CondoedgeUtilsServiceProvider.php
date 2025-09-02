@@ -27,7 +27,9 @@ use Condoedge\Utils\Command\FixIncompleteAddressesCommand;
 use Condoedge\Utils\Command\RunComplianceValidationCommand;
 use Condoedge\Utils\Kompo\Plugins\DebugReload;
 use Condoedge\Utils\Kompo\Plugins\HasIntroAnimation;
+use Condoedge\Utils\Services\Maps\GeocodioService;
 use Condoedge\Utils\Services\Maps\GoogleMapsService;
+use Condoedge\Utils\Services\Maps\NominatimService;
 
 class CondoedgeUtilsServiceProvider extends ServiceProvider
 {
@@ -162,8 +164,18 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
             );
         });
 
+        $this->app->singleton(NominatimService::class, function ($app) {
+            return new NominatimService();
+        });
+
+        $this->app->singleton(GeocodioService::class, function ($app) {
+            return new GeocodioService(
+                apiKey: config('services.geocodio.api_key')
+            );
+        });
+
         $this->app->bind(\Condoedge\Utils\Services\Maps\GeocodingService::class, function ($app) {
-            return $app->make(GoogleMapsService::class);
+            return $app->make(GeocodioService::class);
         });
     }
 

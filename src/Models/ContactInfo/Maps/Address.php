@@ -88,6 +88,17 @@ class Address extends Model
         return str_replace(Address::BASE_SEPARATOR, ', ', $this->getAddressLabel($full));
     }
 
+    public function getAddressToGeocode(): array
+    {
+        return [
+            'address' => $this->address1, 
+            'city' => $this->city,
+            'state' => $this->state,
+            'postal_code' => $this->postal_code,
+            'country' => $this->country,
+        ];
+    }
+
     public function getAddressGoogleLink()
     {
         return 'https://maps.google.com?&daddr='.urlencode(str_replace(Address::BASE_SEPARATOR, ' ', $this->getAddressLabel()));

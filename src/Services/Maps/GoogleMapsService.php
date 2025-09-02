@@ -15,8 +15,12 @@ class GoogleMapsService extends AbstractApiClientService implements GeocodingSer
         return config('services.google_maps.base_url');
     }
 
-    public function geocode(string $address): ?GeocodingResult
+    public function geocode(string|array $address): ?GeocodingResult
     {
+        if (is_array($address)) {
+            $address = implode(', ', $address);
+        }
+
         if (isset($this->addressesCache[$address])) {
             return $this->addressesCache[$address];
         }
@@ -44,6 +48,11 @@ class GoogleMapsService extends AbstractApiClientService implements GeocodingSer
         }
 
         return null;
+    }
+
+    public function acceptsBatch(): bool
+    {
+        return false;
     }
 
     protected function getUsageKey(): string

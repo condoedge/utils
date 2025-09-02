@@ -27,4 +27,9 @@ return [
     'nominatim' => [
         'base_url' => env('NOMINATIM_BASE_URL', 'http://localhost:7070'),
     ],
+
+    'geocodio' => [
+        'base_url' => env('GEOCODIO_BASE_URL', 'https://api.geocod.io/v1.9'),
+        'api_key' => env('GEOCODIO_API_KEY'),
+    ],
 ];

@@ -9,6 +9,7 @@ abstract class AbstractApiClientService
     protected $name = 'API Service';
     protected $baseUrl;
     protected $apiKey;
+    protected $acceptJson = true;
 
     public function __construct($apiKey = null)
     {
@@ -23,9 +24,17 @@ abstract class AbstractApiClientService
 
         $url = $baseUrl . '/' . $endpoint;
 
-        $response = Http::acceptJson()
-            ->withToken($this->apiKey)
-            ->$method($url, $data);
+        $httpRequest = Http::asJson(); // To have an initial request object
+
+        if ($this->acceptJson) {
+            $httpRequest = $httpRequest->acceptJson();
+        } 
+
+        if ($this->apiKey) {
+            $httpRequest = $httpRequest->withToken($this->apiKey);
+        }
+
+        $response = $httpRequest->$method($url, $data);
 
         if ($response->failed()) {
             throw new \Exception($this->name . ' request failed: ' . $response->body());
