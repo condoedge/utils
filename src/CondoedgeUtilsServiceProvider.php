@@ -175,7 +175,7 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
         });
 
         $this->app->bind(\Condoedge\Utils\Services\Maps\GeocodingService::class, function ($app) {
-            return $app->make(GeocodioService::class);
+            return $app->make(NominatimService::class);
         });
     }
 
@@ -235,7 +235,7 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
         $this->app->booted(function () {
             $schedule = app(\Illuminate\Console\Scheduling\Schedule::class);
 
-            $schedule->command('condoedge-utils:run-compliance-validation')->dailyAt('02:00');
+            $schedule->command('compliance:run-validation')->dailyAt('02:00');
         });
     }
 }
