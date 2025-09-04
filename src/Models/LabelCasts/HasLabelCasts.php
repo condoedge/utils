@@ -2,6 +2,8 @@
 
 namespace Condoedge\Utils\Models\LabelCasts;
 
+use Condoedge\Utils\Casts\FileArray;
+
 /**
  * @param array<string, \Condoedge\Utils\Models\LabelCasts\AbstractLabelCast> $labelCasts
  */
@@ -34,9 +36,9 @@ trait HasLabelCasts
         return $cast ? $cast->getLabel($this->getAttribute($attr) ?? null, $attr) : $rawAttribute;
     }
 
-    public static function getCastedLabel($attr, $value)
+    public function getCastedLabel($attr, $value)
     {
-        $model = new static;
+        $model = $this;
 
         $cast = $model->getLabelCastInstance($attr, $value);
 
@@ -48,6 +50,18 @@ trait HasLabelCasts
         $cast = $this->casts[$attr] ?? null;
 
         if (!$cast) return null;
+
+        if ($cast == 'boolean' || $cast == 'bool') {
+            return 'boolean';
+        }
+
+        if ($cast == FileArray::class) {
+            return 'file_array';
+        }
+
+        if ($cast == 'date' || $cast == 'datetime' || $cast == 'custom_datetime') {
+            return 'carbon';
+        }
 
         if (enum_exists($cast) || $castedValue instanceof \BackedEnum) {
             return 'enum';
@@ -63,6 +77,10 @@ trait HasLabelCasts
         $defaultTypes = [
             'enum' => \Condoedge\Utils\Models\LabelCasts\EnumLabelCast::class,
             'relationship' => \Condoedge\Utils\Models\LabelCasts\RelationshipLabelCast::class,
+            'carbon' => \Condoedge\Utils\Models\LabelCasts\CarbonLabelCast::class,
+            'boolean' => \Condoedge\Utils\Models\LabelCasts\YesNoLabelCast::class,
+            'file_array' => \Condoedge\Utils\Models\LabelCasts\ArrayFileLabelCast::class,
+            'array_image' => \Condoedge\Utils\Models\LabelCasts\ArrayImageLabelCast::class,  
         ];
 
         return $defaultTypes[$type] ?? null;

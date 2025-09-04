@@ -2,10 +2,10 @@
 
 namespace Condoedge\Utils\Models;
 
-use Kompo\Komponents\Komponent;
 use Kompo\Models\ModelBase;
 
 use Condoedge\Utils\Facades\UserModel;
+use Kompo\Elements\BaseElement;
 
 class ModelChangesLog extends ModelBase
 {
@@ -101,14 +101,14 @@ class ModelChangesLog extends ModelBase
         $comparision = $this->getColumnComparision($column, false, true);
 
         return [
-            'old' => $comparision['old'] instanceof Komponent ? $comparision['old'] : _Html($comparision['old']),
-            'new' => $comparision['new'] instanceof Komponent ? $comparision['new'] : _Html($comparision['new']),
+            'old' => $comparision['old'] instanceof BaseElement ? $comparision['old'] : _Html($comparision['old']),
+            'new' => $comparision['new'] instanceof BaseElement ? $comparision['new'] : _Html($comparision['new']),
         ];
     }
 
     protected function showableValue($value, $komponentAllowed = true)
     {
-        if (!$value || in_array(gettype($value), ['string', 'integer', 'double']) || ($komponentAllowed && $value instanceof Komponent)) {
+        if (!$value || in_array(gettype($value), ['string', 'integer', 'double']) || ($komponentAllowed && $value instanceof BaseElement)) {
             return $value;
         }
 

@@ -1,5 +1,7 @@
 <?php
 
+use Condoedge\Utils\Http\Controllers\FileColumnsController;
+use Condoedge\Utils\Kompo\Files\DisplayFileModal;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth'])->group(function(){
@@ -11,3 +13,7 @@ Route::middleware(['auth'])->group(function(){
 	Route::get('audio-preview/{type}/{id}', \Condoedge\Utils\Kompo\Files\AudioPreview::class)->name('audio.preview');
 	Route::get('video-preview/{type}/{id}', \Condoedge\Utils\Kompo\Files\VideoPreview::class)->name('video.preview');
 });
+
+Route::get('display-files-modal/{mime}/{type}/{id}/{column}/{index?}', DisplayFileModal::class)->name('preview-files-modal');
+
+Route::get('display-files/{type}/{id}/{column}/{index?}', [FileColumnsController::class, 'display'])->name('preview-files');

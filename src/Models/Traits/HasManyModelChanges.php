@@ -19,7 +19,8 @@ trait HasManyModelChanges
                     'changed_by' => auth()->id(),
                     'old_data' => collect(array_keys($model->getDirty()))->intersect($model->getColumnsToSaveOldData())
                         ->mapWithKeys(fn($col) => [$col => $model->getOriginal($col)])->toArray(),
-                    'new_data' => collect(array_keys($model->getDirty()))->mapWithKeys(fn($col) => [$col => $model->getAttribute($col)])->toArray(),
+                    'new_data' => collect(array_keys($model->getDirty()))->intersect($model->getColumnsToSaveOldData())
+                        ->mapWithKeys(fn($col) => [$col => $model->getAttribute($col)])->toArray(),
                     'changed_at' => now()
                 ]);
             }

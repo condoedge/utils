@@ -10,6 +10,10 @@ class RelationshipLabelCast extends AbstractLabelCast
 
         if (!count($this->options)) return $value;
 
+        if (is_array($value)) {
+            $value = $value['id'] ?? null;
+        }
+
         $class = $this->options['class'] ?? null;
         $column = $this->options['column'] ?? null;
         $method = $this->options['method'] ?? null;
