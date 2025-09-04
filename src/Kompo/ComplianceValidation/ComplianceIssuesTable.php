@@ -20,7 +20,7 @@ class ComplianceIssuesTable extends WhiteTable
                 )->class('gap-4')
             ),
             _FlexBetween(
-                _FlexEnd(
+                _Flex(
                     _Input()->name('search', false)->placeholder('generic.search')->filter(),
                 )->class('gap-3'),
                 _FlexEnd(

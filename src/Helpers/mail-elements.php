@@ -197,7 +197,7 @@ if (!function_exists('mailSubtitle')) {
 if (!function_exists('mailMinititle')) {
     function mailMinititle($label, $additionalStyle = 'text-align:center')
     {
-    	return '<div style="font-size:0.9rem;font-weight:700;color:black;margin-bottom:0.5rem;'.$additionalStyle.'">'.__($label).'</div>';
+    	return '<div style="font-size:0.9rem;font-weight:600;color:black;margin-bottom:0.5rem;'.$additionalStyle.'">'.__($label).'</div>';
     }
 }
 

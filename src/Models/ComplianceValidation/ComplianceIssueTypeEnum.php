@@ -21,8 +21,8 @@ enum ComplianceIssueTypeEnum: int
     public function classes()
     {
         return match($this) {
-            self::WARNING => 'bg-yellow-100 text-yellow-800',
-            self::ERROR => 'bg-red-100 text-red-800',
+            self::WARNING => 'bg-warning text-white',
+            self::ERROR => 'bg-danger text-white',
         };
     }
 }

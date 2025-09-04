@@ -69,16 +69,16 @@ class ComplianceIssue extends Model
     // ELEMENTS
     public function typeBadge()
     {
-        return _Badge($this->type->label())->class($this->type->classes());
+        return _Pill($this->type->label())->class($this->type->classes());
     }
 
     public function statusEl()
     {
         if ($this->resolved_at) {
-            return _Html('✓ ' . __('compliance.resolved'))->class('text-green-600');
+            return _Pill('compliance.resolved')->class('text-positive');
         }
 
-        return _Html('● ' . __('compliance.unresolved'))->class('text-red-600');
+        return _Pill('compliance.unresolved')->class('text-danger');
     }
 
     public function moreDetailsElement()
