@@ -18,18 +18,24 @@ use Illuminate\Database\Eloquent\Relations\Relation;
 use Condoedge\Utils\Kompo\Plugins\Base\PluginsManager;
 use Condoedge\Utils\Kompo\Plugins\EnableResponsiveTable;
 use Condoedge\Utils\Kompo\Plugins\EnableWhiteTableStyle;
-use Condoedge\Utils\Kompo\Plugins\FormCanHaveTableWithFields;
 use Condoedge\Utils\Kompo\Plugins\TableIntoFormSetValuesPlugin;
 use Condoedge\Utils\Services\GlobalConfig\GlobalConfigServiceContract;
 
 use App\Models\User;
 use Condoedge\Utils\Command\FixIncompleteAddressesCommand;
 use Condoedge\Utils\Command\RunComplianceValidationCommand;
+use Condoedge\Utils\Events\ComplianceIssueDetected;
+use Condoedge\Utils\Events\MultipleComplianceIssuesDetected;
 use Condoedge\Utils\Kompo\Plugins\DebugReload;
 use Condoedge\Utils\Kompo\Plugins\HasIntroAnimation;
+use Condoedge\Utils\Listeners\HandleComplianceNotifications;
+use Condoedge\Utils\Listeners\HandleBatchComplianceNotifications;
+use Condoedge\Utils\Services\ComplianceValidation\ComplianceNotificationService;
+use Condoedge\Utils\Services\ComplianceValidation\NotificationStrategyRegistry;
 use Condoedge\Utils\Services\Maps\GeocodioService;
 use Condoedge\Utils\Services\Maps\GoogleMapsService;
 use Condoedge\Utils\Services\Maps\NominatimService;
+use Illuminate\Support\Facades\Event;
 
 class CondoedgeUtilsServiceProvider extends ServiceProvider
 {
@@ -109,6 +115,8 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
             DebugReload::class,
             HasIntroAnimation::class,
         ]);
+
+        $this->registerComplianceNotificationSystem();
     }
 
     /**
@@ -177,6 +185,15 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
         $this->app->bind(\Condoedge\Utils\Services\Maps\GeocodingService::class, function ($app) {
             return $app->make(NominatimService::class);
         });
+
+        // Register compliance notification system
+        $this->app->singleton(NotificationStrategyRegistry::class, function ($app) {
+            return new NotificationStrategyRegistry();
+        });
+
+        // Note: ComplianceNotificationService is abstract and must be bound in the consuming project
+        // Example in your main project's service provider:
+        // $this->app->bind(ComplianceNotificationService::class, YourConcreteNotificationService::class);
     }
 
     protected function loadHelpers()
@@ -235,7 +252,29 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
         $this->app->booted(function () {
             $schedule = app(\Illuminate\Console\Scheduling\Schedule::class);
 
-            $schedule->command('compliance:run-validation')->dailyAt('02:00');
+            // Option 1: Frequency-based scheduling (RECOMMENDED)
+            $schedule->command('compliance:run-validation --frequency=daily')->dailyAt('02:00');
+            $schedule->command('compliance:run-validation --frequency=weekly')->weekly()->mondays()->at('01:00');
+            $schedule->command('compliance:run-validation --frequency=monthly')->monthly()->at('00:30');
+            $schedule->command('compliance:run-validation --frequency=business-days')->weekdays()->at('08:00');
+
+            // Option 2: Minute-based checking (use if you need precise timing)
+            // $schedule->command('compliance:run-validation --scheduled')->everyMinute();
+
+            // Option 3: Hourly checks (good compromise)
+            // $schedule->command('compliance:run-validation --scheduled')->hourly();
         });
+    }
+
+    /**
+     * Register the compliance notification system event listeners and strategies
+     */
+    protected function registerComplianceNotificationSystem(): void
+    {
+        // Register event listeners
+        // Event::listen(ComplianceIssueDetected::class, HandleComplianceNotifications::class);
+        
+        // Register batch compliance notifications listener
+        Event::listen(MultipleComplianceIssuesDetected::class, HandleBatchComplianceNotifications::class);
     }
 }

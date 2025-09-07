@@ -2,6 +2,8 @@
 
 namespace Condoedge\Utils\Services\ComplianceValidation;
 
+use Condoedge\Utils\Events\ComplianceIssueDetected;
+use Condoedge\Utils\Events\MultipleComplianceIssuesDetected;
 use Condoedge\Utils\Models\ComplianceValidation\ValidationExecution;
 use Condoedge\Utils\Services\ComplianceValidation\Rules\RuleContract;
 use Illuminate\Support\Collection;
@@ -22,7 +24,9 @@ class RulesProcessor
     {
         $startedAt = now();
         [$failingValidatables, $testedCount] = $rule->findViolations();
-        
+
+        event(new MultipleComplianceIssuesDetected($rule->getCode(), $failingValidatables));
+
         $complianceIssuesData = $this->createComplianceIssuesData($rule, $failingValidatables);
         $this->repository->syncIssues($rule->getCode(), $complianceIssuesData, $failingValidatables);
         
@@ -44,6 +48,9 @@ class RulesProcessor
                 $complianceIssue->resolved_at = null;
                 $complianceIssue->rule_code = $rule->getCode();
                 $complianceIssue->detail_message = $rule->getIssueDescription($validatable);
+
+                // Dispatch event for notifications (before persisting to database)
+                event(new ComplianceIssueDetected($complianceIssue, $validatable, $rule->getCode()));
 
                 $data = $complianceIssue->toArray();
                 $data['created_at'] = $now;
