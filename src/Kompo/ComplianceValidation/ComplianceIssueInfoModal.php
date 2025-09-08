@@ -30,9 +30,9 @@ class ComplianceIssueInfoModal extends Modal
         }
 
         return _Rows(
-            $this->model->moreDetailsElement(),
-
             _Text($this->model->detail_message)->maxChars(150)->class('mb-2'),
+            
+            $this->model->moreDetailsElement(),
 
             _Button('compliance.close')->closeModal(),
         )->class('space-y-4');

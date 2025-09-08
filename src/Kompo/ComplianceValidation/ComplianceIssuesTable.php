@@ -75,7 +75,7 @@ class ComplianceIssuesTable extends WhiteTable
             
             $complianceIssue->statusEl(),
             
-            _Text($complianceIssue->detail_message)->maxChars(50),
+            _Html($complianceIssue->getRuleInstance()?->getName()),
             
             _TripleDotsDropdown(
                 _DropdownLink('compliance.view-details')
