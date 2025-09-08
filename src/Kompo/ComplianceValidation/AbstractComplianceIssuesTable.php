@@ -34,7 +34,7 @@ abstract class AbstractComplianceIssuesTable extends WhiteTable
                         ->filter(),
                     _Toggle('compliance.show-resolved')->name('show_resolved', false)
                         ->filter()
-                        ->class('w-full'),
+                        ->class('w-full min-w-[150px]'),
                 )->class('gap-3'),
             )->class('gap-3 mt-2'),
         );
