@@ -10,6 +10,6 @@ class YesNoLabelCast extends AbstractLabelCast
     {
         if (!$value) return null;
 
-        return $value ? __('translate.yes') : __('translate.no');
+        return $value ? __('utils.yes') : __('utils.no');
     }
 }

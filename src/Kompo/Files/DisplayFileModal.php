@@ -7,7 +7,7 @@ use Condoedge\Utils\Models\Files\FileTypeEnum;
 
 class DisplayFileModal extends Modal
 {
-    public $_Title = 'translate.file-preview';
+    public $_Title = 'utils.file-preview';
 
     public $noHeaderButtons = true;
 
@@ -32,7 +32,7 @@ class DisplayFileModal extends Modal
 
         return _Rows(
             FileTypeEnum::fromMimeType($mime)?->componentFromColumn($this->type, $this->modelId, $this->column, $this->index - 1)
-             ?? _Html('translate.no-preview-available'),
+             ?? _Html('utils.no-preview-available'),
         )->style('overflow-y: auto;')->class('px-8 py-6');
     }
 }

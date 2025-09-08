@@ -35,6 +35,9 @@
 	"utils.export-ready-message": "Your Coolecto export is ready!",
 	"utils.export-via-email": "Export to my email",
 	"utils.export-will-be-sent-to-thi-email": "Export will be sent to this email",
+	"utils.file-preview": "File preview",
+	"utils.no": "No",
+	"utils.no-preview-available": "No preview available",
 	"utils.or": "or",
 	"utils.phone": "Phone",
 	"utils.reports-download-file": "Download report file",
@@ -42,5 +45,6 @@
 	"utils.request-for-export-done": "Request for export done !",
 	"utils.the-file-must-be-one-of-these-types": "The file must be one of these types",
 	"utils.this-report-can-take-some-time-select-the-option": "This report can take some time to generate. Select your option.",
-	"utils.wait-for-the-email-to-download-your-file": "Check your email to view your report"
+	"utils.wait-for-the-email-to-download-your-file": "Check your email to view your report",
+	"utils.yes": "Yes"
 }

@@ -35,6 +35,9 @@
 	"utils.export-ready-message": "Votre export Coolecto est prêt !",
 	"utils.export-via-email": "Exporter à mon courriel",
 	"utils.export-will-be-sent-to-thi-email": "L'export sera envoyée à ce courriel",
+	"utils.file-preview": "Aperçu du fichier",
+	"utils.no": "Non",
+	"utils.no-preview-available": "Aucun aperçu disponible",
 	"utils.or": "ou",
 	"utils.phone": "Téléphone",
 	"utils.reports-download-file": "Télécharger le fichier du rapport",
@@ -42,5 +45,6 @@
 	"utils.request-for-export-done": "Demande d'exportation effectuée !",
 	"utils.the-file-must-be-one-of-these-types": "Le fichier doit être de l'un des types suivants",
 	"utils.this-report-can-take-some-time-select-the-option": "La génération de ce rapport peut prendre un certain temps. Effectuez votre choix.",
-	"utils.wait-for-the-email-to-download-your-file": "Consultez vos courriels pour visualiser votre rapport"
+	"utils.wait-for-the-email-to-download-your-file": "Consultez vos courriels pour visualiser votre rapport",
+	"utils.yes": "Oui"
 }
