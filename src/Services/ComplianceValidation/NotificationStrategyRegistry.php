@@ -3,6 +3,7 @@
 namespace Condoedge\Utils\Services\ComplianceValidation;
 
 use Condoedge\Utils\Services\ComplianceValidation\Strategies\NoNotificationStrategy;
+use Condoedge\Utils\Services\ComplianceValidation\Strategies\ValidatableIsNotificableStrategy;
 
 class NotificationStrategyRegistry
 {
@@ -47,7 +48,7 @@ class NotificationStrategyRegistry
     protected function getDefaultStrategy(string $context): NotificationStrategyContract
     {
         $defaultKey = $this->buildKey($context, 'default');
-        return $this->strategies[$defaultKey] ?? new NoNotificationStrategy();
+        return $this->strategies[$defaultKey] ?? new ValidatableIsNotificableStrategy();
     }
     
     /**

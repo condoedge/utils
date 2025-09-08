@@ -24,13 +24,10 @@ use Condoedge\Utils\Services\GlobalConfig\GlobalConfigServiceContract;
 use App\Models\User;
 use Condoedge\Utils\Command\FixIncompleteAddressesCommand;
 use Condoedge\Utils\Command\RunComplianceValidationCommand;
-use Condoedge\Utils\Events\ComplianceIssueDetected;
 use Condoedge\Utils\Events\MultipleComplianceIssuesDetected;
 use Condoedge\Utils\Kompo\Plugins\DebugReload;
 use Condoedge\Utils\Kompo\Plugins\HasIntroAnimation;
-use Condoedge\Utils\Listeners\HandleComplianceNotifications;
 use Condoedge\Utils\Listeners\HandleBatchComplianceNotifications;
-use Condoedge\Utils\Services\ComplianceValidation\ComplianceNotificationService;
 use Condoedge\Utils\Services\ComplianceValidation\NotificationStrategyRegistry;
 use Condoedge\Utils\Services\Maps\GeocodioService;
 use Condoedge\Utils\Services\Maps\GoogleMapsService;
@@ -253,16 +250,16 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
             $schedule = app(\Illuminate\Console\Scheduling\Schedule::class);
 
             // Option 1: Frequency-based scheduling (RECOMMENDED)
-            $schedule->command('compliance:run-validation --frequency=daily')->dailyAt('02:00');
-            $schedule->command('compliance:run-validation --frequency=weekly')->weekly()->mondays()->at('01:00');
-            $schedule->command('compliance:run-validation --frequency=monthly')->monthly()->at('00:30');
-            $schedule->command('compliance:run-validation --frequency=business-days')->weekdays()->at('08:00');
+            // $schedule->command('compliance:run-validation --frequency=daily')->dailyAt('02:00');
+            // $schedule->command('compliance:run-validation --frequency=weekly')->weekly()->mondays()->at('01:00');
+            // $schedule->command('compliance:run-validation --frequency=monthly')->monthly()->at('00:30');
+            // $schedule->command('compliance:run-validation --frequency=business-days')->weekdays()->at('08:00');
 
             // Option 2: Minute-based checking (use if you need precise timing)
             // $schedule->command('compliance:run-validation --scheduled')->everyMinute();
 
             // Option 3: Hourly checks (good compromise)
-            // $schedule->command('compliance:run-validation --scheduled')->hourly();
+            $schedule->command('compliance:run-validation --scheduled')->hourly();
         });
     }
 

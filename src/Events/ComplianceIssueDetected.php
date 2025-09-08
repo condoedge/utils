@@ -6,6 +6,7 @@ use Condoedge\Utils\Models\ComplianceValidation\ComplianceIssue;
 use Condoedge\Utils\Services\ComplianceValidation\ValidatableContract;
 use Illuminate\Foundation\Events\Dispatchable;
 
+
 class ComplianceIssueDetected
 {
     use Dispatchable;

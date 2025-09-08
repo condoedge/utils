@@ -8,14 +8,18 @@ use Condoedge\Utils\Models\ComplianceValidation\ComplianceIssueTypeEnum;
 use Condoedge\Utils\Services\ComplianceValidation\NotificationStrategyContract;
 use Condoedge\Utils\Services\ComplianceValidation\ScheduledRuleContract;
 use Condoedge\Utils\Services\ComplianceValidation\Schedules\DailySchedule;
+use Condoedge\Utils\Services\ComplianceValidation\Schedules\MonthlySchedule;
 use Condoedge\Utils\Services\ComplianceValidation\Schedules\ScheduleContract;
+use Condoedge\Utils\Services\ComplianceValidation\Schedules\WeeklySchedule;
 use Condoedge\Utils\Services\ComplianceValidation\Strategies\NoNotificationStrategy;
+use Condoedge\Utils\Services\ComplianceValidation\Strategies\ValidatableIsNotificableStrategy;
 use Condoedge\Utils\Services\ComplianceValidation\ValidatableContract;
 use Illuminate\Support\Str;
 use Kompo\Elements\BaseElement;
 
 abstract class BaseRule implements RuleContract, ScheduledRuleContract
 {
+    protected $frequency = 'daily';
     protected ?ScheduleContract $schedule = null;
 
     /**
@@ -87,7 +91,12 @@ abstract class BaseRule implements RuleContract, ScheduledRuleContract
      */
     protected function createDefaultSchedule(): ScheduleContract
     {
-        return new DailySchedule(2, 0);
+        return match ($this->frequency) {
+            'daily' => new DailySchedule(),  // Daily
+            'weekly' => new WeeklySchedule(), // Weekly
+            'monthly' => new MonthlySchedule(), // Monthly
+            default => new DailySchedule(), // Fallback to daily
+        };
     }
 
     /**
@@ -135,7 +144,7 @@ abstract class BaseRule implements RuleContract, ScheduledRuleContract
     {
         $strategies = $this->getNotificationStrategies();
         
-        return $strategies[$validatableContext] ?? $strategies['default'] ?? new NoNotificationStrategy();
+        return $strategies[$validatableContext] ?? $strategies['default'] ?? new ValidatableIsNotificableStrategy();
     }
 
     /**
