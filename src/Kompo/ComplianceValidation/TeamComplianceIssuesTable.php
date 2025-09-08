@@ -14,7 +14,8 @@ class TeamComplianceIssuesTable extends AbstractComplianceIssuesTable
             _FlexEnd(
                 _Toggle('compliance.include-related-entities')
                     ->name('include_related_entities', false)
-                    ->filter(),
+                    ->filter()
+                    ->class('w-full'),
             ),
         );
     }

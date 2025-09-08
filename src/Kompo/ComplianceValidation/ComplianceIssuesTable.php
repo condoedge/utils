@@ -33,7 +33,8 @@ class ComplianceIssuesTable extends WhiteTable
                         ->placeholder('compliance.filter-by-type')
                         ->filter(),
                     _Toggle('compliance.show-resolved')->name('show_resolved', false)
-                        ->filter(),
+                        ->filter()
+                        ->class('w-full min-w-[150px]'),
                 )->class('gap-3'),
             )->class('gap-3 mt-2'),
         );
