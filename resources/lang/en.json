@@ -22,12 +22,14 @@
 	"compliance.warning": "Warning",
 	"compliance.with-values-all-the-following-roles-exceed": "All the following roles exceed their maximum number of assignments per team: <br>:roles",
 	"error.must-be-at-least": "Must be at least",
+	"error.must-be-at-most": "Must be at most",
 	"error.years-old": "years old",
 	"files.browse-files": "Browse files",
 	"files.or": "or",
 	"files.with-values-max-files-size-is": "Max total size of files is :size Mb",
 	"files.your-files-exceed-max-size": "Your files exceed max size allowed",
 	"files-attach-files": "Attach files",
+	"notes.content": "Content",
 	"utils.direct-export": "Export report here",
 	"utils.email-is-required": "Email is required",
 	"utils.export-ready": "Excel export is ready",
@@ -46,5 +48,11 @@
 	"utils.the-file-must-be-one-of-these-types": "The file must be one of these types",
 	"utils.this-report-can-take-some-time-select-the-option": "This report can take some time to generate. Select your option.",
 	"utils.wait-for-the-email-to-download-your-file": "Check your email to view your report",
-	"utils.yes": "Yes"
+	"utils.yes": "Yes",
+	"validation.invalid-phone-format": "Invalid phone format :attribute",
+	"validation.invalid_format": "Invalid format",
+	"validation.invalid_length": "Invalid lenght",
+	"validation.no_repeated_characters": "No repeated characters accepted",
+	"validation.no_repeated_names": "Repeated names not accepted",
+	"validation.required": "Required"
 }

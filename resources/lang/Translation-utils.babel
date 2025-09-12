@@ -378,6 +378,21 @@
 								</translations>
 							</concept_node>
 							<concept_node>
+								<name>must-be-at-most</name>
+								<description/>
+								<comment/>
+								<translations>
+									<translation>
+										<language>en-US</language>
+										<approved>false</approved>
+									</translation>
+									<translation>
+										<language>fr-FR</language>
+										<approved>false</approved>
+									</translation>
+								</translations>
+							</concept_node>
+							<concept_node>
 								<name>years-old</name>
 								<description/>
 								<comment/>
@@ -474,6 +489,26 @@
 							</translation>
 						</translations>
 					</concept_node>
+					<folder_node>
+						<name>notes</name>
+						<children>
+							<concept_node>
+								<name>content</name>
+								<description/>
+								<comment/>
+								<translations>
+									<translation>
+										<language>en-US</language>
+										<approved>false</approved>
+									</translation>
+									<translation>
+										<language>fr-FR</language>
+										<approved>false</approved>
+									</translation>
+								</translations>
+							</concept_node>
+						</children>
+					</folder_node>
 					<folder_node>
 						<name>utils</name>
 						<children>
@@ -749,6 +784,101 @@
 							</concept_node>
 							<concept_node>
 								<name>yes</name>
+								<description/>
+								<comment/>
+								<translations>
+									<translation>
+										<language>en-US</language>
+										<approved>false</approved>
+									</translation>
+									<translation>
+										<language>fr-FR</language>
+										<approved>false</approved>
+									</translation>
+								</translations>
+							</concept_node>
+						</children>
+					</folder_node>
+					<folder_node>
+						<name>validation</name>
+						<children>
+							<concept_node>
+								<name>invalid-phone-format</name>
+								<description/>
+								<comment/>
+								<translations>
+									<translation>
+										<language>en-US</language>
+										<approved>false</approved>
+									</translation>
+									<translation>
+										<language>fr-FR</language>
+										<approved>false</approved>
+									</translation>
+								</translations>
+							</concept_node>
+							<concept_node>
+								<name>invalid_format</name>
+								<description/>
+								<comment/>
+								<translations>
+									<translation>
+										<language>en-US</language>
+										<approved>false</approved>
+									</translation>
+									<translation>
+										<language>fr-FR</language>
+										<approved>false</approved>
+									</translation>
+								</translations>
+							</concept_node>
+							<concept_node>
+								<name>invalid_length</name>
+								<description/>
+								<comment/>
+								<translations>
+									<translation>
+										<language>en-US</language>
+										<approved>false</approved>
+									</translation>
+									<translation>
+										<language>fr-FR</language>
+										<approved>false</approved>
+									</translation>
+								</translations>
+							</concept_node>
+							<concept_node>
+								<name>no_repeated_characters</name>
+								<description/>
+								<comment/>
+								<translations>
+									<translation>
+										<language>en-US</language>
+										<approved>false</approved>
+									</translation>
+									<translation>
+										<language>fr-FR</language>
+										<approved>false</approved>
+									</translation>
+								</translations>
+							</concept_node>
+							<concept_node>
+								<name>no_repeated_names</name>
+								<description/>
+								<comment/>
+								<translations>
+									<translation>
+										<language>en-US</language>
+										<approved>false</approved>
+									</translation>
+									<translation>
+										<language>fr-FR</language>
+										<approved>false</approved>
+									</translation>
+								</translations>
+							</concept_node>
+							<concept_node>
+								<name>required</name>
 								<description/>
 								<comment/>
 								<translations>

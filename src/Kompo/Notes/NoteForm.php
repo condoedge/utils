@@ -33,8 +33,8 @@ class NoteForm extends Modal
     public function body()
     {
         return _Rows(
-            _Textarea('translate.content')->name('content_nt')->class('mb-3')->required(),
-            _DateTime('translate.date')->name('date_nt')->default(now())->class('mb-12')->required(),
+            _Textarea('notes.content')->name('content_nt')->class('mb-3')->required(),
+            _DateTime('notes.date')->name('date_nt')->default(now())->class('mb-12')->required(),
 
             _FlexBetween(
                 !$this->model->id ? null : 

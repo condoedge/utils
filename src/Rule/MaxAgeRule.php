@@ -24,7 +24,7 @@ class MaxAgeRule implements ValidationRule
     public function validate(string $attribute, mixed $value, \Closure $fail): void
     {
         if (Carbon::parse($value)->age > $this->maxAge) {
-            $fail(__('translate.error.must-be-at-most') . ' ' . $this->maxAge . ' ' . __('translate.error.years-old'));
+            $fail(__('error.must-be-at-most') . ' ' . $this->maxAge . ' ' . __('error.years-old'));
         }
     }
 }

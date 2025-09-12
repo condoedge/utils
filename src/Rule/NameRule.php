@@ -24,23 +24,23 @@ class NameRule implements ValidationRule
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         if (empty($value)) {
-            $fail(__('translate.required', ['attribute' => $attribute]));
+            $fail(__('validation.required', ['attribute' => $attribute]));
         }
 
         if (mb_strlen($value) < 2 || mb_strlen($value) > $this->maxLength) {
-            $fail(__('translate.invalid_length', ['attribute' => $attribute]));
+            $fail(__('validation.invalid_length', ['attribute' => $attribute]));
         }
 
         if (!preg_match('/^[A-Za-z ]{2,'.$this->maxLength.'}$/', $value)) {
-            $fail(__('translate.invalid_format', ['attribute' => $attribute]));
+            $fail(__('validation.invalid_format', ['attribute' => $attribute]));
         }
 
         if (preg_match('/\b(\w+) \1\b/', $value)) {
-            $fail(__('translate.no_repeated_names', ['attribute' => $attribute]));
+            $fail(__('validation.no_repeated_names', ['attribute' => $attribute]));
         }
 
         if (preg_match('/^(.)\1{2,}$/', $value)) {
-            $fail(__('translate.no_repeated_characters', ['attribute' => $attribute]));
+            $fail(__('validation.no_repeated_characters', ['attribute' => $attribute]));
         }
     }
 }

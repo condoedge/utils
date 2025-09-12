@@ -18,7 +18,7 @@ class InternationalPhoneRule implements ValidationRule
         $pattern = '/^\+?[1-9]\d{7,20}$/';
 
         if (!preg_match($pattern, $value)) {
-            $fail(__('translate.invalid_phone_format', ['attribute' => $attribute]));
+            $fail(__('validation.invalid-phone-format', ['attribute' => $attribute]));
         }
     }
 }

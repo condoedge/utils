@@ -22,12 +22,14 @@
 	"compliance.warning": "Avertissement",
 	"compliance.with-values-all-the-following-roles-exceed": "Tous les rôles suivants dépassent leur nombre maximal d'affectations par équipe : <br>:roles",
 	"error.must-be-at-least": "Doit avoir au moins",
+	"error.must-be-at-most": "Doit être au plus",
 	"error.years-old": "ans",
 	"files.browse-files": "Parcourir les fichiers",
 	"files.or": "ou",
 	"files.with-values-max-files-size-is": "Taille totale maximale des fichiers est de :size Mo",
 	"files.your-files-exceed-max-size": "Vos fichiers dépassent la taille maximale autorisée",
 	"files-attach-files": "Joindre des fichiers",
+	"notes.content": "Contenu",
 	"utils.direct-export": "Exporter le rapport ici",
 	"utils.email-is-required": "Courriel requis",
 	"utils.export-ready": "L'export Excel est prêt",
@@ -46,5 +48,11 @@
 	"utils.the-file-must-be-one-of-these-types": "Le fichier doit être de l'un des types suivants",
 	"utils.this-report-can-take-some-time-select-the-option": "La génération de ce rapport peut prendre un certain temps. Effectuez votre choix.",
 	"utils.wait-for-the-email-to-download-your-file": "Consultez vos courriels pour visualiser votre rapport",
-	"utils.yes": "Oui"
+	"utils.yes": "Oui",
+	"validation.invalid-phone-format": "Format de téléphone invalide :attribute",
+	"validation.invalid_format": "Format invalide",
+	"validation.invalid_length": "Longueur invalide",
+	"validation.no_repeated_characters": "Aucun caractère répété n'est accepté",
+	"validation.no_repeated_names": "Les noms répétés ne sont pas acceptés",
+	"validation.required": "Requis"
 }
