@@ -19,6 +19,19 @@ trait HasComponentPlugins
         })->flatten()->unique()->all();
     }
 
+    // Using this as a patch to access before the boot method of plugins
+    public function authorizeBoot()
+    {
+        $this->getAllPlugins()->each(function ($plugin) {
+            $pluginInstance = is_object($plugin) ? $plugin : new $plugin($this);
+            if (method_exists($pluginInstance, 'beforeBoot')) {
+                $pluginInstance->beforeBoot();
+            }
+        });
+
+        return true;
+    }
+
     public function booted()
     {
         $this->getAllPlugins()->each(function ($plugin) {

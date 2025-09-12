@@ -1,6 +1,9 @@
 <?php
 
 /* FILE UTILITIES METHODS */
+
+use Illuminate\Validation\Rule;
+
 if (!function_exists('appendBeforeExtension')) {
     function appendBeforeExtension($path, $appendText)
     {
@@ -186,4 +189,13 @@ if (!function_exists('videoMimeTypes')) {
     {
         return ['video/avi', 'video/x-msvideo', 'video/mpeg', 'video/ogg', 'video/x-matroska', 'video/quicktime', 'video/webm', 'video/mp4'];
     }
+}
+
+// VALIDATION 
+if (!function_exists('validateFileRules')) {
+    function validateFileRules(string $field, $rules = [])
+    {
+        return Rule::when(request($field) instanceof \Illuminate\Http\UploadedFile, $rules, ['json']);
+    }
+
 }

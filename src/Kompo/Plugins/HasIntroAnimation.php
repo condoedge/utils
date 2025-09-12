@@ -43,7 +43,7 @@ class HasIntroAnimation extends ComponentPlugin
             return $introJs;
         }
 
-        return '';
+        return '(9';
     }
 
     protected function getPrefixFile()

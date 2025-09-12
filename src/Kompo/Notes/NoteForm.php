@@ -33,8 +33,8 @@ class NoteForm extends Modal
     public function body()
     {
         return _Rows(
-            _Textarea()->name('content_nt')->class('mb-3'),
-            _DateTime()->name('date_nt')->default(now())->class('mb-12'),
+            _Textarea('translate.content')->name('content_nt')->class('mb-3')->required(),
+            _DateTime('translate.date')->name('date_nt')->default(now())->class('mb-12')->required(),
 
             _FlexBetween(
                 !$this->model->id ? null : 
@@ -42,5 +42,13 @@ class NoteForm extends Modal
                     _SubmitButton('notes.save')->class('flex-1')->closeModal()->refresh(NotesList::ID),
             )->class('gap-3')
         )->class('mx-2 mb-2');
+    }
+
+    public function rules()
+    {
+        return [
+            'content_nt' => 'required|string|max:255',
+            'date_nt' => 'required|date',
+        ];
     }
 }

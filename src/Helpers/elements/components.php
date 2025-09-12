@@ -2,6 +2,7 @@
 
 use Condoedge\Utils\Kompo\Elements\Collapsible;
 use Condoedge\Utils\Kompo\Elements\ResponsiveTabs;
+use Condoedge\Utils\Kompo\Elements\InternationalPhoneInput;
 
 if (!function_exists('_Collapsible')) {
     function _Collapsible() {
@@ -41,4 +42,11 @@ function _DateTextInput()
 function _Text()
 {
     return \Condoedge\Utils\Kompo\Elements\Text::form(...func_get_args());
+}
+
+if (!function_exists('_InternationalPhoneInput')) {
+    function _InternationalPhoneInput()
+    {
+        return InternationalPhoneInput::form(...func_get_args());
+    }
 }
