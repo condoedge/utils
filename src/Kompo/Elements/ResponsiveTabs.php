@@ -124,7 +124,7 @@ class ResponsiveTabs extends Rows
             ->placeholder($this->tabLabels[0])
             ->id('tabs-select-' . $this->uniqueId)
             ->name('tabs_select', false)
-            ->class("block {$this->breakpoint}:hidden  2xl:hidden without-x-icon whiteField")
+            ->class("block {$this->breakpoint}:hidden without-x-icon whiteField")
             ->attr([
                 'readonly' => 'readonly',
             ])
