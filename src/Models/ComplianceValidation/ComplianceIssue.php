@@ -38,7 +38,7 @@ class ComplianceIssue extends Model
         $query->where(function ($subQuery) use ($term) {
             $subQuery->where('rule_code', 'like', wildcardSpace($term))
                      ->orWhere('detail_message', 'like', wildcardSpace($term))
-                     ->orWhereHasMorph('validatable', fn($q) => $q->search($term));
+                     ->orWhereHas('validatable', fn($q) => $q->search($term));
         });
     }
 
