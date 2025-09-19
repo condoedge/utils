@@ -36,8 +36,6 @@ class FileForm extends Modal
 
 	public function rules()
 	{
-		return [
-			'files' => 'required',
-        ];
+		return FileModel::attachmentsRules('files');
 	}
 }
