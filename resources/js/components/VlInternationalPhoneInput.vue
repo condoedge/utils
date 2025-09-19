@@ -164,12 +164,19 @@ export default {
         // Formatted phone value for display
         formattedValue() {
             if (!this.phoneValue) return ''
-            
+
             try {
-                // Always use AsYouType for proper formatting
-                const asYouType = new AsYouType(this.selectedCountryCode)
-                const formatted = asYouType.input(this.phoneValue)
-                return formatted || this.phoneValue
+                // If phone value starts with the country code, show it formatted
+                if (this.phoneValue.startsWith('+')) {
+                    const asYouType = new AsYouType()
+                    const formatted = asYouType.input(this.phoneValue)
+                    return formatted || this.phoneValue
+                } else {
+                    // For national numbers, format with country context
+                    const asYouType = new AsYouType(this.selectedCountryCode)
+                    const formatted = asYouType.input(this.phoneValue)
+                    return formatted || this.phoneValue
+                }
             } catch (error) {
                 return this.phoneValue
             }
@@ -243,19 +250,28 @@ export default {
         },
         
         selectCountry(country) {
+            const previousCountryCode = this.selectedCountryCode;
+            const previousCountry = this.countries.find(c => c.code === previousCountryCode);
             this.selectedCountryCode = country.code
             this.isDropdownOpen = false
             this.searchTerm = ''
-            
+
+            // Get current and new dial codes
+            const previousDialCode = previousCountry ? previousCountry.dialCode : '';
+            const newDialCode = country.dialCode;
+
             // Check if current value is just a country code (like +54, +1, etc.)
-            const currentDialCode = `+${this.currentCountry.dialCode}`
-            const isOnlyCountryCode = this.phoneValue === currentDialCode || this.phoneValue === this.currentCountry.dialCode
-            
-            if (!this.phoneValue || isOnlyCountryCode) {
-                // Show new country code
-                this.phoneValue = `+${country.dialCode}`
-                this.component.value = this.phoneValue
-                
+            const currentDialCode = `+${previousDialCode}`
+            const isOnlyCountryCode = !this.phoneValue ||
+                                    this.phoneValue === currentDialCode ||
+                                    this.phoneValue === previousDialCode ||
+                                    this.phoneValue.replace(/\D/g, '') === previousDialCode
+
+            if (isOnlyCountryCode) {
+                // Set new country code and ensure component.value is complete
+                this.phoneValue = `+${newDialCode}`
+                this.component.value = `+${newDialCode}`
+
                 // Update input display immediately
                 this.$nextTick(() => {
                     if (this.$refs.phoneInput) {
@@ -263,10 +279,41 @@ export default {
                     }
                 })
             } else {
-                // Keep existing number but reformat with new country
-                this.reformatWithCountry(country.code)
+                // Extract national number and reformat with new country
+                let nationalNumber = this.phoneValue;
+                console.log(nationalNumber, previousDialCode);
+                // Remove previous country code if it exists
+                if (nationalNumber.startsWith(`+${previousDialCode}`)) {
+                    nationalNumber = nationalNumber.substring((`+${previousDialCode}`).length).trim();
+                } else if (nationalNumber.startsWith(previousDialCode)) {
+                    nationalNumber = nationalNumber.substring(previousDialCode.length).trim();
+                } else if (nationalNumber.startsWith('+')) {
+                    // Try to parse and extract national number
+                    try {
+                        const parsed = parsePhoneNumberFromString(nationalNumber);
+                        if (parsed && parsed.nationalNumber) {
+                            nationalNumber = parsed.nationalNumber;
+                        }
+                    } catch (error) {
+                        // Keep original if parsing fails
+                    }
+                }
+
+                // Set new phone value with new country code
+                this.phoneValue = `+${newDialCode}${nationalNumber}`;
+                this.component.value = this.phoneValue;
+
+                // Try to format properly
+                try {
+                    const phoneNumber = parsePhoneNumberFromString(this.phoneValue);
+                    if (phoneNumber && phoneNumber.isValid()) {
+                        this.component.value = phoneNumber.number;
+                    }
+                } catch (error) {
+                    // Keep current value if parsing fails
+                }
             }
-            
+
             // Focus back to phone input
             this.$nextTick(() => {
                 this.focusPhoneInput()
@@ -274,12 +321,21 @@ export default {
         },
         
         
-        reformatWithCountry(countryCode) {
+        reformatWithCountry(phoneValue, countryCode) {
             try {
-                const phoneNumber = parsePhoneNumberFromString(this.phoneValue, countryCode)
+                const phoneNumber = parsePhoneNumberFromString(phoneValue, countryCode)
                 if (phoneNumber && phoneNumber.isValid()) {
-                    this.phoneValue = phoneNumber.nationalNumber
+                    // Always keep the full international number in component.value
+                    this.phoneValue = phoneNumber.number
                     this.component.value = phoneNumber.number
+                } else {
+                    // Fallback: ensure we have at least the country code
+                    const country = this.countries.find(c => c.code === countryCode);
+                    if (country) {
+                        const cleanValue = phoneValue.replace(/\D/g, '');
+                        this.phoneValue = `+${country.dialCode}${cleanValue}`;
+                        this.component.value = this.phoneValue;
+                    }
                 }
             } catch (error) {
                 // Keep current value if parsing fails
@@ -346,15 +402,32 @@ export default {
                 return
             }
             
-            // Update internal state
-            this.phoneValue = cleanedValue
-            this.component.value = this.getE164Number(cleanedValue)
-            
+            this.updateInput(input, cleanedValue)
+        },
+
+        updateInput(input, cleanedValue = null) {
+            // Always ensure we have the country code in the phone value
+            const country = this.countries.find(c => c.code === this.selectedCountryCode);
+            let fullPhoneValue = cleanedValue;
+
+            if (cleanedValue && country) {
+                // If the cleaned value doesn't start with the country code, add it
+                if (!cleanedValue.startsWith(`+${country.dialCode}`) && !cleanedValue.startsWith(country.dialCode)) {
+                    fullPhoneValue = `+${country.dialCode}${cleanedValue.replace(/^\+/, '')}`;
+                } else if (cleanedValue.startsWith(country.dialCode) && !cleanedValue.startsWith(`+${country.dialCode}`)) {
+                    fullPhoneValue = `+${cleanedValue}`;
+                }
+            }
+
+            // Update internal state - phoneValue for display, component.value for the complete number
+            this.phoneValue = fullPhoneValue || cleanedValue
+            this.component.value = this.getE164Number(this.phoneValue)
+
             // Update display value with proper formatting
             this.$nextTick(() => {
                 const formatted = this.formattedValue
                 input.value = formatted
-                
+
                 // Maintain cursor position
                 const cursorPos = Math.min(input.selectionStart, formatted.length)
                 input.setSelectionRange(cursorPos, cursorPos)
@@ -445,14 +518,21 @@ export default {
             return digitsOnly.length <= 15
         },
         
-        getE164Number(nationalNumber) {
-            if (!nationalNumber) return ''
-            
+        getE164Number(phoneValue) {
+            if (!phoneValue) return ''
+
             try {
-                const phoneNumber = parsePhoneNumberFromString(nationalNumber, this.selectedCountryCode)
-                return phoneNumber ? phoneNumber.number : nationalNumber
+                // If it already looks like an international number, try to parse it as-is
+                if (phoneValue.startsWith('+')) {
+                    const phoneNumber = parsePhoneNumberFromString(phoneValue)
+                    return phoneNumber ? phoneNumber.number : phoneValue
+                }
+
+                // Otherwise, try to parse it with the selected country
+                const phoneNumber = parsePhoneNumberFromString(phoneValue, this.selectedCountryCode)
+                return phoneNumber ? phoneNumber.number : phoneValue
             } catch (error) {
-                return nationalNumber
+                return phoneValue
             }
         },
         
