@@ -31,7 +31,7 @@ class NameRule implements ValidationRule
             $fail(__('validation.invalid_length', ['attribute' => $attribute]));
         }
 
-        if (!preg_match('/^[A-Za-z ]{2,'.$this->maxLength.'}$/', $value)) {
+        if (!preg_match('/^[A-Za-z \-]{2,'.$this->maxLength.'}$/', $value)) {
             $fail(__('validation.invalid_format', ['attribute' => $attribute]));
         }
 
