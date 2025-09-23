@@ -341,9 +341,9 @@ if (!function_exists('mailProgressBar')) {
     {
     	$color = '#007EFF';
         $borderColor = '#EEF2F6';
+        $pct = !$goal ? 100 : intval($totalSales / $goal * 100);
         $totalSales = number_format($totalSales);
         $goal = number_format($goal);
-        $pct = !$goal ? 100 : intval($totalSales / $goal * 100);
 
         return '<div style="text-align:center; background-color: '.$borderColor.'; border-radius:1rem; padding: 16px 16px 16px 16px;">'.
             '<div style="font-weight:700;font-size:2.5rem;color:'.$color.';margin-bottom:0.5rem">$'.$totalSales.'</div>'.
