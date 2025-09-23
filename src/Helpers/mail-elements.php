@@ -336,14 +336,14 @@ if (!function_exists('mailSvg')) {
     }
 }
 
-if (!function_exists('mailCampaignProgressBar')) {
-    function mailCampaignProgressBar($campaign)
+if (!function_exists('mailProgressBar')) {
+    function mailProgressBar($totalSales = 0, $goal = 100)
     {
     	$color = '#007EFF';
         $borderColor = '#EEF2F6';
-        $totalSales = number_format($campaign->goal_sales);
-        $goal = number_format($campaign->goal);
-        $pct = intval($campaign->pct_goal);
+        $totalSales = number_format($totalSales);
+        $goal = number_format($goal);
+        $pct = !$goal ? 100 : intval($totalSales / $goal * 100);
 
         return '<div style="text-align:center; background-color: '.$borderColor.'; border-radius:1rem; padding: 16px 16px 16px 16px;">'.
             '<div style="font-weight:700;font-size:2.5rem;color:'.$color.';margin-bottom:0.5rem">$'.$totalSales.'</div>'.
@@ -353,5 +353,13 @@ if (!function_exists('mailCampaignProgressBar')) {
             	'<div>'.$pct.'%</div>'.
             '</div>'.
         '</div>';
+    }
+}
+
+
+if (!function_exists('mailCampaignProgressBar')) {
+    function mailCampaignProgressBar($campaign)
+    {
+        return mailProgressBar($campaign->goal_sales, $campaign->goal);
     }
 }
