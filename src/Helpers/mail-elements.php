@@ -337,10 +337,14 @@ if (!function_exists('mailSvg')) {
 }
 
 if (!function_exists('mailProgressBar')) {
-    function mailProgressBar($totalSales = 0, $goal = 100)
+    function mailProgressBar($totalSales, $goal)
     {
     	$color = '#007EFF';
         $borderColor = '#EEF2F6';
+
+        $goal = floatval($goal);
+        $totalSales = floatval($totalSales);
+
         $pct = !$goal ? 100 : intval($totalSales / $goal * 100);
         $totalSales = number_format($totalSales);
         $goal = number_format($goal);
