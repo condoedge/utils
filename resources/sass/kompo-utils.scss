@@ -34,6 +34,21 @@
   width: var(--select-width) !important;
 }
 
+/* DROPDOWN MACROS */
+.dropdown-over-modal {
+  --dropdown-translate-y: 0px;
+  --dropdown-translate-x: 0px;
+  --dropdown-width: 200px;
+}
+
+.dropdown-over-modal .vlDropdownMenu {
+  position: fixed;
+  left: auto !important;
+  width: auto !important;
+  top: 0px;
+  transform: translate(var(--dropdown-translate-x), var(--dropdown-translate-y)) !important;
+}
+
 // PANEL LOADING
 .vlPanelLoading {
   position: relative;
