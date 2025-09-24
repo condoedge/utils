@@ -3,6 +3,7 @@
 use Condoedge\Utils\Kompo\Elements\Collapsible;
 use Condoedge\Utils\Kompo\Elements\ResponsiveTabs;
 use Condoedge\Utils\Kompo\Elements\InternationalPhoneInput;
+use Condoedge\Utils\Kompo\Elements\PasswordInput;
 
 if (!function_exists('_Collapsible')) {
     function _Collapsible() {
@@ -48,5 +49,12 @@ if (!function_exists('_InternationalPhoneInput')) {
     function _InternationalPhoneInput()
     {
         return InternationalPhoneInput::form(...func_get_args());
+    }
+}
+
+if (!function_exists('_PasswordInput')) {
+    function _PasswordInput()
+    {
+        return PasswordInput::form(...func_get_args());
     }
 }
