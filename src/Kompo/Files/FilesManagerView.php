@@ -77,13 +77,12 @@ class FilesManagerView extends Table
             _Html($file->name),
             _Html(ucfirst($file->fileable_type ?: '-')),
 			$file->uploadedAt(),
-            !$canView ? _Html() : _Columns(
+            _FlexBetween(
                 _Link()->class('mt-1 -mr-2')->col('col-md-3')
                     ->icon('arrow-down')
-                    ->href($file->link)
-                    ->attr(['download' => $file->name]),
+                    ->href('files.download', ['id' => $file->id, 'type' => $file->getMorphClass()]),
                 _Delete($file)->col('col-md-3'),
-            )->class('px-2'),
+            )->class('px-2 gap-4'),
 		)->class('text-sm cursor-pointer')
 		->selfGet('getFileInfo', [
 			'id' => $file->id,

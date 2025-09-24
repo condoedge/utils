@@ -19,11 +19,18 @@ class FileInfo extends Form
                 $this->model->uploadedAt()->class('!text-sm !text-black'),
             )->class('gap-2'),
             $this->fileableInfo(),
-            !auth()->user()->can('viewFileOf', $this->model->fileable) ? null : _Button('files-edit-form')
-                ->selfGet('getFileForm', ['id' => $this->model->id])->inModal()
-                ->class('mt-4'),
+            // _Button('files-edit-form')
+            //     ->selfGet('getFileForm', ['id' => $this->model->id])->inModal()
+            //     ->class('mt-4'),
+
+            _Rows(
+                _Link('translate.files.download')->button()->class('mb-4')->balloon('translate.files.download')
+                    ->href('files.download', ['id' => $this->model->id, 'type' => $this->model->getMorphClass()]),
+                    
+                $this->model->file_type_enum?->getPreviewComponent($this->model)
+            )->class('mt-6'),
             // _Html(__('file.file-uploaded-by') . ': ' . $file->uploadedBy())->class('text-sm'),
-        )->class('pr-12 pl-6 py-4 min-w-[25%]');
+        )->class('p-4')->style('width: min(30vw, 500px);');
     }
 
     public function getFileForm($id)

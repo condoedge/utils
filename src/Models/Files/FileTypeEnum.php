@@ -2,6 +2,11 @@
 
 namespace Condoedge\Utils\Models\Files;
 
+use Condoedge\Utils\Kompo\Files\AudioPreview;
+use Condoedge\Utils\Kompo\Files\ImagePreview;
+use Condoedge\Utils\Kompo\Files\PdfPreview;
+use Condoedge\Utils\Kompo\Files\VideoPreview;
+
 enum FileTypeEnum: int
 {
     use \Condoedge\Utils\Models\Traits\EnumKompo;
@@ -61,6 +66,22 @@ enum FileTypeEnum: int
     public function isPreviewable()
     {
         return in_array($this, [self::IMAGE, self::PDF, self::AUDIO, self::VIDEO]);
+    }
+
+    public function getPreviewComponent($model)
+    {
+        $modelParams = [
+            'type' => $model->getMorphClass(),
+            'id' => $model->id,
+        ];
+        
+        return match ($this) {
+            self::IMAGE => new ImagePreview(null, $modelParams),
+            self::PDF => new PdfPreview(null, $modelParams),
+            self::AUDIO => new AudioPreview(null, $modelParams),
+            self::VIDEO => new VideoPreview(null, $modelParams),
+            default => null,
+        };
     }
 
     public function getPreviewButton($komponent, $model)
