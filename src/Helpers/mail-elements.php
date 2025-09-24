@@ -77,7 +77,7 @@ if (!function_exists('makeQrElement')) {
     function makeQrElement($element, $text = '')
     {
         return '
-            <div style="background-color: #fff; border-radius: 1rem; border-color: #f1f2f3; padding: 16px; text-align: center; width: max-content;">
+            <div style="background-color: #fff; border-radius: .675rem; border-color: #f1f2f3; padding: 16px; text-align: center; width: max-content;">
                 <div>' . $element . '</div>
                 <p style="font-size: 1rem; margin-top: 1rem; font-weight: 500; color: #000; text-align: center;">' . $text . '</p>
             </div>
@@ -253,7 +253,7 @@ if (!function_exists('mailValueBold')) {
 if (!function_exists('mailCard')) {
     function mailCard($innerHtml, $backgroundColor = "rgb(247 249 252)", $styles = "")
     {
-    	return '<div style="background: '. $backgroundColor .';padding:.9rem;border-radius: 1rem;'. $styles .'">'.$innerHtml.'</div>';
+    	return '<div style="background: '. $backgroundColor .';padding:.9rem;border-radius: .675rem;'. $styles .'">'.$innerHtml.'</div>';
     }
 }
 
@@ -267,7 +267,7 @@ if (!function_exists('mailTable')) {
 if (!function_exists('mailTableCard')) {
     function mailTableCard($innerHtml, $style = 'width: 100%', $borderColor = '#EEF2F6')
     {
-    	return '<table class="table" style="'.$style.'; background-color: '.$borderColor.'; border-radius:1rem; padding: 8px 8px 8px 8px;">'.$innerHtml.'</table>';
+    	return '<table class="table" style="'.$style.'; background-color: '.$borderColor.'; border-radius:.675rem; padding: 8px 8px 8px 8px;">'.$innerHtml.'</table>';
     }
 }
 
@@ -339,7 +339,7 @@ if (!function_exists('mailSvg')) {
 if (!function_exists('mailProgressBar')) {
     function mailProgressBar($totalSales, $goal)
     {
-    	$color = '#007EFF';
+    	$color = '#004890ff';
         $borderColor = '#EEF2F6';
 
         $goal = floatval($goal);
@@ -349,10 +349,10 @@ if (!function_exists('mailProgressBar')) {
         $totalSales = number_format($totalSales);
         $goal = number_format($goal);
 
-        return '<div style="text-align:center; background-color: '.$borderColor.'; border-radius:1rem; padding: 16px 16px 16px 16px;">'.
-            '<div style="font-weight:700;font-size:2.5rem;color:'.$color.';margin-bottom:0.5rem">$'.$totalSales.'</div>'.
+        return '<div style="text-align:center; background-color: '.$borderColor.'; border-radius:.675rem; padding: 8px 16px 16px 16px;">'.
+            '<div style="font-weight:600;font-size:2rem;color: black; margin-bottom:0.5rem">'.$totalSales.' $</div>'.
         	_ProgressBarHtml($pct, $color).
-            '<div style="display:flex;justify-content:space-between;font-size:0.85rem;font-weight:bold;margin-top:0.25rem">'.
+            '<div style="display:flex;justify-content:space-between;font-size:0.85rem;font-weight:semibold;margin-top:0.25rem">'.
             	'<div>$'.$totalSales.' / $'.$goal.'</div>'.
             	'<div>'.$pct.'%</div>'.
             '</div>'.
