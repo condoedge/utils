@@ -224,7 +224,7 @@ export default {
         document.addEventListener('click', this.handleClickOutside)
         
         // Set initial value
-        this.component.value = this.phoneValue
+        // this.component.value = this.phoneValue
         
         // Auto-detect country if no explicit country is set and no phone value exists
         if (!this.$_config('country') && !this.phoneValue) {
