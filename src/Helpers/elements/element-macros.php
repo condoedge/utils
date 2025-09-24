@@ -212,3 +212,11 @@ Img::macro('directSrc', function($src) {
 Element::macro('ajaxPayload', function($payload = []) {
     return $this->config(['ajaxPayload' => $payload]);
 });
+
+Layout::macro('fixChildrenSpinners', function () {
+    $id = $this->id ?? class_basename($this) . uniqid();
+
+    return $this->id($id)->onClick->run('() => {
+        $("#'.$id.'").find(".icon-spinner").addClass("hidden"); //remove loading spinner when the click is in the parent element
+    }');
+});
