@@ -25,6 +25,7 @@
 	"error.must-be-at-most": "Must be at most",
 	"error.years-old": "years old",
 	"files.browse-files": "Browse files",
+	"files.download": "Download",
 	"files.or": "or",
 	"files.with-values-max-files-size-is": "Max total size of files is :size Mb",
 	"files.your-files-exceed-max-size": "Your files exceed max size allowed",
