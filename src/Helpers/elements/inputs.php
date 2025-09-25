@@ -36,7 +36,7 @@ Dropdown::macro('dropdownOverModal', function ($id = null, $sumWidth = false, $h
 				let dHeight = dropdownListenerEl.height();
 
 				let style = dropdownListenerEl.attr("style") || "";
-				style += "--dropdown-translate-y:" + (dOffset.top + dHeight + $heightAdd) + "px !important;";
+				style += "--dropdown-translate-y:" + (dOffset.top + dHeight + ' . $heightAdd . ') + "px !important;";
 
 				const rightDistance = window.innerWidth - (dOffset.left + ' . ($sumWidth ? 'dWidth' : '20') . ');
 				style += "--dropdown-translate-x: -" + Math.abs(rightDistance) + "px !important;";
