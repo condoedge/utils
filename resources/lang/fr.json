@@ -25,6 +25,7 @@
 	"error.must-be-at-most": "Doit être au plus",
 	"error.years-old": "ans",
 	"files.browse-files": "Parcourir les fichiers",
+	"files.download": "Télécharger",
 	"files.or": "ou",
 	"files.with-values-max-files-size-is": "Taille totale maximale des fichiers est de :size Mo",
 	"files.your-files-exceed-max-size": "Vos fichiers dépassent la taille maximale autorisée",

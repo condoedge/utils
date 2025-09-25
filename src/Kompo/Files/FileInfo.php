@@ -24,7 +24,7 @@ class FileInfo extends Form
             //     ->class('mt-4'),
 
             _Rows(
-                _Link('translate.files.download')->button()->class('mb-4')->balloon('translate.files.download')
+                _Link('files.download')->button()->class('mb-4')->balloon('files.download')
                     ->href('files.download', ['id' => $this->model->id, 'type' => $this->model->getMorphClass()]),
                     
                 $this->model->file_type_enum?->getPreviewComponent($this->model)
