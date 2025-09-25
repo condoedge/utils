@@ -23,7 +23,7 @@ Select::macro('overModal', function ($id = null) {
 		}'));
 });
 
-Dropdown::macro('dropdownOverModal', function ($id = null) {
+Dropdown::macro('dropdownOverModal', function ($id = null, $sumWidth = false, $heightAdd = 0) {
 	$id = $id ?? (class_basename($this) . \Str::random(5) . time());
 
 	$this->elements = array_merge($this->elements ?? [], [
@@ -36,9 +36,9 @@ Dropdown::macro('dropdownOverModal', function ($id = null) {
 				let dHeight = dropdownListenerEl.height();
 
 				let style = dropdownListenerEl.attr("style") || "";
-				style += "--dropdown-translate-y:" + (dOffset.top + dHeight) + "px !important;";
+				style += "--dropdown-translate-y:" + (dOffset.top + dHeight + $heightAdd) + "px !important;";
 
-				const rightDistance = window.innerWidth - (dOffset.left + 20);
+				const rightDistance = window.innerWidth - (dOffset.left + ' . ($sumWidth ? 'dWidth' : '20') . ');
 				style += "--dropdown-translate-x: -" + Math.abs(rightDistance) + "px !important;";
 
 				dropdownListenerEl.attr("style", style);
