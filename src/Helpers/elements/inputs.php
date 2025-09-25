@@ -38,13 +38,15 @@ Dropdown::macro('dropdownOverModal', function ($id = null) {
 				let style = dropdownListenerEl.attr("style") || "";
 				style += "--dropdown-translate-y:" + (dOffset.top + dHeight) + "px !important;";
 
-				const rightDistance = window.innerWidth - (dOffset.left + dWidth);
-				style += "--dropdown-translate-x:" + (rightDistance) + "px !important;";
+				const rightDistance = window.innerWidth - (dOffset.left + 20);
+				style += "--dropdown-translate-x: -" + Math.abs(rightDistance) + "px !important;";
 
 				dropdownListenerEl.attr("style", style);
 			}
 
 			dropdownListenerEl.addClass("dropdown-over-modal");
+
+			setTranslate();
 
 			dropdownListenerEl.on("mouseenter", function() {
 				setTranslate();

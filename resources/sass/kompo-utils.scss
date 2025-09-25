@@ -43,9 +43,11 @@
 
 .dropdown-over-modal .vlDropdownMenu {
   position: fixed;
-  left: auto !important;
+  right: 0 !important;
   width: auto !important;
   top: 0px;
+  left: unset !important;
+  transform-origin: unset !important;
   transform: translate(var(--dropdown-translate-x), var(--dropdown-translate-y)) !important;
 }
 
