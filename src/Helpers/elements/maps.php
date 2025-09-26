@@ -72,12 +72,12 @@ if (!function_exists('loadFormattedLabel')) {
         if (!$address) {
             return;
         }
-        
-        $value = collect(config('kompo.places_attributes'))->map(fn ($key) => $address->{$key});
+
+        $value = collect(config('kompo.places_attributes'))->mapWithKeys(fn ($col, $key) => [$col => $address->{$col}]);
 
         $address->setRawAttributes(array_filter([
-            'address_label' => $address->getAddressInline(),
             ...$value->all(),
+            'address_label' => $address->getAddressInline(),
             // ...$address->getAttributes()
         ]));
 
