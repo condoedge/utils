@@ -6,7 +6,9 @@ use Kompo\Rows;
 use Kompo\Select;
 
 Select::macro('overModal', function ($id = null) {
-	return $this->id($id ?? $this->label)
+	$id = $id ?? (class_basename($this) . \Str::random(5) . time());
+
+	return $this->id($id)
 		->class('select-over-modal')
 		->onFocus(fn($e) => $e->run('() => {
 			let input =  $("#' . $id . '").closest(".vlTaggableInput");

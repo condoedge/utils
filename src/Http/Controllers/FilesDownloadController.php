@@ -16,7 +16,7 @@ class FilesDownloadController extends Controller
 
         $disk = $model->disk ?? 'local';
 
-        if (!$model->viewableForUser()) {
+        if (method_exists($model, 'viewableForUser') && !$model->viewableForUser()) {
             abort(403, __('error.you-cant-download-this-file'));
         }
 

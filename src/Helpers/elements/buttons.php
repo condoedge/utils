@@ -149,7 +149,7 @@ if (!function_exists('_TabLink')) {
 if (!function_exists('_BackLink')) {
 	function _BackLink($label = '')
 	{
-		return _Link($label)->icon(_Sax('arrow-left-1'))->class('text-gray-400');
+		return _Link($label)->icon(_Sax('arrow-left-1'))->class('text-gray-500');
 	}
 }
 
@@ -158,7 +158,7 @@ if (!function_exists('_BackButton')) {
 	{
 		$route = !$route ? null : route($route, $params);
 	
-		return _Link($label)->icon('arrow-left')->class('w-min')->run('() => {
+		return _BackLink($label)->icon('arrow-left')->class('w-min')->run('() => {
 			if (window.history.length > 1 && window.document.referrer !== window.location.href && window.document.referrer.includes(window.location.origin)) {
 				window.history.back();
 			} else {
