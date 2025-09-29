@@ -2,9 +2,9 @@
 
 namespace Condoedge\Utils\Kompo\Elements;
 
-use Kompo\Input;
+use Kompo\Password;
 
-class PasswordInput extends Input
+class PasswordInput extends Password
 {
     public $vueComponent = 'PasswordInput'; // Resolves to VlPasswordInput
 
