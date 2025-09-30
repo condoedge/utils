@@ -2,13 +2,13 @@
 
 namespace Condoedge\Utils\Models\Traits;
 
-use App\Models\User;
+use Condoedge\Utils\Facades\UserModel;
 
 trait HasAddedModifiedByTrait
 {
     public static function userClass()
     {
-        return config('kompo-auth.user-model', User::class);
+        return config('kompo-auth.user-model', UserModel::getClass());
     }
 
     public static function bootHasAddedModifiedByTrait()
