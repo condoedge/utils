@@ -3,7 +3,11 @@
 if (!function_exists("_CheckAllItems")) {
     function _CheckAllItems()
     {
-        return _Checkbox()->class('pl-3 pt-4 mb-0')->id('checkall-checkbox')->emit('checkAllItems')->run('checkAllCheckboxes');
+        $id = 'checkall-checkbox' . uniqid();
+        
+        return _Checkbox()->class('pl-3 pt-4 mb-0')->id($id)->emit('checkAllItems')->run('() => {checkAllCheckboxes("' . $id . '");}')->attr([
+            'onclick' => 'event.stopPropagation()',
+        ]);
     }
 }
 
