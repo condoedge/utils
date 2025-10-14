@@ -4,6 +4,7 @@ namespace Condoedge\Utils\Models\ContactInfo\Phone;
 
 use Condoedge\Utils\Models\Model;
 use Illuminate\Support\Facades\Schema;
+use Propaganistas\LaravelPhone\PhoneNumber;
 
 class Phone extends Model
 {
@@ -72,7 +73,25 @@ class Phone extends Model
     /* CALCULATED FIELDS */
     public function getFullLabelWithExtension()
     {
-        return $this->getPhoneNumber() . ($this->extension_ph ? (' - ext:' . $this->extension_ph) : '');
+        return $this->getFormattedPhoneNumber() . ($this->extension_ph ? (' - ext:' . $this->extension_ph) : '');
+    }
+
+    public function getFormattedPhoneNumber()
+    {
+        try {
+            $defaultCountry = config('kompo-utils.default-country-phone', 'CA');
+
+            try {
+                 $phone = new PhoneNumber($this->getPhoneNumber()); // if the country code is included
+                 $phone->formatNational(); // Format to check if it's valid
+            } catch (\Propaganistas\LaravelPhone\Exceptions\NumberParseException $e) {
+                $phone = new PhoneNumber($this->getPhoneNumber(), $defaultCountry); // force default country
+            }
+
+            return $phone->formatNational(); // (514) 702-8066
+        } catch (\Exception $e) {
+           return $this->getPhoneNumber();
+        }
     }
 
     public function getPhoneNumber()
