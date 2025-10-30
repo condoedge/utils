@@ -38,12 +38,14 @@ class HasIntroAnimation extends ComponentPlugin
         if (!$skipIntro && !componentIntroViewed($this->component)) {
             auth()->user()->saveSetting(componentIntroViewedKey($this->component), true);
 
-        	$introJs = $this->replaceContentWithVariables($this->translateContent(file_get_contents($filePath)));
+            $translatedContent = $this->translateContent(file_get_contents($filePath));
+            $replacedContent = $this->replaceContentWithVariables($translatedContent);
+        	$introJs = $this->managePhpInjections($replacedContent);
 
             return $introJs;
         }
 
-        return '(9';
+        return '';
     }
 
     protected function getPrefixFile()
@@ -89,5 +91,97 @@ class HasIntroAnimation extends ComponentPlugin
             'user_last_name' => explode(' ', auth()->user()?->name ?: '')[1] ?? '',
             'user_name' => auth()->user()?->name ?: '',
         ];
+    }
+
+    public function managePhpInjections($content)
+    {
+        // Handle condition blocks first (they remove entire blocks)
+        $content = $this->processConditionalBlocks($content);
+
+        // Clean up comma issues after block removal
+        $content = $this->cleanupCommas($content);
+    
+        // Then handle other simple injections
+        $content = $this->processSimpleInjections($content);
+        
+        return $content;
+    }
+
+    private function processConditionalBlocks($content)
+    {
+        // Match complete blocks that contain @condition comments
+        $pattern = '/\{[^{}]*?\/\*\s*@condition\s*:\s*([^*]*?)\*\/[^{}]*?\}/s';
+        
+        return preg_replace_callback($pattern, function($matches) {
+            $condition = trim($matches[1]);
+            $fullBlock = $matches[0];
+            
+            // Evaluate condition
+            $shouldKeep = $this->evaluateCondition($condition);
+            
+            if ($shouldKeep) {
+                // Remove only the comment, keep the block
+                return preg_replace('/\/\*\s*@condition\s*:[^*]*?\*\//', '', $fullBlock);
+            } else {
+                // Remove entire block
+                return '';
+            }
+        }, $content);
+    }
+
+    private function processSimpleInjections($content)
+    {
+        // Handle other injection types that don't remove blocks
+        $pattern = '/\/\*\s*@([a-zA-Z]+)\s*:\s*([^*]*?)\*\//';
+        
+        return preg_replace_callback($pattern, function($matches) {
+            $type = $matches[1];
+            $code = trim($matches[2]);
+            $fullMatch = $matches[0];
+            
+            $method = 'manage' . ucfirst($type);
+            
+            if ($type === 'condition') {
+                // Already handled in processConditionalBlocks
+                return $fullMatch;
+            }
+            
+            if (method_exists($this, $method)) {
+                return $this->$method($code, $fullMatch);
+            }
+            
+            if (app()->has($method)) {
+                return app()->get($method)($code, $fullMatch);
+            }
+            
+            // Unknown injection type, remove the comment
+            return '';
+        }, $content);
+    }
+
+    private function evaluateCondition($condition)
+    {
+        try {
+            $result = false;
+            eval('$result = ' . $condition . ';');
+            return (bool) $result;
+        } catch (Exception $e) {
+            \Log::warning("Error evaluating condition: {$condition}. Error: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    private function cleanupCommas($content)
+    {
+        // Remove double commas
+        $content = preg_replace('/,\s*,/', ',', $content);
+        
+        // Remove comma before closing bracket/brace
+        $content = preg_replace('/,\s*(\]|\})/', '$1', $content);
+        
+        // Remove comma after opening bracket/brace
+        $content = preg_replace('/(\[|\{)\s*,/', '$1', $content);
+        
+        return $content;
     }
 }

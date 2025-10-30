@@ -19,6 +19,50 @@ trait HasModelPlugins
         });
     }
 
+    public function newCollection(array $models = [])
+    {
+        foreach (static::getPlugins() as $plugin) {
+            $pluginInstance = is_object($plugin) ? $plugin : new $plugin($this);
+            if (method_exists($pluginInstance, 'newCollection')) {
+                $value = $pluginInstance->newCollection($this, $models);
+
+                if ($value !== false) {
+                    return $value;
+                }
+            }
+        }
+
+        return parent::newCollection($models);
+    }
+
+    public function getAttributes()
+    {
+        $attributes = parent::getAttributes();
+
+        foreach ($this->getPlugins() as $plugin) {
+            $pluginInstance = is_object($plugin) ? $plugin : new $plugin($this);
+            if (method_exists($pluginInstance, 'getAttributes')) {
+                $attributes = $pluginInstance->getAttributes($this, $attributes);
+            }
+        }
+
+        return $attributes;
+    }
+
+    public function getAttribute($key)
+    {
+        $value = parent::getAttribute($key);
+
+        foreach ($this->getPlugins() as $plugin) {
+            $pluginInstance = is_object($plugin) ? $plugin : new $plugin($this);
+            if (method_exists($pluginInstance, 'getAttribute')) {
+                $value = $pluginInstance->getAttribute($this, $key, $value);
+            }
+        }
+
+        return $value;
+    }
+
     protected function getRelationshipFromMethod($method)
     {
         foreach ($this->getPlugins() as $plugin) {
