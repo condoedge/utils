@@ -26,6 +26,7 @@ class MissingTranslationsTable extends WhiteTable
     {
         return [
             _Th('translate.translation-key'),
+            _Th('translate.package'),
             _Th('translate.ignore')->class('text-right w-6'),
             _Th('translate.fixed')->class('text-right w-6'),
         ];
@@ -35,6 +36,8 @@ class MissingTranslationsTable extends WhiteTable
     {
         return _TableRow(
             _Html($missingTranslation->translation_key),
+
+            _Html($missingTranslation->package ?? '-'),
 
             _Checkbox()->name('ignored_at')->value($missingTranslation->ignored_at ? 1 : 0)
                 ->class('!mb-0 mx-auto')

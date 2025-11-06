@@ -23,12 +23,34 @@ class TrackingTranslator extends Translator
 
         if ($translation === $key && is_string($key) && preg_match('/^[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)$/', $key)) {
             try {
-                MissingTranslation::upsertMissingTranslation($key);
+                MissingTranslation::upsertMissingTranslation($key, $this->getPackage());
             } catch (\Exception $e) {}
  
             return $translation;
         }
         
         return $translation;
+    }
+
+    protected function getPackage()
+    {
+        $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 10);
+        $backtrace = array_slice($backtrace, 2); // Skip first two frames (this method and get method)
+
+        foreach ($backtrace as $trace) {
+            $class = $trace['class'] ?? null;
+            $function = $trace['function'] ?? null;
+            $file = $trace['file'] ?? null;
+
+            if ($class && str_starts_with($class, 'Condoedge\\') || (str_starts_with($class, 'Kompo\\Auth'))) {
+                return $class;
+            }
+
+            if ($function && preg_match('/^_[A-Z]/', $function) && $file) {
+                return $file;
+            }
+        }
+        
+        return null;
     }
 }
