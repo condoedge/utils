@@ -22,9 +22,10 @@ class TrackingTranslator extends Translator
         $translation = parent::get($key, $replace, $locale, $fallback);
 
         if ($translation === $key && is_string($key) && preg_match('/^[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)$/', $key)) {
-            Log::warning("MISSING TRANSLATION KEY: $key");
-            MissingTranslation::upsertMissingTranslation($key);
-                
+            try {
+                MissingTranslation::upsertMissingTranslation($key);
+            } catch (\Exception $e) {}
+ 
             return $translation;
         }
         
