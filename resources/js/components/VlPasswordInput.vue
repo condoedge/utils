@@ -1,5 +1,5 @@
 <template>
-    <vl-form-field v-bind="$_wrapperAttributes" class="[&>.vlInputWrapper]:!bg-transparent [&>.vlInputWrapper]:!border-none">
+    <vl-form-field v-bind="$_wrapperAttributes">
         <div :class="inputGroupClass">
             <!-- Toggle button on the left -->
             <button
@@ -79,12 +79,7 @@ export default {
                 ...this.$_defaultFieldAttributes,
                 ...this.$_defaultInputAttributes,
                 autocomplete: 'current-password',
-                placeholder: this.placeholder,
             }
-        },
-
-        placeholder() {
-            return this.$_config('placeholder') || ''
         },
 
         showToggle() {
@@ -229,9 +224,6 @@ export default {
     align-items: stretch;
     border-radius: 0.5rem;
     position: relative;
-
-    background-color: var(--form-control-bg);
-    border: var(--form-control-border);
 }
 
 .toggle-button {

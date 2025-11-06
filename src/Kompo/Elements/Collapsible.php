@@ -29,7 +29,9 @@ class Collapsible extends Rows
 
         if ($this->config('expandBasedInLinks')) {
             $this->config([
-                'links' => $this->getLinksFromElements(cascade: true)->implode(','),
+                'links' => collect($this->elements)->map(function ($item) {
+                    return $item->href ?? null;
+                })->filter()->implode(','),
             ]);
         }
     }
@@ -58,7 +60,7 @@ class Collapsible extends Rows
     public function expandedClass(string $expandedClass)
     {
         return $this->config([
-            'expandedClass' => $expandedClass . ' VlExpanded',
+            'expandedClass' => $expandedClass,
         ]);
     }
 
@@ -76,34 +78,24 @@ class Collapsible extends Rows
         ]);
     }
 
+    public function expandedByDefault($expanded = true)
+    {
+        return $this->config([
+            'expandedByDefault' => $expanded,
+        ]);
+    }
+
+    public function expandByDefaultDelay($delayInMs)
+    {
+        return $this->config([
+            'expandByDefaultDelay' => $delayInMs,
+        ]);
+    }
+
     public function withIcon(string $icon, string $classes = '') {
         return $this->config([
             'iconT' => IconGenerator::toHtml($icon, $classes),
         ]);
-    }
-
-    protected function getLinksFromElements($el = null, $cascade = true)
-    {
-        $el = $el ?: $this;
-
-        $links = collect();
-
-        foreach ($el->elements as $item) {
-            $validLink = isset($item->href) && $item->href != 'javascript:void(0)';
-
-            if (!$validLink && isset($item->elements) && $cascade) {
-
-                foreach ($item->elements as $subItem) {
-                    $links = $links->merge($this->getLinksFromElements($subItem, $cascade));
-                }
-
-                continue;
-            }
-
-            if ($validLink) $links->push($item->href ?? null);
-        }
-
-        return $links->filter();
     }
 
     protected function titleEl($titleLabel)

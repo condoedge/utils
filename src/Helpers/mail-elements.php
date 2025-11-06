@@ -86,11 +86,11 @@ if (!function_exists('makeQrElement')) {
 }
 
 if (!function_exists('getCenteredGrid')) {
-    function getCenteredGrid($elements, $bg = '#003AB3', $tableExtraStyles = "", $tdExtraStyle = "", $spacing = '20px')
+    function getCenteredGrid($elements, $bg = '#003AB3', $tableExtraStyles = "", $tdExtraStyle = "", $spacing = '20px', $chunks = 2)
     {
         $bg = $bg ?: '#003AB3';
 
-        $chunks = array_chunk($elements, 2);
+        $chunks = array_chunk($elements, $chunks);
 
         $rowsHtml = '';
         foreach ($chunks as $key => $chunk) {

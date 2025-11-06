@@ -12,8 +12,14 @@ class DebugReload extends ComponentPlugin
             return;
         }
 
+        try {
+            $iconEl = _Sax('refresh');
+        } catch (\Exception $e) {
+            $iconEl = null;
+        }
+
         $this->component->elements = array_merge($this->component->elements, [
-            _Link()->icon(_Sax('refresh'))->refresh()->class('absolute top-6 right-6')
+            _Link(!$iconEl ? 'refresh' : null)->icon($iconEl)->refresh()->class('absolute top-6 right-6')
         ]);
 
         $this->prependComponentProperty('class', ' relative ');

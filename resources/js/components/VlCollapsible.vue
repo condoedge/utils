@@ -29,6 +29,13 @@ export default {
             expanded: false,
         }
     },
+    created() {
+        if (this.$_config('expandedByDefault')) {
+            setTimeout(() => {
+                this.expanded = true;
+            }, this.$_config('expandByDefaultDelay') || 0);
+        }
+    },
     mounted() {
         setTimeout(() => {
             if (this.$_config('expandBasedInLinks') && this.links.some(link => window.location.origin + window.location.pathname == link)) {

@@ -6,7 +6,7 @@
             v-bind="$_attributes"
             v-html="content"
         />
-        <button :style="buttonStyle" :class="buttonClass" v-if="showMoreBtn" @click.stop="() => showingMore = !showingMore">{{showingMore ? showLessText : showMoreText}}</button>
+        <button type="button" :style="buttonStyle" :class="buttonClass" v-if="showMoreBtn" @click.stop="toggleShowingMore">{{showingMore ? showLessText : showMoreText}}</button>
    </div>
 </template>
 
@@ -15,6 +15,11 @@ import Other from 'vue-kompo/js/form/mixins/Other'
 
 export default {
     mixins: [Other],
+    methods: {
+        toggleShowingMore() {
+            this.showingMore = !this.showingMore;
+        }
+    },
     computed: {
         content() {
             const originalContent = this.$_config('content');
@@ -35,7 +40,7 @@ export default {
             return content;
         },
         showMoreBtn() {
-            return (this.showMoreText || this.showLessText) && (this.maxLines != null || this.maxChars != null) &&
+            return (this.maxLines != null || this.maxChars != null) && 
                 (this.$_config('content').length != this.content.length || this.showingMore);
         }
     },

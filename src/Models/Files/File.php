@@ -135,6 +135,10 @@ class File extends Model implements Searchable
         return $this->visibility == FileVisibilityEnum::PUBLIC || ($this->visibility == FileVisibilityEnum::PRIVATE && $this->user_id == auth()->id());
     }
 
+    public function isUploadedByUser($user)
+    {
+        return $this->added_by == $user->id;
+    }
 
     /* ACTIONS */
     public function delete()
@@ -163,11 +167,12 @@ class File extends Model implements Searchable
         return $rawCaseQuery;
     }
 
-    public static function uploadMultipleFiles($files, $fileableType = null, $fileableId = null, $tags = [])
+    public static function uploadMultipleFiles($files, $fileableType = null, $fileableId = null, $tags = [], $disk = 'public', $visibility = 'public')
     {
         $fileHandler = new FileHandler();
 
-        $fileHandler->setDisk('public'); // TODO: make this configurable
+        $fileHandler->setDisk($disk);
+        $fileHandler->visibility = $visibility;
 
         collect($files)->map(function ($uploadedFile) use ($fileHandler, $fileableId, $fileableType, $tags) {
 
