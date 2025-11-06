@@ -32,6 +32,7 @@ use Condoedge\Utils\Services\Maps\GeocodioService;
 use Condoedge\Utils\Services\Maps\GoogleMapsService;
 use Condoedge\Utils\Services\Maps\NominatimService;
 use Illuminate\Support\Facades\Event;
+use Condoedge\Utils\Command\MissingTranslationAnalyzerCommand;
 
 class CondoedgeUtilsServiceProvider extends ServiceProvider
 {
