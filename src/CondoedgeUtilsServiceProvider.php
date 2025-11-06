@@ -77,6 +77,11 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
 
         // This will log the missing translation keys in the log file
         app('translator')->handleMissingKeysUsing(function ($key) {
+
+            if (in_array($key, config('logging.ignored_translation_keys'))) {
+                return;
+            }
+
             $hasTranslatableSyntax = preg_match('/^([a-zA-Z]*\.[a-zA-Z]*)+$/', $key);
 
             if ($hasTranslatableSyntax) {
