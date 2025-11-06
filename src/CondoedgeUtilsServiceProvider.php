@@ -2,6 +2,7 @@
 
 namespace Condoedge\Utils;
 
+use Condoedge\Utils\Command\SendEmailForMissingTranslationsCommand;
 use Condoedge\Utils\Facades\FileModel;
 use Condoedge\Utils\Kompo\Common\Form;
 use Illuminate\Support\Facades\File;
@@ -243,6 +244,7 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
                 RunComplianceValidationCommand::class,
                 FixIncompleteAddressesCommand::class,
                 MissingTranslationAnalyzerCommand::class,
+                SendEmailForMissingTranslationsCommand::class,
             ]);
         }
     }
@@ -251,6 +253,8 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
     {
         $this->app->booted(function () {
             $schedule = app(\Illuminate\Console\Scheduling\Schedule::class);
+
+            $schedule->command('app:send-missing-translations-email')->daily();
 
             // Option 1: Frequency-based scheduling (RECOMMENDED)
             // $schedule->command('compliance:run-validation --frequency=daily')->dailyAt('02:00');

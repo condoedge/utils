@@ -24,4 +24,9 @@ class MissingTranslation extends Model
             return $translation;
         });
     }
+
+    public function scopeUnresolved($query)
+    {
+        return $query->whereNull('fixed_at')->whereNull('ignored_at');
+    }
 }
