@@ -27,6 +27,7 @@
     "scripts": {
         "post-autoload-dump": [
             "@php artisan vendor:publish --tag=utils-assets",
+            "@npm install",
             "@php scripts/add-js-loader.php"
         ]
     },

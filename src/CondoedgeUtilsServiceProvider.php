@@ -4,7 +4,6 @@ namespace Condoedge\Utils;
 
 use Condoedge\Utils\Facades\FileModel;
 use Condoedge\Utils\Kompo\Common\Form;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Route;
 use Condoedge\Utils\Kompo\Common\Modal;
@@ -75,15 +74,6 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
 
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'kompo-utils');
 
-        // This will log the missing translation keys in the log file
-        app('translator')->handleMissingKeysUsing(function ($key) {
-            $hasTranslatableSyntax = preg_match('/^([a-zA-Z]*\.[a-zA-Z]*)+$/', $key);
-
-            if ($hasTranslatableSyntax) {
-                Log::warning("MISSING TRANSLATION KEY: $key");
-            }
-        });
-
         $this->publishes([
             __DIR__ . '/../resources/js' => base_path('resources/js/utils'),
         ], 'utils-assets');
@@ -123,6 +113,17 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
      */
     public function register()
     {
+        // Extend the translator to track missing translations
+        $this->app->extend('translator', function ($translator, $app) {
+            $loader = $translator->getLoader();
+            $locale = $translator->getLocale();
+
+            $trackingTranslator = new \Condoedge\Utils\Services\Translation\TrackingTranslator($loader, $locale);
+            $trackingTranslator->setFallback($translator->getFallback());
+            
+            return $trackingTranslator;
+        });
+        
         $this->booted(function () {
             \Route::middleware('web')->group(__DIR__.'/../routes/files.php');
             \Route::middleware('web')->group(__DIR__.'/../routes/utils.php');
@@ -240,6 +241,7 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
             $this->commands([
                 RunComplianceValidationCommand::class,
                 FixIncompleteAddressesCommand::class,
+                MissingTranslationAnalyzerCommand::class,
             ]);
         }
     }
