@@ -137,15 +137,51 @@ class MissingTranslationAnalyzerCommand extends Command
     
     private function extractAllTranslationKeys()
     {
+        $keys = [];
+        $this->keyFileMap = [];
+
+        // Scan main project files
+        $this->info("Scanning project files...");
+        $this->scanDirectory(base_path(), $keys, [
+            'vendor', 'node_modules', 'storage', 'bootstrap/cache'
+        ]);
+
+        // Scan vendor packages (condoedge/*, kompo/*)
+        $vendorPaths = [
+            'vendor/condoedge',
+            'vendor/kompo'
+        ];
+
+        foreach ($vendorPaths as $vendorPath) {
+            $fullPath = base_path($vendorPath);
+            
+            if (!is_dir($fullPath)) {
+                continue;
+            }
+
+            $packages = glob($fullPath . '/*', GLOB_ONLYDIR);
+            
+            foreach ($packages as $package) {
+                $packageName = basename(dirname($package)) . '/' . basename($package);
+                $this->info("Scanning package: {$packageName}");
+                
+                // Don't exclude vendor within these specific packages
+                $this->scanDirectory($package, $keys, [
+                    'node_modules', 'tests', 'Test'
+                ]);
+            }
+        }
+
+        return array_unique($keys);
+    }
+
+    private function scanDirectory($baseDir, &$keys, $excludeDirs = [])
+    {
         $finder = new Finder();
-        $files = $finder->files()
-            ->in(base_path())
+        $finderInstance = $finder->files()
+            ->in($baseDir)
             ->name('*.php')
             ->name('*.blade.php')
-            ->exclude('vendor')
-            ->exclude('node_modules')
-            ->exclude('storage')
-            ->exclude('bootstrap/cache')
             ->notName('*.lock')
             ->notName('*.min.js')
             ->notName('*.min.css')
@@ -157,12 +193,17 @@ class MissingTranslationAnalyzerCommand extends Command
             ->notPath('*/_ide_helper*')
             ->notPath('*/config/cache/*')
             ->notPath('*/lang/*')
-            ->notPath('*/resources/lang/*');
+            ->notPath('*/resources/lang/*')
+            ->notPath('*/Command/*')
+            ->notPath('*/Commands/*')
+            ->notPath('*/Console/*');
 
-        $keys = [];
-        $this->keyFileMap = []; // Store key to file mappings
+        // Exclude specified directories
+        foreach ($excludeDirs as $dir) {
+            $finderInstance->exclude($dir);
+        }
 
-        foreach ($files as $file) {
+        foreach ($finderInstance as $file) {
             // Skip files that shouldn't contain translations
             if ($this->shouldSkipFile($file->getFilename(), $file->getRealPath())) {
                 continue;
@@ -179,15 +220,17 @@ class MissingTranslationAnalyzerCommand extends Command
                 if (!isset($this->keyFileMap[$key])) {
                     $this->keyFileMap[$key] = [];
                 }
+                
+                // Normalize path separators to forward slashes
+                $relativePath = str_replace('\\', '/', str_replace(base_path() . DIRECTORY_SEPARATOR, '', $file->getRealPath()));
+                
                 $this->keyFileMap[$key][] = [
-                    'file' => str_replace(base_path() . DIRECTORY_SEPARATOR, '', $file->getRealPath()),
+                    'file' => $relativePath,
                     'line' => $keyData['line'],
                     'context' => $keyData['context']
                 ];
             }
         }
-
-        return array_unique($keys);
     }
 
     private function indexKeys($keys)
@@ -220,11 +263,35 @@ class MissingTranslationAnalyzerCommand extends Command
 
             foreach ($keys as $key) {
                 if (!$this->hasTranslation($key, $locale)) {
+                    $locations = $this->keyFileMap[$key] ?? [];
+                    
                     $missingData = [
                         'key' => $key,
-                        'locations' => $this->keyFileMap[$key] ?? []
+                        'locations' => $locations
                     ];
                     $missing[$locale][] = $missingData;
+                    
+                    // Save to MissingTranslation table with file locations
+                    try {
+                        $bestLocation = $this->findBestLocation($locations);
+                        
+                        $missingTranslation = \Condoedge\Utils\Models\MissingTranslation::upsertMissingTranslation($key);
+                        
+                        if ($missingTranslation && $bestLocation) {
+                            // Extract package name from file path
+                            $file = $bestLocation['file'];
+                            $package = $this->extractPackageFromPath($file);
+                            
+                            // Update with file and package info
+                            $missingTranslation->update([
+                                'file' => $file,
+                                'package' => $package,
+                                'line' => $bestLocation['line'] ?? null,
+                            ]);
+                        }
+                    } catch (\Exception $e) {
+                        // Silently continue if database save fails
+                    }
                 }
             }
         }
@@ -240,6 +307,74 @@ class MissingTranslationAnalyzerCommand extends Command
                 $this->info("You can edit the file: " . storage_path('app/translation_exclude_keys.json'));
             }
         }
+    }
+
+    private function findBestLocation($locations)
+    {
+        if (empty($locations)) {
+            return null;
+        }
+        
+        // Priority order:
+        // 1. Files from app/ or resources/
+        // 2. Files from vendor packages that are NOT commands
+        // 3. Any other file
+        
+        $prioritized = [];
+        $nonCommand = [];
+        $fallback = [];
+        
+        foreach ($locations as $location) {
+            $file = $location['file'];
+            
+            // Skip command files
+            if (strpos($file, '/Command/') !== false || 
+                strpos($file, '/Commands/') !== false || 
+                strpos($file, '/Console/') !== false) {
+                $fallback[] = $location;
+                continue;
+            }
+            
+            // Prioritize app and resources
+            if (str_starts_with($file, 'app/') || str_starts_with($file, 'resources/')) {
+                $prioritized[] = $location;
+            } else {
+                $nonCommand[] = $location;
+            }
+        }
+        
+        // Return in priority order
+        if (!empty($prioritized)) {
+            return $prioritized[0];
+        }
+        
+        if (!empty($nonCommand)) {
+            return $nonCommand[0];
+        }
+        
+        return !empty($fallback) ? $fallback[0] : $locations[0];
+    }
+
+    private function extractPackageFromPath($filePath)
+    {
+        // Check if it's from a vendor package
+        if (preg_match('#vendor/([^/]+/[^/]+)/#', $filePath, $matches)) {
+            return $matches[1]; // e.g., "condoedge/utils"
+        }
+        
+        // Check if it's from app directory
+        if (str_starts_with($filePath, 'app/')) {
+            return 'app';
+        }
+        
+        // Check if it's from resources
+        if (str_starts_with($filePath, 'resources/')) {
+            return 'resources';
+        }
+        
+        // Default to the first directory
+        $parts = explode('/', $filePath);
+        return $parts[0] ?? 'unknown';
     }
 
     private function hasTranslation($key, $locale)

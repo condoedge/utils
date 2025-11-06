@@ -254,7 +254,8 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
         $this->app->booted(function () {
             $schedule = app(\Illuminate\Console\Scheduling\Schedule::class);
 
-            $schedule->command('app:send-missing-translations-email')->daily();
+            $schedule->command('app:missing-translation-analyzer-command')->dailyAt('07:30');
+            $schedule->command('app:send-missing-translations-email')->dailyAt('08:00');
 
             // Option 1: Frequency-based scheduling (RECOMMENDED)
             // $schedule->command('compliance:run-validation --frequency=daily')->dailyAt('02:00');
