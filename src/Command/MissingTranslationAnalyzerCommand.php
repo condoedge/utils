@@ -250,7 +250,7 @@ class MissingTranslationAnalyzerCommand extends Command
                     try {
                         $firstLocation = !empty($locations) ? $locations[0] : null;
 
-                        \Condoedge\Utils\Models\MissingTranslation::upsertMissingTranslation($key, $firstLocation);
+                        \Condoedge\Utils\Models\MissingTranslation::upsertMissingTranslation($key, $firstLocation['file'] ?? null);
                     } catch (\Exception $e) {
                         // Silently continue if database save fails
                     }
