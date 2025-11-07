@@ -250,6 +250,10 @@ class MissingTranslationAnalyzerCommand extends Command
                     try {
                         $firstLocation = !empty($locations) ? $locations[0] : null;
 
+                        $filename = $firstLocation['file'] ?? null;
+
+                        $filename = str_contains($filename, 'MissingTranslationAnalyzerCommand') ? null : $filename;
+
                         \Condoedge\Utils\Models\MissingTranslation::upsertMissingTranslation($key, $firstLocation['file'] ?? null);
                     } catch (\Exception $e) {
                         // Silently continue if database save fails
@@ -270,29 +274,6 @@ class MissingTranslationAnalyzerCommand extends Command
             }
         }
     }
-
-    private function extractPackageFromPath($filePath)
-    {
-        // Check if it's from a vendor package
-        if (preg_match('#vendor/([^/]+/[^/]+)/#', $filePath, $matches)) {
-            return $matches[1]; // e.g., "condoedge/utils"
-        }
-        
-        // Check if it's from app directory
-        if (str_starts_with($filePath, 'app/')) {
-            return 'app';
-        }
-        
-        // Check if it's from resources
-        if (str_starts_with($filePath, 'resources/')) {
-            return 'resources';
-        }
-        
-        // Default to the first directory
-        $parts = explode('/', $filePath);
-        return $parts[0] ?? 'unknown';
-    }
-
     private function hasTranslation($key, $locale)
     {
         // Verificar si existe la traducción
