@@ -45,6 +45,7 @@ class MissingTranslationAnalyzerCommand extends Command
         'custom_translator' => '/\$this->translator\s*\(\s*[\'"]([^\'"]+)[\'"]\s*\)/',
         'custom_helpers' => '/_[a-zA-Z]+\s*\(\s*[\'"]([^\'"]+)[\'"]\s*\)/',
         'underscore' => '/(?<![a-zA-Z])_\s*\(\s*[\'"]([^\'"]+)[\'"]\s*\)/',
+        'titles' => '/protected\s+\$_Title\s*=\s*[\'"](.+?)[\'"]\s*;/',
     ];
 
     /**
@@ -137,51 +138,15 @@ class MissingTranslationAnalyzerCommand extends Command
     
     private function extractAllTranslationKeys()
     {
-        $keys = [];
-        $this->keyFileMap = [];
 
-        // Scan main project files
-        $this->info("Scanning project files...");
-        $this->scanDirectory(base_path(), $keys, [
-            'vendor', 'node_modules', 'storage', 'bootstrap/cache'
-        ]);
-
-        // Scan vendor packages (condoedge/*, kompo/*)
-        $vendorPaths = [
-            'vendor/condoedge',
-            'vendor/kompo'
-        ];
-
-        foreach ($vendorPaths as $vendorPath) {
-            $fullPath = base_path($vendorPath);
-            
-            if (!is_dir($fullPath)) {
-                continue;
-            }
-
-            $packages = glob($fullPath . '/*', GLOB_ONLYDIR);
-            
-            foreach ($packages as $package) {
-                $packageName = basename(dirname($package)) . '/' . basename($package);
-                $this->info("Scanning package: {$packageName}");
-                
-                // Don't exclude vendor within these specific packages
-                $this->scanDirectory($package, $keys, [
-                    'node_modules', 'tests', 'Test'
-                ]);
-            }
-        }
-
-        return array_unique($keys);
-    }
-
-    private function scanDirectory($baseDir, &$keys, $excludeDirs = [])
-    {
         $finder = new Finder();
-        $finderInstance = $finder->files()
-            ->in($baseDir)
+        $files = $finder->files()
+            ->in(base_path())
             ->name('*.php')
             ->name('*.blade.php')
+            ->exclude('node_modules')
+            ->exclude('storage')
+            ->exclude('bootstrap/cache')
             ->notName('*.lock')
             ->notName('*.min.js')
             ->notName('*.min.css')
@@ -194,16 +159,28 @@ class MissingTranslationAnalyzerCommand extends Command
             ->notPath('*/config/cache/*')
             ->notPath('*/lang/*')
             ->notPath('*/resources/lang/*')
-            ->notPath('*/Command/*')
-            ->notPath('*/Commands/*')
-            ->notPath('*/Console/*');
+            ->filter(function (\SplFileInfo $file) {
+                $path = $file->getRealPath();
+                
+                // If file is not in vendor, include it
+                if (strpos($path, DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR) === false) {
+                    return true;
+                }
+                
+                // If file is in vendor/condoedge or vendor/kompo, include it
+                if (strpos($path, DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'condoedge' . DIRECTORY_SEPARATOR) !== false ||
+                    strpos($path, DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'kompo' . DIRECTORY_SEPARATOR) !== false) {
+                    return true;
+                }
+                
+                // Exclude all other vendor files
+                return false;
+            });
 
-        // Exclude specified directories
-        foreach ($excludeDirs as $dir) {
-            $finderInstance->exclude($dir);
-        }
+        $keys = [];
+        $this->keyFileMap = []; // Store key to file mappings
 
-        foreach ($finderInstance as $file) {
+        foreach ($files as $file) {
             // Skip files that shouldn't contain translations
             if ($this->shouldSkipFile($file->getFilename(), $file->getRealPath())) {
                 continue;
@@ -220,17 +197,15 @@ class MissingTranslationAnalyzerCommand extends Command
                 if (!isset($this->keyFileMap[$key])) {
                     $this->keyFileMap[$key] = [];
                 }
-                
-                // Normalize path separators to forward slashes
-                $relativePath = str_replace('\\', '/', str_replace(base_path() . DIRECTORY_SEPARATOR, '', $file->getRealPath()));
-                
                 $this->keyFileMap[$key][] = [
-                    'file' => $relativePath,
+                    'file' => str_replace(base_path() . DIRECTORY_SEPARATOR, '', $file->getRealPath()),
                     'line' => $keyData['line'],
                     'context' => $keyData['context']
                 ];
             }
         }
+
+        return array_unique($keys);
     }
 
     private function indexKeys($keys)
@@ -273,22 +248,9 @@ class MissingTranslationAnalyzerCommand extends Command
                     
                     // Save to MissingTranslation table with file locations
                     try {
-                        $bestLocation = $this->findBestLocation($locations);
-                        
-                        $missingTranslation = \Condoedge\Utils\Models\MissingTranslation::upsertMissingTranslation($key);
-                        
-                        if ($missingTranslation && $bestLocation) {
-                            // Extract package name from file path
-                            $file = $bestLocation['file'];
-                            $package = $this->extractPackageFromPath($file);
-                            
-                            // Update with file and package info
-                            $missingTranslation->update([
-                                'file' => $file,
-                                'package' => $package,
-                                'line' => $bestLocation['line'] ?? null,
-                            ]);
-                        }
+                        $firstLocation = !empty($locations) ? $locations[0] : null;
+
+                        \Condoedge\Utils\Models\MissingTranslation::upsertMissingTranslation($key, $firstLocation);
                     } catch (\Exception $e) {
                         // Silently continue if database save fails
                     }
@@ -307,52 +269,6 @@ class MissingTranslationAnalyzerCommand extends Command
                 $this->info("You can edit the file: " . storage_path('app/translation_exclude_keys.json'));
             }
         }
-    }
-
-    private function findBestLocation($locations)
-    {
-        if (empty($locations)) {
-            return null;
-        }
-        
-        // Priority order:
-        // 1. Files from app/ or resources/
-        // 2. Files from vendor packages that are NOT commands
-        // 3. Any other file
-        
-        $prioritized = [];
-        $nonCommand = [];
-        $fallback = [];
-        
-        foreach ($locations as $location) {
-            $file = $location['file'];
-            
-            // Skip command files
-            if (strpos($file, '/Command/') !== false || 
-                strpos($file, '/Commands/') !== false || 
-                strpos($file, '/Console/') !== false) {
-                $fallback[] = $location;
-                continue;
-            }
-            
-            // Prioritize app and resources
-            if (str_starts_with($file, 'app/') || str_starts_with($file, 'resources/')) {
-                $prioritized[] = $location;
-            } else {
-                $nonCommand[] = $location;
-            }
-        }
-        
-        // Return in priority order
-        if (!empty($prioritized)) {
-            return $prioritized[0];
-        }
-        
-        if (!empty($nonCommand)) {
-            return $nonCommand[0];
-        }
-        
-        return !empty($fallback) ? $fallback[0] : $locations[0];
     }
 
     private function extractPackageFromPath($filePath)
@@ -536,7 +452,7 @@ class MissingTranslationAnalyzerCommand extends Command
     {
         $skipPatterns = [
             '/composer\.lock/', '/node_modules/', '/vendor\/\//',
-            '/^\s*\/\*\*/', '/use\s+[A-Z][a-zA-Z\\\\]+;/'
+            '/^\s*\/\*\*/', 
         ];
         
         foreach ($skipPatterns as $pattern) {
