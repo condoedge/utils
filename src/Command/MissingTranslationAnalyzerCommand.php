@@ -334,8 +334,18 @@ class MissingTranslationAnalyzerCommand extends Command
     {
         // Quick basic validations
         if (empty($key) || strlen($key) < 2 || strlen($key) > 100 || 
-            is_numeric($key) || strpos($key, '$') !== false ||
+            strpos($key, '$') !== false ||
             filter_var($key, FILTER_VALIDATE_URL) || filter_var($key, FILTER_VALIDATE_EMAIL)) {
+            return false;
+        }
+
+        // Exclude numeric values (integers, floats, decimals like "0.00", "123", "45.67", etc.)
+        if (is_numeric($key)) {
+            return false;
+        }
+
+        // Exclude string representations of numbers and floats (including patterns like "0.00")
+        if (preg_match('/^\d+(\.\d+)?$/', $key)) {
             return false;
         }
 

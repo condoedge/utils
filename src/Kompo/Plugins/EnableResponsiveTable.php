@@ -23,7 +23,7 @@ class EnableResponsiveTable extends \Condoedge\Utils\Kompo\Plugins\Base\Componen
         ];
     }
 
-    protected function decorateRow($row)
+    public function decorateRow($row)
     {
         $wrapper = ($row instanceof Layout) ? $row::class : null;
         $elements = $wrapper ? $row->elements : $row;
@@ -43,7 +43,7 @@ class EnableResponsiveTable extends \Condoedge\Utils\Kompo\Plugins\Base\Componen
             return '';
         }
 
-        $header = $headers('headers')[$index] ?? '';
+        $header = $headers[$index] ?? '';
 
         return ($header instanceof Th) ? $header->label : $header;
     }
