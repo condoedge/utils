@@ -17,18 +17,18 @@ class MissingTranslationsTable extends WhiteTable
     public function top()
     {
         return _FlexBetween(
-            _Html('translate.missing-translations')->class('text-2xl font-semibold'),
-            _Toggle('translate.include-ignored-ones')->name('include_ignored_ones', false)->filter(),
+            _Html('utils.missing-translations')->class('text-2xl font-semibold'),
+            _Toggle('utils.include-ignored-ones')->name('include_ignored_ones', false)->filter(),
         );
     }
 
     public function headers()
     {
         return [
-            _Th('translate.translation-key'),
-            _Th('translate.package'),
-            _Th('translate.ignore')->class('text-right w-6'),
-            _Th('translate.fixed')->class('text-right w-6'),
+            _Th('utils.translation-key'),
+            _Th('utils.package'),
+            _Th('utils.ignore')->class('text-right w-6'),
+            _Th('utils.fixed')->class('text-right w-6'),
         ];
     }
 
