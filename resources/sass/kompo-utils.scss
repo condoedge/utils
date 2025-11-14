@@ -168,9 +168,9 @@
         }
     
         table tr {
-            border-bottom: 3px solid #ddd;
+            // border-bottom: 3px solid #ddd;
             display: block;
-            margin-bottom: 1em;
+            margin-bottom: 0.5rem;
         }
     
         table td {
@@ -180,15 +180,25 @@
             text-align: right;
         }
     
-        table td>div::before {
-            content: attr(data-label);
-            float: left;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-    
         table td:last-child {
             border-bottom: 0;
+            padding-bottom: 0 !important;
         }
+
+        .vlTableWrapper {
+          padding: 0 !important;
+          background: none !important;
+
+          tr {
+            padding: 1rem 1.25rem !important;
+            
+            @apply bg-white rounded-xl;
+          }
+
+          .table tbody td, .vlTableWrapper .table thead th {
+            padding-left: 0rem !important;
+          }
+        }
+        
     }
 }
