@@ -115,16 +115,18 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        // Extend the translator to track missing translations
-        $this->app->extend('translator', function ($translator, $app) {
-            $loader = $translator->getLoader();
-            $locale = $translator->getLocale();
+        if (!$this->app->runningInConsole()) {
+            // Extend the translator to track missing translations
+            $this->app->extend('translator', function ($translator, $app) {
+                $loader = $translator->getLoader();
+                $locale = $translator->getLocale();
 
-            $trackingTranslator = new \Condoedge\Utils\Services\Translation\TrackingTranslator($loader, $locale);
-            $trackingTranslator->setFallback($translator->getFallback());
-            
-            return $trackingTranslator;
-        });
+                $trackingTranslator = new \Condoedge\Utils\Services\Translation\TrackingTranslator($loader, $locale);
+                $trackingTranslator->setFallback($translator->getFallback());
+                
+                return $trackingTranslator;
+            });
+        }
         
         $this->booted(function () {
             \Route::middleware('web')->group(__DIR__.'/../routes/files.php');

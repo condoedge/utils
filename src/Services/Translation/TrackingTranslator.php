@@ -5,9 +5,12 @@ namespace Condoedge\Utils\Services\Translation;
 use Illuminate\Translation\Translator;
 use Illuminate\Support\Facades\Log;
 use Condoedge\Utils\Models\MissingTranslation;
+use Condoedge\Utils\Services\Translation\TranslationKeyFilter;
 
 class TrackingTranslator extends Translator
 {
+    /** @var TranslationKeyFilter|null */
+    private $keyFilter;
     /**
      * Get the translation for the given key.
      *
@@ -21,7 +24,11 @@ class TrackingTranslator extends Translator
     {
         $translation = parent::get($key, $replace, $locale, $fallback);
 
-        if ($translation === $key && is_string($key) && preg_match('/^[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)$/', $key)) {
+        // Record lazily only when key looks like a namespaced translation key
+        if ($translation === $key
+            && is_string($key)
+            && preg_match('/^[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/', $key)
+            && $this->getKeyFilter()->isValidKey($key)) {
             try {
                 MissingTranslation::upsertMissingTranslation($key, $this->getPackage());
             } catch (\Exception $e) {}
@@ -30,6 +37,14 @@ class TrackingTranslator extends Translator
         }
         
         return $translation;
+    }
+
+    private function getKeyFilter(): TranslationKeyFilter
+    {
+        if (!$this->keyFilter) {
+            $this->keyFilter = new TranslationKeyFilter();
+        }
+        return $this->keyFilter;
     }
 
     protected function getPackage()

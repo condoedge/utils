@@ -4,6 +4,7 @@ namespace Condoedge\Utils\Command;
 
 use Illuminate\Console\Command;
 use Symfony\Component\Finder\Finder;
+use Condoedge\Utils\Services\Translation\TranslationKeyFilter;
 
 class MissingTranslationAnalyzerCommand extends Command
 {
@@ -13,6 +14,9 @@ class MissingTranslationAnalyzerCommand extends Command
      * @var array
      */
     private $keyFileMap = [];
+
+    /** @var TranslationKeyFilter|null */
+    private $keyFilter;
 
     /**
      * The name and signature of the console command.
@@ -104,6 +108,19 @@ class MissingTranslationAnalyzerCommand extends Command
             '/vendor/', '/node_modules/', '/storage/', '/bootstrap/cache/',
             '/public/build/', '/public/hot'
         ]
+    ];
+
+    /**
+     * File-like extensions to treat as filenames and ignore as translation keys
+     */
+    private const FILE_LIKE_EXTENSIONS = [
+        'txt', 'pdf', 'xlsx', 'xls', 'csv',
+        'doc', 'docx', 'ppt', 'pptx',
+        'png', 'jpg', 'jpeg', 'gif', 'svg', 'webp',
+        'zip', 'rar', 'tar', 'gz', '7z',
+        'mp3', 'mp4', 'mov', 'avi', 'mkv', 'webm',
+        'log', 'md', 'json', 'xml', 'html', 'htm', 'css', 'js', 'ts',
+        'yml', 'yaml', 'ini'
     ];
 
     /**
@@ -332,35 +349,16 @@ class MissingTranslationAnalyzerCommand extends Command
 
     private function isValidTranslationKey($key, $content = '', $matchedText = '')
     {
-        // Quick basic validations
-        if (empty($key) || strlen($key) < 2 || strlen($key) > 100 || 
-            strpos($key, '$') !== false ||
-            filter_var($key, FILTER_VALIDATE_URL) || filter_var($key, FILTER_VALIDATE_EMAIL)) {
-            return false;
-        }
+        $context = $matchedText ? $this->getMatchContext($content, $matchedText) : '';
+        return $this->getKeyFilter()->isValidKey($key, $context);
+    }
 
-        // Exclude numeric values (integers, floats, decimals like "0.00", "123", "45.67", etc.)
-        if (is_numeric($key)) {
-            return false;
+    private function getKeyFilter(): TranslationKeyFilter
+    {
+        if (!$this->keyFilter) {
+            $this->keyFilter = new TranslationKeyFilter();
         }
-
-        // Exclude string representations of numbers and floats (including patterns like "0.00")
-        if (preg_match('/^\d+(\.\d+)?$/', $key)) {
-            return false;
-        }
-
-        // Check context if provided
-        if ($matchedText && !$this->isValidInContext($key, $this->getMatchContext($content, $matchedText))) {
-            return false;
-        }
-
-        // Check if excluded
-        if ($this->isExcludedKey($key)) {
-            return false;
-        }
-
-        // Check against exclusion rules
-        return $this->passesExclusionRules($key);
+        return $this->keyFilter;
     }
 
     private function passesExclusionRules($key)
@@ -399,6 +397,10 @@ class MissingTranslationAnalyzerCommand extends Command
 
         // Exclude CSS selectors
         if (str_starts_with($key, '.') || str_starts_with($key, '#')) return false;
+
+        // Exclude likely filenames based on common file extensions
+        $ext = strtolower(pathinfo($key, PATHINFO_EXTENSION));
+        if (!empty($ext) && in_array($ext, self::FILE_LIKE_EXTENSIONS, true)) return false;
 
         return true;
     }
