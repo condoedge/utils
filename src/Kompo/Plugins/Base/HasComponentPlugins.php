@@ -42,6 +42,18 @@ trait HasComponentPlugins
         });
     }
 
+    public function afterKompoAction($actionType, $content = null)
+    {
+        return $this->getAllPlugins()->reduce(function ($content, $plugin) use ($actionType) {
+            $pluginInstance = is_object($plugin) ? $plugin : new $plugin($this);
+            if (method_exists($pluginInstance, 'onAfterKompoAction')) {
+                $content = $pluginInstance->onAfterKompoAction($actionType, $content);
+            }
+
+            return $content;
+        }, $content);
+    }
+
     public function createdDisplay()
     {
         $this->getAllPlugins()->each(function ($plugin) {

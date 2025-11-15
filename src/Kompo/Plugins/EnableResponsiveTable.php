@@ -21,14 +21,34 @@ class EnableResponsiveTable extends \Condoedge\Utils\Kompo\Plugins\Base\Componen
 
         $this->prependComponentProperty('class', ' responsive-table ');
         
-        $decoratedRows = collect(getPrivateProperty($this->getComponentProperty('query'), 'items'))->map(function ($item) {
+        $this->makeRowsResponsive($this->getComponentProperty('query'));
+    }
+
+    public function onAfterKompoAction($actionType, $content = null)
+    {
+        if ($this->isDisabled()) {
+            return $content;
+        }
+
+        if ($actionType != 'browse-items') {
+            return $content;
+        }
+
+        return $this->makeRowsResponsive($content);
+    }
+
+    protected function makeRowsResponsive($query = null)
+    {
+        $decoratedRows = collect(getPrivateProperty($query, 'items'))->map(function ($item) {
             return [
                 ...$item,
                 'render' => $this->decorateRow($item['render'])
             ];
         });
 
-        setPrivateProperty($this->getComponentProperty('query'), 'items', $decoratedRows);
+        setPrivateProperty($query, 'items', $decoratedRows);
+
+        return $query;
     }
 
     public function decorateRow($row)
@@ -47,7 +67,13 @@ class EnableResponsiveTable extends \Condoedge\Utils\Kompo\Plugins\Base\Componen
             );
         });
 
-        return $wrapper ? $wrapper::form($decoratedElements) : $decoratedElements;
+        if ($wrapper) {
+            setPrivateProperty($row, 'elements', $decoratedElements->toArray());
+
+            return $row;
+        }
+
+        return $decoratedElements;
     }
 
     protected function getHeader($index)
