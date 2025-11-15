@@ -60,7 +60,7 @@ class EnableResponsiveTable extends \Condoedge\Utils\Kompo\Plugins\Base\Componen
             return _Rows(
                 _FlexBetween(
                     !is_string($this->getHeader($i)) ? $this->getHeader($i) 
-                        : _Html($this->getHeader($i))->class('uppercase font-bold'),
+                        : _Html('<span>'.$this->getHeader($i).'</span>')->class('uppercase font-bold'),
                     $element,
                 )->class('flex md:hidden'),
                 _Rows($element)->class('hidden md:block')
