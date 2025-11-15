@@ -69,6 +69,7 @@ class EnableResponsiveTable extends \Condoedge\Utils\Kompo\Plugins\Base\Componen
 
         if ($wrapper) {
             setPrivateProperty($row, 'elements', $decoratedElements->toArray());
+            setPrivateProperty($row, 'style', trim((getPrivateProperty($row, 'style') ?? ''). ' height: auto !important;'));
 
             return $row;
         }
