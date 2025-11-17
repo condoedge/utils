@@ -9,7 +9,7 @@ class EnableResponsiveTable extends \Condoedge\Utils\Kompo\Plugins\Base\Componen
 {
     protected function isDisabled()
     {
-        return $this->getComponentProperty('isResponsive') === false
+        return $this->getComponentProperty('isResponsive') !== true
             || !$this->componentHasMethod('headers');
     }
 
