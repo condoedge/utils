@@ -211,7 +211,7 @@ class ExportPlugin extends ComponentPlugin
 
         if (!$call) return false;
 
-		return str_contains($call['file'], 'ExportableToExcel');
+		return str_contains($call['file'] ?? '', 'ExportableToExcel');
 	}
 
     // PATCHES
