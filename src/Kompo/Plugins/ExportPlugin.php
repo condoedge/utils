@@ -209,7 +209,7 @@ class ExportPlugin extends ComponentPlugin
 	{
 		$call = collect(debug_backtrace())->first(fn($trace) => $trace['function'] === $function);
 
-        if (!$call) return false;
+        if (!$call || !isset($call['file'])) return false;
 
 		return str_contains($call['file'] ?? '', 'ExportableToExcel');
 	}
