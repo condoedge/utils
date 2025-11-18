@@ -11,3 +11,7 @@ Route::post('forget-intro-component', function () {
 
     return response()->json(['status' => 'success']);
 })->name('forget-intro-component');
+
+Route::middleware(['auth'])->group(function () {
+    Route::post('edit-place-fields', \Condoedge\Utils\Kompo\ContactInfo\Maps\AddressPlaceEditingForm::class)->name('edit-place-fields');
+});

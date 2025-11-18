@@ -6,7 +6,7 @@ const SAX_ICON_MAP = 'location';
 
 /* MAP INPUTS */
 Element::macro('editableFields', fn() => $this->editableWith(
-    _Link('general.edit')->rIcon(_Sax('edit'))->class('text-xs text-gray-600')->post('edit-place-fields')->inModal()
+    _Link('general.edit')->rIcon(_Sax('edit'))->class('text-xs text-gray-600 z-10')->post('edit-place-fields')->inModal()
 ));
 
 if (!function_exists('_CustomPlace')) {
