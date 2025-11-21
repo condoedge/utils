@@ -9,7 +9,7 @@ class AddressPlaceEditingForm extends Modal
 	public $class = 'max-w-2xl overflow-y-auto mini-scroll';
 	public $style = 'max-height:95vh';
 
-	public $_Title = 'translate.manage-address';
+	public $_Title = 'utils.manage-address';
 
 	public function handle()
 	{
@@ -30,8 +30,8 @@ class AddressPlaceEditingForm extends Modal
 		return [
 			_Input('maps-address-address1')->name('address')->value(request('address')),
 			_Columns(
-				_Input('translate.maps-address-postal-code')->name('postal_code')->value(request('postal_code')),
-				_Input('translate.maps-address-city')->name('city')->value(request('city')),
+				_Input('utils.maps-address-postal-code')->name('postal_code')->value(request('postal_code')),
+				_Input('utils.maps-address-city')->name('city')->value(request('city')),
 			),
 		];
 	}
