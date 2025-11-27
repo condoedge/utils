@@ -46,8 +46,8 @@ class TranslationKeyFilter
             '/^[a-z]+[A-Z]/',        // camelCase
             '/^\$/',                 // variables
             '/^(function|class|return)/',
-            '/^validation.values[^,]*$/', // validation.values.something
-            '/^validation.custom[^,]*$/', // validation.custom.something
+            '/^validation\.values[^,]*$/', // validation.values.something
+            '/^validation\.custom[^,]*$/', // validation.custom.something
             '/^[a-zA-Z ]*$/' // only letters and spaces
         ]
     ];
