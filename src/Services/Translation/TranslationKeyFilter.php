@@ -9,7 +9,15 @@ class TranslationKeyFilter
             'config(', 'env(', '->get(', 'Config::', 'config/', 'config.',
             'rules(', 'validator(', 'validate(', 'Validator::', 'function_exists(',
             'class_exists(', 'method_exists(', 'interface_exists(', 'trait_exists(',
-            'defined(', 'constant(', 'storage_path(', 'resource_path(',
+            'defined(', 'constant(', 'storage_path(', 'resource_path(', '_Sax(', 
+            'icon(', 'svg(', 'path(', 'url(', 'route(', 'asset(',
+            'Auth::', 'auth(', 'Gate::', 'gate(', 'DB::', 'db(',
+            'Session::', 'session(', 'Cache::', 'cache(', 'Log::', 'log(',
+            'Mail::', 'mail(', 'View::', 'view(', 'Event::', 'event(',
+            'Queue::', 'queue(', 'Storage::', 'storage(', 'Response::', 'response(',
+            'Request::', 'request(', 'Route::', 'route(', 'URL::', 'url(',
+            'Redirect::', 'redirect(', 'Schema::', 'schema(', 'Artisan::', 'artisan(',
+            'Broadcast::', 'broadcast(', 'Password::', 'password(', 'Notification::', 'notification(',
         ],
         'config_patterns' => [
             'app.', 'database.', 'cache.', 'queue.', 'mail.', 'session.',
@@ -37,7 +45,10 @@ class TranslationKeyFilter
             '/^[A-Z_]+$/',           // CONSTANTS
             '/^[a-z]+[A-Z]/',        // camelCase
             '/^\$/',                 // variables
-            '/^(function|class|return)/'
+            '/^(function|class|return)/',
+            '/^validation.values[^,]*$/', // validation.values.something
+            '/^validation.custom[^,]*$/', // validation.custom.something
+            '/^[a-zA-Z ]*$/' // only letters and spaces
         ]
     ];
 

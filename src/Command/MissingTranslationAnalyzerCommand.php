@@ -53,46 +53,6 @@ class MissingTranslationAnalyzerCommand extends Command
     ];
 
     /**
-     * Exclusion rules configuration
-     */
-    private const EXCLUSION_RULES = [
-        'contexts' => [
-            'config(', 'env(', '->get(', 'Config::', 'config/', 'config.',
-            'rules(', 'validator(', 'validate(', 'Validator::', 'function_exists(',
-            'class_exists(', 'method_exists(', 'interface_exists(', 'trait_exists(',
-            'defined(', 'constant(', 'storage_path(', 'resource_path(',
-        ],
-        'config_patterns' => [
-            'app.', 'database.', 'cache.', 'queue.', 'mail.', 'session.',
-            'filesystems.', 'broadcasting.', 'auth.', 'services.', 'logging.',
-            'view.', 'sanctum.', 'cors.',
-        ],
-        'validation_rules' => [
-            'required', 'nullable', 'string', 'integer', 'numeric', 'boolean',
-            'email', 'url', 'date', 'datetime', 'image', 'file', 'unique', 'exists',
-            'min', 'max', 'between', 'size', 'regex', 'confirmed', 'sometimes'
-        ],
-        'validation_patterns' => [
-            'min:', 'max:', 'between:', 'size:', 'digits:', 'mimes:', 'dimensions:',
-            'regex:', 'unique:', 'exists:', 'required_if:', 'in:', 'not_in:'
-        ],
-        'db_fields' => [
-            'id', 'created_at', 'updated_at', 'deleted_at', 'remember_token',
-            'password', 'uuid', 'slug', 'status', 'type', 'active', 'visible'
-        ],
-        'common_words' => [
-            'yes', 'no', 'ok', 'true', 'false', 'null', 'get', 'set', 'add',
-            'remove', 'delete', 'create', 'update', 'class', 'id', 'name', 'type'
-        ],
-        'code_patterns' => [
-            '/^[A-Z_]+$/',           // CONSTANTS
-            '/^[a-z]+[A-Z]/',        // camelCase
-            '/^\$/',                 // variables
-            '/^(function|class|return)/'
-        ]
-    ];
-
-    /**
      * File exclusion configuration
      */
     private const FILE_EXCLUSIONS = [
@@ -359,60 +319,6 @@ class MissingTranslationAnalyzerCommand extends Command
             $this->keyFilter = new TranslationKeyFilter();
         }
         return $this->keyFilter;
-    }
-
-    private function passesExclusionRules($key)
-    {
-        $rules = self::EXCLUSION_RULES;
-
-        // Config patterns
-        foreach ($rules['config_patterns'] as $pattern) {
-            if (str_starts_with($key, $pattern)) return false;
-        }
-
-        // Validation rules
-        if (in_array($key, $rules['validation_rules'])) return false;
-
-        // Validation patterns
-        foreach ($rules['validation_patterns'] as $pattern) {
-            if (str_starts_with($key, $pattern)) return false;
-        }
-
-        // Database fields
-        if (in_array($key, $rules['db_fields'])) return false;
-
-        // Common words
-        if (in_array(strtolower($key), $rules['common_words'])) return false;
-
-        // Code patterns
-        foreach ($rules['code_patterns'] as $pattern) {
-            if (preg_match($pattern, $key)) return false;
-        }
-
-        // Must follow translation key pattern
-        if (!preg_match('/^[a-zA-Z][a-zA-Z0-9._-]*$/', $key)) return false;
-
-        // Exclude paths/filenames
-        if (strpos($key, '/') !== false || strpos($key, '\\') !== false) return false;
-
-        // Exclude CSS selectors
-        if (str_starts_with($key, '.') || str_starts_with($key, '#')) return false;
-
-        // Exclude likely filenames based on common file extensions
-        $ext = strtolower(pathinfo($key, PATHINFO_EXTENSION));
-        if (!empty($ext) && in_array($ext, self::FILE_LIKE_EXTENSIONS, true)) return false;
-
-        return true;
-    }
-
-    private function isValidInContext($key, $context)
-    {
-        foreach (self::EXCLUSION_RULES['contexts'] as $contextPattern) {
-            if (stripos($context, $contextPattern) !== false) {
-                return false;
-            }
-        }
-        return true;
     }
     
     private function shouldSkipFile($filename, $filepath)
