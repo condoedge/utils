@@ -26,37 +26,58 @@ Select::macro('overModal', function ($id = null) {
 });
 
 Dropdown::macro('dropdownOverModal', function ($id = null, $sumWidth = false, $heightAdd = 0) {
-	$id = $id ?? (class_basename($this) . \Str::random(5) . time());
+	$id = $id ?: (class_basename($this) . \Str::random(5) . time());
 
 	$this->elements = array_merge($this->elements ?? [], [
 		_Hidden()->onLoad(fn($e) => $e->run('() => {
 			const dropdownListenerEl = $("#' . $id . '");
 
-			function setTranslate() {
-				let dWidth = dropdownListenerEl.find(".vlDropdownMenu").width();
-				let dOffset = dropdownListenerEl.offset();
-				let dHeight = dropdownListenerEl.height();
+			if (!dropdownListenerEl.length) {
+				return;
+			}
 
-				let style = dropdownListenerEl.attr("style") || "";
-				style += "--dropdown-translate-y:" + (dOffset.top + dHeight + ' . $heightAdd . ') + "px !important;";
+			const dropdownHost = dropdownListenerEl.get(0);
+
+			if (!dropdownHost) {
+				return;
+			}
+
+			const bumpZIndex = () => {
+				window.__kompoDropdownOverModalZIndex = (window.__kompoDropdownOverModalZIndex || 200) + 1;
+				dropdownHost.style.setProperty("z-index", window.__kompoDropdownOverModalZIndex, "important");
+			};
+
+			function setTranslate() {
+				const dropdownMenu = dropdownListenerEl.find(".vlDropdownMenu");
+				const dWidth = dropdownMenu.outerWidth() || dropdownListenerEl.outerWidth() || 0;
+				const dOffset = dropdownListenerEl.offset() || { top: 0, left: 0 };
+				const dHeight = dropdownListenerEl.outerHeight() || 0;
+
+				bumpZIndex();
+
+				dropdownHost.style.setProperty("--dropdown-translate-y", (dOffset.top + dHeight + ' . $heightAdd . ') + "px", "important");
 
 				const rightDistance = window.innerWidth - (dOffset.left + ' . ($sumWidth ? 'dWidth' : '20') . ');
-				style += "--dropdown-translate-x: -" + Math.abs(rightDistance) + "px !important;";
-
-				dropdownListenerEl.attr("style", style);
+				dropdownHost.style.setProperty("--dropdown-translate-x", "-" + Math.abs(rightDistance - 30) + "px", "important");
 			}
 
 			dropdownListenerEl.addClass("dropdown-over-modal");
 
 			setTranslate();
 
-			dropdownListenerEl.on("mouseenter", function() {
+			dropdownListenerEl.on("mouseenter focusin", () => {
 				setTranslate();
+				dropdownListenerEl.removeClass("dropdown-scroll-hide");
 			});
+
+			// Hide dropdown on scroll - listen on window with capture to catch all scrolls
+			window.addEventListener("scroll", () => {
+				dropdownListenerEl.addClass("dropdown-scroll-hide");
+			}, true);
 	}')),
 	]);
 	
-	return $this->id($id ?? $this->label);
+	return $this->id($id);
 });
 
 Dropdown::macro('maxHeightWithScroll', function ($height = '30rem') {
