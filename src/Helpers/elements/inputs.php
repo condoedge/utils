@@ -62,17 +62,65 @@ Dropdown::macro('dropdownOverModal', function ($id = null, $sumWidth = false, $h
 			}
 
 			dropdownListenerEl.addClass("dropdown-over-modal");
+			
+			// Remove hover-based opening, we will control it via JS
+			dropdownListenerEl.removeClass("vlOpenOnHover");
 
-			setTranslate();
+			const dropdownMenu = dropdownListenerEl.find(".vlDropdownMenu");
+			let isOverTrigger = false;
+			let isOverMenu = false;
+			let closeTimeout;
 
-			dropdownListenerEl.on("mouseenter focusin", () => {
+			function showMenu() {
+				clearTimeout(closeTimeout);
 				setTranslate();
-				dropdownListenerEl.removeClass("dropdown-scroll-hide");
+				dropdownMenu.css({ 
+					opacity: 1, 
+					transform: "translate(var(--dropdown-translate-x), var(--dropdown-translate-y)) scale(1)",
+					pointerEvents: "auto"
+				});
+			}
+
+			function hideMenu() {
+				closeTimeout = setTimeout(() => {
+					if (!isOverTrigger && !isOverMenu) {
+						dropdownMenu.css({ 
+							opacity: 0, 
+							transform: "translate(var(--dropdown-translate-x), var(--dropdown-translate-y)) scale(0)",
+							pointerEvents: "none"
+						});
+					}
+				}, 100);
+			}
+
+			// Initial state
+			dropdownMenu.css({ opacity: 0, transform: "scale(0)", pointerEvents: "none" });
+
+			// Trigger hover
+			dropdownListenerEl.on("mouseenter", () => {
+				isOverTrigger = true;
+				showMenu();
+			});
+			dropdownListenerEl.on("mouseleave", () => {
+				isOverTrigger = false;
+				hideMenu();
 			});
 
-			// Hide dropdown on scroll - listen on window with capture to catch all scrolls
+			// Menu hover
+			dropdownMenu.on("mouseenter", () => {
+				isOverMenu = true;
+				showMenu();
+			});
+			dropdownMenu.on("mouseleave", () => {
+				isOverMenu = false;
+				hideMenu();
+			});
+
+			// Hide on scroll
 			window.addEventListener("scroll", () => {
-				dropdownListenerEl.addClass("dropdown-scroll-hide");
+				isOverTrigger = false;
+				isOverMenu = false;
+				dropdownMenu.css({ opacity: 0, transform: "scale(0)", pointerEvents: "none" });
 			}, true);
 	}')),
 	]);

@@ -38,7 +38,6 @@
 .dropdown-over-modal {
   --dropdown-translate-y: 0px;
   --dropdown-translate-x: 0px;
-  --dropdown-width: 200px;
 }
 
 .dropdown-over-modal .vlDropdownMenu {
@@ -49,28 +48,6 @@
   left: unset !important;
   transform-origin: unset !important;
   transform: translate(var(--dropdown-translate-x), var(--dropdown-translate-y)) !important;
-  pointer-events: none;
-}
-
-/* Only enable pointer-events when the toggler itself is hovered */
-.dropdown-over-modal .vlDropdownToggler:hover ~ .vlDropdownMenu,
-.dropdown-over-modal.vlForcedOpen .vlDropdownMenu {
-  pointer-events: auto;
-}
-
-/* Menu items need pointer-events for clicking */
-.dropdown-over-modal .vlDropdownMenu > * {
-  pointer-events: auto;
-}
-
-/* Hide dropdown menu on scroll */
-.dropdown-over-modal.dropdown-scroll-hide .vlDropdownMenu {
-  opacity: 0 !important;
-  transform: scale(0) !important;
-}
-
-.dropdown-over-modal.dropdown-scroll-hide .vlDropdownMenu > * {
-  pointer-events: none !important;
 }
 
 // PANEL LOADING
