@@ -130,6 +130,11 @@ class File extends Model implements Searchable
         return \Storage::disk($this->disk)->url($this->path);
     }
 
+    public function getDownloadUrlAttribute()
+    {
+        return route('file.download', ['type' => $this->getMorphClass(), 'id' => $this->id]);
+    }
+
     public function viewableForUser()
     {
         return $this->visibility == FileVisibilityEnum::PUBLIC || ($this->visibility == FileVisibilityEnum::PRIVATE && $this->user_id == auth()->id());
@@ -174,7 +179,7 @@ class File extends Model implements Searchable
         $fileHandler->setDisk($disk);
         $fileHandler->visibility = $visibility;
 
-        collect($files)->map(function ($uploadedFile) use ($fileHandler, $fileableId, $fileableType, $tags) {
+        return collect($files)->map(function ($uploadedFile) use ($fileHandler, $fileableId, $fileableType, $tags) {
 
             $file = new File();
 
