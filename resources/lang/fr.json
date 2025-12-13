@@ -30,6 +30,7 @@
 	"files.with-values-max-files-size-is": "Taille totale maximale des fichiers est de :size Mo",
 	"files.your-files-exceed-max-size": "Vos fichiers dépassent la taille maximale autorisée",
 	"files-attach-files": "Joindre des fichiers",
+	"general.edit": "Modifier",
 	"notes.content": "Contenu",
 	"utils.direct-export": "Exporter le rapport ici",
 	"utils.email-is-required": "Courriel requis",

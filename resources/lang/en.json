@@ -30,6 +30,7 @@
 	"files.with-values-max-files-size-is": "Max total size of files is :size Mb",
 	"files.your-files-exceed-max-size": "Your files exceed max size allowed",
 	"files-attach-files": "Attach files",
+	"general.edit": "Edit",
 	"notes.content": "Content",
 	"utils.direct-export": "Export report here",
 	"utils.email-is-required": "Email is required",
