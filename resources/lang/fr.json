@@ -31,6 +31,8 @@
 	"files.your-files-exceed-max-size": "Vos fichiers dépassent la taille maximale autorisée",
 	"files-attach-files": "Joindre des fichiers",
 	"general.edit": "Modifier",
+	"maps-address-address1": "Adresse",
+	"maps-address-description": "Description de l'adresse",
 	"notes.content": "Contenu",
 	"utils.direct-export": "Exporter le rapport ici",
 	"utils.email-is-required": "Courriel requis",
