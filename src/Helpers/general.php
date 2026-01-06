@@ -122,7 +122,7 @@ if (!function_exists('secureCall')) {
 		try {
 			if (function_exists($functionName)) {
 				return $functionName(...$params);
-			} elseif (method_exists($params[0], $functionName)) {
+			} elseif (isset($params[0]) && method_exists($params[0], $functionName)) {
 				$object = array_shift($params);
 				return $object->$functionName(...$params);
 			} 

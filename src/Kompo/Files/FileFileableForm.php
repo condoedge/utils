@@ -15,7 +15,7 @@ class FileFileableForm extends Form
 
     public function created()
     {
-        $this->defaultType = $this->model->fileable_type ?: collect(FileModel::typesOptions())->keys()->first();
+        $this->defaultType = $this->model->fileable_type;
         $this->defaultId = $this->model->fileable_id;
     }
 
@@ -34,6 +34,10 @@ class FileFileableForm extends Form
 
     public function getSelectFileable()
     {
+        if (!request('fileable_type') && !$this->defaultType) {
+            return _Html('translate.files-select-type-fileable-first')->class('text-gray-600 italic');
+        }
+
         return new SelectFileable(null, [
             'fileable_type' => request('fileable_type') ?: $this->defaultType,
             'fileable_id' => request('fileable_id') ?: $this->defaultId,
@@ -43,7 +47,7 @@ class FileFileableForm extends Form
     public function rules()
     {
         return [
-            'fileable_type' => 'required',
+            // 'fileable_type' => 'required',
         ];
     }
 }

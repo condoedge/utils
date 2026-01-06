@@ -38,12 +38,18 @@ class FileUploadModalManager extends Modal
                 _MultiFileSizeCalculationDiv(),
             )->class('mb-10'),
             _Rows(
-                _TagsMultiSelect()->class('mb-10'),
+                _TagsMultiSelect(),
             ),
-            _Rows(
-                _Html('files-fileable')->class('text-lg font-semibold mb-2'),
-                new FileFileableForm($this->model->id),
-            ),
+
+            _Collapsible(
+                _Rows(
+                    _Html('files-fileable')->class('text-lg font-semibold mb-2'),
+                    new FileFileableForm($this->model->id),
+                ),
+            )->titleLabel('translate.advanced-options')
+                ->titleElClass('!text-level1 !font-regular')
+                ->class('mb-4'),
+
             _SubmitButton()->closeModal(),
         );
 	}
