@@ -5,6 +5,7 @@ namespace Condoedge\Utils\Models\Files;
 use Condoedge\Utils\Kompo\Files\AudioPreview;
 use Condoedge\Utils\Kompo\Files\ImagePreview;
 use Condoedge\Utils\Kompo\Files\PdfPreview;
+use Condoedge\Utils\Kompo\Files\RawDocumentPreview;
 use Condoedge\Utils\Kompo\Files\VideoPreview;
 
 enum FileTypeEnum: int
@@ -19,7 +20,9 @@ enum FileTypeEnum: int
     case AUDIO = 6;
     case VIDEO = 7;
 
-    case UNKNOWN = 8;
+    case RAW_DOCUMENT = 8;
+
+    case UNKNOWN = 10;
 
     public function label()
     {
@@ -31,6 +34,7 @@ enum FileTypeEnum: int
             self::SPREADSHEET => __('file-type-spreadsheet'),
             self::AUDIO => __('file-type-audio'),
             self::VIDEO => __('file-type-video'),
+            self::RAW_DOCUMENT => __('translate.file-type-raw-document'),
             default => __('file-type-unknown'),
         };
     }
@@ -41,10 +45,11 @@ enum FileTypeEnum: int
             self::IMAGE => imageMimeTypes(),
             self::PDF => pdfMimeTypes(),
             self::COMPRESSED => ['application/x-rar-compressed', 'application/zip', 'application/x-gzip', 'application/gzip', 'application/vnd.rar', 'application/x-7z-compressed'],
-            self::DOCUMENT => ['text/plain', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+            self::DOCUMENT => ['application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
             self::SPREADSHEET => ['application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
             self::AUDIO => ['audio/basic', 'audio/aiff', 'audio/mpeg', 'audio/midi', 'audio/wave', 'audio/ogg'],
             self::VIDEO => videoMimeTypes(),
+            self::RAW_DOCUMENT => ['text/plain', 'application/vnd.oasis.opendocument.text', 'application/rtf'],
             default => [],
         };
     }
@@ -59,13 +64,14 @@ enum FileTypeEnum: int
             self::SPREADSHEET => 'coolecto-excel',
             self::AUDIO => 'coolecto-audio',
             self::VIDEO => 'coolecto-video',
+            self::RAW_DOCUMENT => 'coolecto-word',
             default => 'coolecto-archive',
         };
     }
 
     public function isPreviewable()
     {
-        return in_array($this, [self::IMAGE, self::PDF, self::AUDIO, self::VIDEO]);
+        return in_array($this, [self::IMAGE, self::PDF, self::AUDIO, self::VIDEO, self::RAW_DOCUMENT]);
     }
 
     public function getPreviewComponent($model)
@@ -80,6 +86,7 @@ enum FileTypeEnum: int
             self::PDF => new PdfPreview(null, $modelParams),
             self::AUDIO => new AudioPreview(null, $modelParams),
             self::VIDEO => new VideoPreview(null, $modelParams),
+            self::RAW_DOCUMENT => new RawDocumentPreview(null, $modelParams),
             default => null,
         };
     }
@@ -91,6 +98,7 @@ enum FileTypeEnum: int
             self::PDF => $komponent->href(fileRoute($model->getMorphClass(), $model->id))->inNewTab(),
             self::AUDIO => $komponent->get('audio.preview', ['id' => $model->id, 'type' => $model->getMorphClass()])->inModal(),
             self::VIDEO => $komponent->get('video.preview', ['id' => $model->id, 'type' => $model->getMorphClass()])->inModal(),
+            self::RAW_DOCUMENT => $komponent->get('raw_document.preview', ['id' => $model->id, 'type' => $model->getMorphClass()])->inModal(),
             default => null,
         };
     }
@@ -104,6 +112,7 @@ enum FileTypeEnum: int
             self::PDF => _Html('<embed src="' . $route . '" frameborder="0" width="100%" height="100%">'),
             self::AUDIO => _Audio($route),
             self::VIDEO => _Video($route),
+            self::RAW_DOCUMENT => _Html('<embed src="' . $route . '" frameborder="0" width="100%" height="100%">'),
             default => null,
         };
     }
