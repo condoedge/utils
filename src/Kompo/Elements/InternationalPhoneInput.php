@@ -16,7 +16,7 @@ class InternationalPhoneInput extends Input
         $this->config([
             'displayFormat' => 'international', // e164|national|international
             'validateFront' => true,
-        ]);
+        ])->noInputWrapper();
     }
 
     public function defaultCountry(?string $iso2)

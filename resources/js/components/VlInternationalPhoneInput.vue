@@ -227,10 +227,10 @@ export default {
         // this.component.value = this.phoneValue
         
         // Auto-detect country if no explicit country is set and no phone value exists
-        if (!this.$_config('country') && !this.phoneValue) {
-            if (!this.autoDetectCountryFromPhone(this.phoneValue)) {
-                this.detectCountryByLocation()
-            }
+        if (this.phoneValue) {
+            this.autoDetectCountryFromPhone(this.phoneValue)
+        } else if (!this.selectedCountryCode) {
+            this.detectCountryByLocation()
         }
     },
     
@@ -606,7 +606,7 @@ export default {
         },
         
         // Auto-detect country from existing phone number
-        autoDetectCountryFromPhone(phoneValue) {
+        autoDetectCountryFromPhone(phoneValue) {;
             try {
                 const phoneNumber = parsePhoneNumberFromString(phoneValue)
                 if (phoneNumber && phoneNumber.country) {
