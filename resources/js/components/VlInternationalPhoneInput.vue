@@ -228,7 +228,9 @@ export default {
         
         // Auto-detect country if no explicit country is set and no phone value exists
         if (!this.$_config('country') && !this.phoneValue) {
-            this.detectCountryByLocation()
+            if (!this.autoDetectCountryFromPhone(this.phoneValue)) {
+                this.detectCountryByLocation()
+            }
         }
     },
     
@@ -609,10 +611,14 @@ export default {
                 const phoneNumber = parsePhoneNumberFromString(phoneValue)
                 if (phoneNumber && phoneNumber.country) {
                     this.selectedCountryCode = phoneNumber.country
+
+                    return true;
                 }
             } catch (error) {
                 console.warn('Failed to auto-detect country from phone:', error)
             }
+
+            return false;
         },
         
         // API methods

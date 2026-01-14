@@ -88,7 +88,7 @@ class Phone extends Model
                 $phone = new PhoneNumber($this->getPhoneNumber(), $defaultCountry); // force default country
             }
 
-            return $phone->formatNational(); // (514) 702-8066
+            return $phone->formatInternational(); // +1 (514) 702-8066
         } catch (\Exception $e) {
            return $this->getPhoneNumber();
         }
