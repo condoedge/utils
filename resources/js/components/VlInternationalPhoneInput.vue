@@ -84,7 +84,7 @@ export default {
             phoneValue: this.component?.value || '',
             
             // Country selection state
-            selectedCountryCode: this.$_config('country') || this.$_config('defaultCountry') || 'US',
+            selectedCountryCode: this.$_config('country') || this.$_config('defaultCountry'),
             isDropdownOpen: false,
             searchTerm: '',
             
