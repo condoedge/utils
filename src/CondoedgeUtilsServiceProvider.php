@@ -53,7 +53,9 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
 
         $this->loadJSONTranslationsFrom(__DIR__.'/../resources/lang');
 
-        $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
+        if (config('kompo-utils.load-migrations', true)) {
+            $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
+        }
 
         $this->publishes([
             __DIR__ . '/../config/global-config.php' => config_path('global-config.php'),
