@@ -9,7 +9,7 @@ if (!function_exists('getAppClass')) {
 	function getAppClass(...$namespaces)
 	{
         foreach ($namespaces as $namespace) {
-            if (class_exists($namespace)) {
+            if ($namespace && class_exists($namespace)) {
                 return $namespace;
             }
         }
