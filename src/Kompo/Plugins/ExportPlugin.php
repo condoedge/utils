@@ -7,6 +7,7 @@ use Condoedge\Utils\Kompo\Plugins\Base\ComponentPlugin;
 use Condoedge\Utils\Services\Exports\ComponentToExportableToExcel;
 use Condoedge\Utils\Services\Exports\ExportableHeaviness;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 use Kompo\Elements\BaseElement;
 use Kompo\Komponents\KomponentManager;
 use Kompo\Query;
@@ -69,8 +70,8 @@ class ExportPlugin extends ComponentPlugin
     // Options of exports
     public function exportToExcelViaEmail()
     {
-        if (!request('export_email')) {
-            return throwValidationError('export_email', __('utils.email-is-required'));
+        if (!request('export_email') || Validator::make(request()->only('export_email'), ['export_email' => 'required|email'])->fails()) {
+            return throwValidationError('export_email', !request('export_email') ? __('utils.email-is-required') : __('translate.email-is-invalid'));
         }
 
         $exportableInstance = $this->exportableInstance();
