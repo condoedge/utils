@@ -21,7 +21,7 @@ abstract class ImgFormLayout extends Form
                 _Img(asset($this->imgUrl))->class('h-screen w-full')->bgCover(),
             )->class('relative hidden md:block')->col('col-md-7'),
             _Rows(
-                _LocaleSwitcher()->class('absolute top-0 right-0'),
+                $this->localeSwitcher(),
                 _Rows(
                     $this->rightColumnBody(),
                 )->class('p-6 md:p-8 w-full')->class($this->rightColumnBodyWrapperClass)->style('max-width:500px'),
@@ -29,4 +29,9 @@ abstract class ImgFormLayout extends Form
             ->col('col-12 col-md-5 bg-greenmain'),
 		)->class('no-gutters');
 	}
+
+    protected function localeSwitcher()
+    {
+        return _LocaleSwitcher();
+    }
 }
