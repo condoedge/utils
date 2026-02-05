@@ -60,9 +60,7 @@ function setLoadingScreen()
 {
     const loadingInnerHtml = `
         <div class="loading-screen">
-            <div class="spinner">
-                
-            </div>    
+            <i id="vl-spinner" class="icon-spinner" style="display: block;"></i>
         </div>
     `;
 

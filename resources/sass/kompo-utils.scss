@@ -201,3 +201,11 @@
         
     }
 }
+
+/* Double login fix */
+body::has(.loading-screen) {
+  &>#vl-spinner {
+    opacity: 0 !important;
+    display: none !important;
+  }
+}
