@@ -108,8 +108,7 @@ if (!function_exists('getTutorialAnimationButton')) {
 		}
 
 		return _Link()->icon(_Sax('info-circle', $iconSize))->class('text-gray-800 text-2xl')
-			->onClick(fn($e) => $e->run('() => {window.utils.setLoadingScreen()}')
-				&& $e->post(route('forget-intro-component', [
+			->onClick(fn($e) => $e->post(route('forget-intro-component', [
 					'intro_key' => componentIntroViewedKey(getCurrentComponentPage()),
 				]))->redirect(url()->full())
 			);
