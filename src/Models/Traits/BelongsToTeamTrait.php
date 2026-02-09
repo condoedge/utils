@@ -32,7 +32,7 @@ trait BelongsToTeamTrait
 
     public function deletable()
     {
-        return safeIsSuperAdmin() || $this->team_id == safesafeCurrentTeamId();
+        return safeIsSuperAdmin() || $this->team_id == safeCurrentTeamId();
     }
 
 }
