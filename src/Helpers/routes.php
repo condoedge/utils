@@ -22,9 +22,13 @@ if(!function_exists('getReferrerRoute')) {
 	}
 }
 
-if(!function_exists('getReferrerUrl')) {
+if(!function_exists('getCurrentComponentPage')) {
 	function getCurrentComponentPage()
 	{
+		if (!request()->route()) {
+			return null;
+		}
+
 		return request()->route()->controller::class;
 	}
 }

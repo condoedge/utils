@@ -224,6 +224,7 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
             'kompo-files' => __DIR__.'/../config/kompo-files.php',
             'kompo-utils' => __DIR__.'/../config/kompo-utils.php',
             'kompo-tags' => __DIR__.'/../config/kompo-tags.php',
+            'errors-views' => __DIR__.'/../config/errors-views.php',
         ];
 
         foreach ($dirs as $key => $path) {
