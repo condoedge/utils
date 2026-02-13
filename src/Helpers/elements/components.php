@@ -40,6 +40,11 @@ function _DateTextInput()
     return \Condoedge\Utils\Kompo\Elements\DateTextInput::form(...func_get_args());
 }
 
+function _SignaturePad()
+{
+    return \Condoedge\Utils\Kompo\Elements\SignaturePad::form(...func_get_args());
+}
+
 function _Text()
 {
     return \Condoedge\Utils\Kompo\Elements\Text::form(...func_get_args());
