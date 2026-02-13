@@ -20,11 +20,15 @@ class ErrorReportHandler
     public function setExtraData($data) 
     {
         $this->extraData = $data;
+
+        return $this;
     }
 
     public function setExtraDataCallback(callable $callback) 
     {
         $this->extraDataCallback = $callback;
+
+        return $this;
     }
 
     public function handle()
