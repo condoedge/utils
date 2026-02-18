@@ -235,47 +235,39 @@ class ComponentToExportableToExcel implements FromArray, WithHeadings, ShouldAut
         return "";
     }
 
-    protected function getItems($fromInstance = null, $perPage = 1000)
+    protected function getItems($fromInstance = null, $perPage = 10000000)
     {
         $fromInstance = $fromInstance ?? $this->component;
 
-        $prevPerPage = $fromInstance->perPage;
-        $fromInstance->perPage = $perPage ?? $this->chunkSize();
+        $prevHasPagination = $fromInstance->hasPagination;
+        $fromInstance->hasPagination = false;
 
         $items = $fromInstance->query();
 
         if ($items instanceof Builder) {
-            if ($perPage > $this->chunkSize()) {
-                // Batch processing for large datasets
-                $result = [];
-                $page = 1;
-                $chunkSize = $this->chunkSize();
+            // Batch processing for large datasets
+            $result = [];
+            $page = 1;
+            $chunkSize = $this->chunkSize();
+            
+            do {
+                $chunk = $items->forPage($page, $chunkSize)->get();
+                if ($chunk->isEmpty()) {
+                    break;
+                }
                 
-                do {
-                    $chunk = $items->forPage($page, $chunkSize)->get();
-                    if ($chunk->isEmpty()) {
-                        break;
-                    }
-                    
-                    foreach ($chunk as $item) {
-                        $result[] = $item;
-                    }
-                      unset($chunk); // Free memory
-                    $page++;
-                    
-                    // Exit if we have enough records
-                    if (count($result) >= $perPage) {
-                        break;
-                    }
-                } while (true);
-                  $items = collect($result);
-                    unset($result); // Free memory
-            } else {
-                $items = $items->take($perPage)->get();
-            }
+                foreach ($chunk as $item) {
+                    $result[] = $item;
+                }
+                unset($chunk); // Free memory
+                $page++;
+            } while (true);
+
+            $items = collect($result);
+            unset($result); // Free memory
         }
 
-        $fromInstance->perPage = $prevPerPage;
+        $fromInstance->hasPagination = $prevHasPagination;
 
         return $items;
     }
