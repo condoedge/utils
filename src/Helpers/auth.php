@@ -21,6 +21,13 @@ if (!function_exists('safeCurrentTeamId')) {
     }
 }
 
+if (!function_exists('safeCurrentTeamRole')) {
+    function safeCurrentTeamRole()
+    {
+        return secureCall('currentTeamRole') ?? null;
+    }
+}
+
 if (!function_exists('safeGetAllTeamChildrenIds')) {
     function safeGetAllTeamChildrenIds()
     {

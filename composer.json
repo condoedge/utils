@@ -34,5 +34,8 @@
     "prefer-stable": true,
     "require-dev": {
         "orchestra/testbench": "*"
+    },
+    "suggest": {
+        "google/analytics-data": "Required for Google Analytics Data API (GoogleAnalyticsService)"
     }
 }
