@@ -62,6 +62,7 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
             __DIR__ . '/../config/kompo-utils.php' => config_path('kompo-utils.php'),
             __DIR__ . '/../config/kompo-files.php' => config_path('kompo-files.php'),
             __DIR__ . '/../config/kompo-tags.php' => config_path('kompo-tags.php'),
+            __DIR__ . '/../config/analytics.php' => config_path('analytics.php'),
         ], 'kompo-utils-config');
 
         $this->publishes([
@@ -108,6 +109,7 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
         ]);
 
         $this->registerComplianceNotificationSystem();
+        $this->registerAnalyticsListeners();
     }
 
     /**
@@ -190,6 +192,10 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
             return $app->make(NominatimService::class);
         });
 
+        $this->app->singleton(\Condoedge\Utils\Services\Analytics\GoogleAnalyticsService::class, function ($app) {
+            return new \Condoedge\Utils\Services\Analytics\GoogleAnalyticsService();
+        });
+
         // Register compliance notification system
         $this->app->singleton(NotificationStrategyRegistry::class, function ($app) {
             return new NotificationStrategyRegistry();
@@ -225,6 +231,7 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
             'kompo-utils' => __DIR__.'/../config/kompo-utils.php',
             'kompo-tags' => __DIR__.'/../config/kompo-tags.php',
             'errors-views' => __DIR__.'/../config/errors-views.php',
+            'analytics' => __DIR__.'/../config/analytics.php',
         ];
 
         foreach ($dirs as $key => $path) {
@@ -274,6 +281,21 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
             // Option 3: Hourly checks (good compromise)
             $schedule->command('compliance:run-validation --scheduled')->hourly();
         });
+    }
+
+    /**
+     * Register Google Analytics event listeners
+     */
+    protected function registerAnalyticsListeners(): void
+    {
+        if (!config('services.google_analytics.measurement_id')) {
+            return;
+        }
+
+        Event::listen(\Illuminate\Auth\Events\Login::class,
+            \Condoedge\Utils\Listeners\TrackUserLogin::class);
+        Event::listen(\Illuminate\Auth\Events\Logout::class,
+            \Condoedge\Utils\Listeners\TrackUserLogout::class);
     }
 
     /**

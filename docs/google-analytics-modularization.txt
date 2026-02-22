@@ -1,0 +1,418 @@
+# Google Analytics Modularization — Plan d'implementation
+
+## Contexte
+
+**Branche:** `google-analytics-v2`
+**Objectif:** Deplacer le code Google Analytics reutilisable de l'application SISC vers le package `condoedge/utils`, pour permettre la reutilisation dans d'autres projets (ex: Coolecto).
+
+**Probleme initial:** Tout le code GA4 (services, middleware, listeners, model, migration, vues Blade) vivait dans `app/` avec des dependances directes vers des fonctions SISC (`currentTeam()`, `currentTeamRole()`, `isSuperAdmin()`).
+
+**Solution:** Utiliser les safe helpers existants dans utils (`safeCurrentTeam()`, `safeIsSuperAdmin()`, etc.) + en creer un nouveau (`safeCurrentTeamRole()`), et utiliser les facades `TeamModel`/`UserModel` pour les relations Eloquent.
+
+---
+
+## Architecture avant/apres
+
+### AVANT (tout dans SISC app/)
+
+```
+app/
+├── Http/Middleware/LogPageView.php          → currentTeam(), isSuperAdmin()
+├── Listeners/
+│   ├── TrackUserLogin.php                   → currentTeam(), App\Services\GoogleTagManager
+│   └── TrackUserLogout.php                  → App\Services\GoogleTagManager
+├── Models/Analytics/PageViewLog.php         → App\Models\Teams\Team, App\Models\User
+├── Services/
+│   ├── GoogleAnalyticsService.php           → Zero dep SISC (GA4 Data API)
+│   └── GoogleTagManager.php                 → currentTeam(), currentTeamRole(), isSuperAdmin()
+config/analytics.php
+database/migrations/2026_02_05_...php        → FK directe vers teams
+resources/views/
+├── layouts/google-analytics.blade.php       → App\Services\GoogleTagManager
+└── kompo/body-top.blade.php                 → config GTM
+```
+
+### APRES (reutilisable dans utils/)
+
+```
+packages/condoedge/utils/
+├── config/
+│   ├── analytics.php                        → +page-view-log-model key
+│   └── services.php                         → +google_analytics, +google_tag_manager
+├── database/migrations/
+│   └── 2026_02_05_...php                    → FK conditionnelle (Schema::hasTable)
+├── resources/views/analytics/
+│   ├── google-analytics.blade.php           → Condoedge\Utils\Services\Analytics\GoogleTagManager
+│   └── body-top.blade.php                   → config GTM (inchange)
+├── src/
+│   ├── Helpers/auth.php                     → +safeCurrentTeamRole()
+│   ├── Http/Middleware/LogPageView.php       → safe helpers + model dynamique via config
+│   ├── Listeners/
+│   │   ├── TrackUserLogin.php               → safe helpers + fallback chains
+│   │   └── TrackUserLogout.php              → namespace change uniquement
+│   ├── Models/Analytics/PageViewLog.php     → BelongsToUserTrait + TeamModel facade
+│   ├── Services/Analytics/
+│   │   ├── GoogleAnalyticsService.php       → namespace change uniquement
+│   │   └── GoogleTagManager.php             → safe helpers + fallback chains
+│   └── CondoedgeUtilsServiceProvider.php    → config, singleton, listeners
+└── composer.json                            → +suggest google/analytics-data
+```
+
+---
+
+## Detail des modifications par phase
+
+### Phase 0 — Corrections prealables
+
+#### 0.1: `.gitignore`
+**Probleme:** Les fichiers Laravel core (`Kernel.php`, `AppServiceProvider.php`, `EventServiceProvider.php`) etaient ajoutes au `.gitignore` par erreur.
+
+**Correction:** Retrait des 2 lignes erronees:
+```diff
+- app/Providers/AppServiceProvider.php
+- app/Http/Kernel.php
+```
+
+#### 0.2: Nouveau helper `safeCurrentTeamRole()`
+**Fichier:** `packages/condoedge/utils/src/Helpers/auth.php`
+
+```php
+if (!function_exists('safeCurrentTeamRole')) {
+    function safeCurrentTeamRole()
+    {
+        return secureCall('currentTeamRole') ?? null;
+    }
+}
+```
+
+Ce helper suit le meme pattern que `safeCurrentTeam()` et `safeIsSuperAdmin()`: il utilise `secureCall()` qui verifie l'existence de la fonction avant de l'appeler et catch les exceptions.
+
+---
+
+### Phase 1 — Configuration (utils)
+
+#### 1.1: `packages/condoedge/utils/config/analytics.php`
+Copie du `config/analytics.php` SISC + ajout de la cle `page-view-log-model`:
+```php
+'page-view-log-model' => \Condoedge\Utils\Models\Analytics\PageViewLog::class,
+```
+Permet a une app consommatrice de surcharger le model (ex: ajouter des colonnes specifiques).
+
+#### 1.2: `packages/condoedge/utils/config/services.php`
+Ajout de 2 blocs apres `geocodio`:
+```php
+'google_analytics' => [
+    'enabled' => env('GOOGLE_ANALYTICS_ENABLED', false),
+    'measurement_id' => env('GOOGLE_ANALYTICS_MEASUREMENT_ID'),
+    'property_id' => env('GOOGLE_ANALYTICS_PROPERTY_ID'),
+    'credentials_path' => env('GOOGLE_ANALYTICS_CREDENTIALS_PATH',
+        storage_path('app/google/analytics-credentials.json')),
+],
+'google_tag_manager' => [
+    'enabled' => env('GTM_ENABLED', false),
+    'container_id' => env('GTM_CONTAINER_ID'),
+],
+```
+Via `mergeConfigFrom`, ces valeurs servent de defaults. L'app SISC les override avec son propre `config/services.php`.
+
+#### 1.3: Enregistrement dans le ServiceProvider
+- `loadConfig()`: ajout de `'analytics' => __DIR__.'/../config/analytics.php'`
+- `publishes()`: ajout de `analytics.php => config_path('analytics.php')` dans le tag `kompo-utils-config`
+
+---
+
+### Phase 2 — Model, Migration, Services (utils)
+
+#### 2.1: `PageViewLog` model
+**Namespace:** `Condoedge\Utils\Models\Analytics`
+
+**Strategie pour les relations:**
+- **User:** Utilise `BelongsToUserTrait` (fournit `user()` via `UserModel::getClass()`)
+- **Team:** Relation manuelle via `TeamModel::getClass()` (ne pas utiliser `BelongsToTeamTrait` car son `scopeForTeam` a une logique differente avec `getAllChildrenRawSolution`)
+
+```php
+use Condoedge\Utils\Facades\TeamModel;
+use Condoedge\Utils\Models\Traits\BelongsToUserTrait;
+
+class PageViewLog extends Model
+{
+    use BelongsToUserTrait;
+
+    public function team(): BelongsTo
+    {
+        return $this->belongsTo(TeamModel::getClass());
+    }
+
+    // scopeForTeam accepte object ou scalar (pas de type hint specifique)
+    public function scopeForTeam(Builder $query, $team): Builder
+    {
+        $teamId = is_object($team) ? $team->id : $team;
+        return $query->where('team_id', $teamId);
+    }
+}
+```
+
+#### 2.2: Migration
+**Changement cle:** La FK `team_id` est conditionnelle:
+```php
+$table->unsignedBigInteger('team_id')->nullable()->index();
+if (Schema::hasTable('teams')) {
+    $table->foreign('team_id')->references('id')->on('teams')->onDelete('set null');
+}
+```
+La migration est auto-chargee par le `loadMigrationsFrom` existant dans le ServiceProvider (gate par `config('kompo-utils.load-migrations')`).
+
+#### 2.3: `GoogleAnalyticsService`
+Namespace change uniquement (`App\Services` → `Condoedge\Utils\Services\Analytics`). Zero dependance SISC — utilise uniquement la Google Analytics Data API.
+
+Enregistre comme singleton:
+```php
+$this->app->singleton(GoogleAnalyticsService::class, function ($app) {
+    return new GoogleAnalyticsService();
+});
+```
+
+#### 2.4: `GoogleTagManager`
+**Namespace:** `Condoedge\Utils\Services\Analytics`
+
+**Modifications dans `getUserData()`:**
+
+| Avant (SISC) | Apres (utils) |
+|---|---|
+| `function_exists('currentTeam') && currentTeam()` | `$team = safeCurrentTeam(); if ($team)` |
+| `function_exists('currentTeamRole') && currentTeamRole()` | `$teamRole = safeCurrentTeamRole(); if ($teamRole)` |
+| `function_exists('isSuperAdmin') ? isSuperAdmin() : false` | `safeIsSuperAdmin()` |
+| `$team->team_name` | `$team->team_name ?? ($team->name ?? null)` |
+| `$team->team_level->value` | `$team->team_level->value ?? ($team->level ?? 'unknown')` |
+| `$teamRole->roleRelation->name` | `$teamRole->roleRelation->name ?? ($teamRole->role->name ?? 'unknown')` |
+| try/catch bloc autour du team context | Retire (safe helpers gerent deja les exceptions) |
+
+**Pourquoi les fallback chains?** Differentes apps peuvent avoir des noms de proprietes differents pour le team model (`team_name` vs `name`, `team_level` enum vs `level` string).
+
+---
+
+### Phase 3 — Middleware, Listeners, Views (utils)
+
+#### 3.1: `LogPageView` middleware
+**Namespace:** `Condoedge\Utils\Http\Middleware`
+
+**Modifications:**
+
+| Avant (SISC) | Apres (utils) |
+|---|---|
+| `use App\Models\Analytics\PageViewLog` | Model dynamique via config |
+| `use App\Services\GoogleTagManager` | `use Condoedge\Utils\Services\Analytics\GoogleTagManager` |
+| `function_exists('currentTeam') ? currentTeam() : null` | `safeCurrentTeam()` |
+| `function_exists('currentTeamRole') ? currentTeamRole() : null` | `safeCurrentTeamRole()` |
+| `$team?->team_level?->value` | `$team?->team_level?->value ?? ($team?->level ?? null)` |
+| `$teamRole?->role?->name` | `$teamRole?->roleRelation?->name ?? ($teamRole?->role?->name ?? null)` |
+| `function_exists('isSuperAdmin') ? isSuperAdmin() : false` | `safeIsSuperAdmin()` |
+| `PageViewLog::create($logData)` | `$modelClass::create($logData)` (via config) |
+
+**Resolution dynamique du model:**
+```php
+$modelClass = config('analytics.page-view-log-model',
+    \Condoedge\Utils\Models\Analytics\PageViewLog::class);
+$modelClass::create($logData);
+```
+
+#### 3.2: `TrackUserLogin` listener
+- Import: `Condoedge\Utils\Services\Analytics\GoogleTagManager`
+- `function_exists('currentTeam') && currentTeam()` → `$team = safeCurrentTeam(); if ($team)`
+- `$team->team_level->value` → `$team->team_level->value ?? ($team->level ?? 'unknown')`
+
+#### 3.3: `TrackUserLogout` listener
+- Namespace + import change uniquement. Zero dependance SISC.
+
+#### 3.4: Vues Blade
+- **`kompo-utils::analytics.google-analytics`**: Remplace `\App\Services\GoogleTagManager::getUserData()` par `\Condoedge\Utils\Services\Analytics\GoogleTagManager::getUserData()`
+- **`kompo-utils::analytics.body-top`**: Copie directe (zero dep SISC)
+
+#### 3.5: Enregistrement des listeners dans le ServiceProvider
+```php
+protected function registerAnalyticsListeners(): void
+{
+    if (!config('services.google_analytics.measurement_id')) {
+        return;
+    }
+
+    Event::listen(Login::class, TrackUserLogin::class);
+    Event::listen(Logout::class, TrackUserLogout::class);
+}
+```
+La condition est `measurement_id` (pas `enabled`), car `GoogleTagManager::isEnabled()` verifie le measurement_id.
+
+Appele depuis `boot()` apres `registerComplianceNotificationSystem()`.
+
+---
+
+### Phase 4 — Composer
+
+`packages/condoedge/utils/composer.json` — ajout:
+```json
+"suggest": {
+    "google/analytics-data": "Required for Google Analytics Data API (GoogleAnalyticsService)"
+}
+```
+En `suggest` et non `require` car le GoogleAnalyticsService (API server-side) est optionnel. Le tracking GA4 client-side (gtag.js) ne necessite pas cette lib.
+
+---
+
+### Phase 5 — Wiring SISC
+
+#### 5.1: `app/Http/Kernel.php`
+```diff
+- \App\Http\Middleware\LogPageView::class,
++ \Condoedge\Utils\Http\Middleware\LogPageView::class,
+```
+
+#### 5.2: `app/Providers/EventServiceProvider.php`
+Retrait des blocs Login/Logout (maintenant geres par le ServiceProvider de utils):
+```diff
+- use Illuminate\Auth\Events\Login;
+- use Illuminate\Auth\Events\Logout;
+  ...
+- Login::class => [\App\Listeners\TrackUserLogin::class],
+- Logout::class => [\App\Listeners\TrackUserLogout::class],
+```
+
+#### 5.3: `resources/views/layouts/app.blade.php`
+```diff
+- @include('layouts.google-analytics')
++ @include('kompo-utils::analytics.google-analytics')
+```
+
+#### 5.4: `resources/views/layouts/dashboard.blade.php`
+```diff
+- <meta name="current-team-id" content="{{ currentTeam()?->id }}">
+- <meta name="current-team-level" content="{{ currentTeam()?->level }}">
++ <meta name="current-team-id" content="{{ safeCurrentTeamId() }}">
++ <meta name="current-team-level" content="{{ safeCurrentTeam()?->team_level?->value ?? safeCurrentTeam()?->level }}">
+```
+
+#### 5.5: Fichiers supprimes de SISC (10 fichiers)
+| Fichier | Raison |
+|---|---|
+| `app/Services/GoogleAnalyticsService.php` | Deplace vers utils |
+| `app/Services/GoogleTagManager.php` | Deplace vers utils |
+| `app/Http/Middleware/LogPageView.php` | Deplace vers utils |
+| `app/Listeners/TrackUserLogin.php` | Deplace vers utils |
+| `app/Listeners/TrackUserLogout.php` | Deplace vers utils |
+| `app/Models/Analytics/PageViewLog.php` | Deplace vers utils |
+| `app/Models/Analytics/` (dossier) | Vide apres suppression |
+| `config/analytics.php` | Deplace vers utils |
+| `database/migrations/2026_02_05_...php` | Deplace vers utils |
+| `resources/views/layouts/google-analytics.blade.php` | Deplace vers utils |
+| `resources/views/kompo/body-top.blade.php` | Deplace vers utils |
+
+#### 5.6-5.9: Fichiers inchanges
+- `config/services.php` (SISC) — garde ses overrides, `mergeConfigFrom` de utils fournit les defaults
+- `.env.example` — pas d'ajout de nouvelles vars
+- `ga4-activity-tracker.js` + `webpack.mix.js` — restent dans SISC (mapping URL→module specifique)
+- `public/js/`, `public/css/` — artefacts de build, inchanges
+
+---
+
+### Phase 6 — Verification
+
+#### Grep pour references obsoletes
+Aucune reference trouvee dans le code source pour:
+- `App\Services\GoogleTagManager`
+- `App\Services\GoogleAnalyticsService`
+- `App\Models\Analytics\PageViewLog`
+- `App\Listeners\TrackUserLogin` / `TrackUserLogout`
+- `App\Http\Middleware\LogPageView`
+- `layouts.google-analytics` / `kompo.body-top`
+
+Seules references: cache Blade compile (`storage/framework/views/`) — auto-regenere.
+
+#### Coherence des config keys
+| Config key | Utilise par |
+|---|---|
+| `services.google_analytics.measurement_id` | GoogleTagManager::isEnabled(), blade view, ServiceProvider |
+| `services.google_analytics.property_id` | GoogleAnalyticsService |
+| `services.google_analytics.credentials_path` | GoogleAnalyticsService |
+| `services.google_tag_manager.*` | body-top.blade.php uniquement |
+| `analytics.enabled` | LogPageView middleware |
+| `analytics.excluded_paths` | LogPageView middleware |
+| `analytics.page-view-log-model` | LogPageView middleware |
+
+---
+
+## Tests en navigateur
+
+**Resultats (Chrome, http://127.0.0.1:8000/dashboard):**
+
+| Check | Resultat |
+|---|---|
+| Page charge sans erreur PHP | 200 OK |
+| Script gtag.js present | `https://www.googletagmanager.com/gtag/js?id=G-JTVTDNBR0P` |
+| `window.gtag` function | Existe |
+| `window.dataLayer` | 8 entries |
+| User properties GA4 | `app_user_id`, `teamId:2`, `teamName:National`, `teamLevel:1`, `teamRoleName:Super admin`, `isSuperAdmin:true` |
+| Meta tag `current-team-id` | `2` |
+| Meta tag `current-team-level` | `1` |
+| `ga4-activity-tracker.js` charge | Oui (`asset()`) |
+| Erreurs console | Aucune |
+| PageViewLog en DB | 238 entries, derniere avec `team_id`, `user_role`, `is_super_admin` corrects |
+
+---
+
+## Diagramme de flux des config
+
+```
+.env (SISC)
+  GOOGLE_ANALYTICS_MEASUREMENT_ID=G-JTVTDNBR0P
+  GOOGLE_ANALYTICS_PROPERTY_ID=...
+       │
+       ▼
+config/services.php (SISC)         config/services.php (utils)
+  google_analytics.measurement_id ◄─── mergeConfigFrom (defaults)
+  google_analytics.property_id
+       │
+       ├──► GoogleTagManager::isEnabled()
+       ├──► google-analytics.blade.php (gtag config)
+       ├──► ServiceProvider::registerAnalyticsListeners()
+       └──► GoogleAnalyticsService (API server-side)
+
+config/analytics.php (utils, merged)
+  enabled, excluded_paths, page-view-log-model
+       │
+       └──► LogPageView middleware
+```
+
+---
+
+## Comment reutiliser dans un autre projet
+
+1. **Ajouter le package** (deja fait via composer local/submodule)
+2. **Configurer `.env`:**
+   ```
+   GOOGLE_ANALYTICS_MEASUREMENT_ID=G-XXXXXXXXXX
+   GOOGLE_ANALYTICS_PROPERTY_ID=123456789
+   ```
+3. **Inclure la vue GA dans le layout:**
+   ```blade
+   @include('kompo-utils::analytics.google-analytics')
+   ```
+4. **Ajouter le middleware au Kernel:**
+   ```php
+   'web' => [
+       // ...
+       \Condoedge\Utils\Http\Middleware\LogPageView::class,
+   ],
+   ```
+5. **Optionnel — surcharger le model:**
+   ```php
+   // config/analytics.php
+   'page-view-log-model' => \App\Models\MyCustomPageViewLog::class,
+   ```
+6. **Optionnel — GA4 Data API (server-side):**
+   ```bash
+   composer require google/analytics-data
+   ```
+   ```
+   GOOGLE_ANALYTICS_CREDENTIALS_PATH=storage/app/google/credentials.json
+   ```
+
+Les listeners Login/Logout sont auto-enregistres par le ServiceProvider si `measurement_id` est configure. Aucune action supplementaire requise.
