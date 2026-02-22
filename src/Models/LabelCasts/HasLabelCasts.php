@@ -31,9 +31,9 @@ trait HasLabelCasts
     {
         $cast = $this->getLabelCastInstance($attr, $this->getAttribute($attr));
 
-        $rawAttribute = $this->getAttributes()[$attr];
+        $rawAttribute = $this->getAttributes()[$attr] ?? null;
 
-        return $cast ? $cast->getLabel($this->getAttribute($attr) ?? null, $attr) : $rawAttribute;
+        return $cast ? $cast->getLabel($this->getAttribute($attr) ?? $rawAttribute, $attr) : $rawAttribute;
     }
 
     public function getCastedLabel($attr, $value)

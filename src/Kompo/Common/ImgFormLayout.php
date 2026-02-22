@@ -8,7 +8,7 @@ abstract class ImgFormLayout extends Form
 {
     public $containerClass = '';
 
-    protected $imgUrl = 'images/left-column-image.png';
+    protected $imgUrl = 'images/left-column-image.webp';
 
     protected $rightColumnBodyWrapperClass = 'flex-1 justify-around md:justify-center';
 
