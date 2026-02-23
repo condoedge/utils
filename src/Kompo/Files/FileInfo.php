@@ -30,7 +30,7 @@ class FileInfo extends Form
                 $this->model->file_type_enum?->getPreviewComponent($this->model)
             )->class('mt-6'),
             // _Html(__('file.file-uploaded-by') . ': ' . $file->uploadedBy())->class('text-sm'),
-        )->class('p-4')->style('width: min(30vw, 500px);');
+        )->class('p-4')->style('width: min(90vw, 500px);');
     }
 
     public function getFileForm($id)

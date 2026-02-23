@@ -36,13 +36,16 @@ class FilesManagerView extends Table
 	{
 		return FileModel::fileFilters(
 			_TitleMain('files-file-manager')->class('mb-4'),
+			_Button('files-upload-files')->icon('upload')->class('md:hidden mb-4')
+				->selfUpdate('getFileUploadModal')
+				->inModal(),
 		);
 	}
 
 	public function right()
 	{
 		return _Rows(
-            _Button('files-upload-files')->icon('upload')->class('ml-0 sm:ml-4 mb-4')
+            _Button('files-upload-files')->icon('upload')->class('ml-0 sm:ml-4 mb-4 hidden md:flex')
             ->selfUpdate('getFileUploadModal')
             ->inModal(),
         	_Panel(
@@ -55,7 +58,7 @@ class FilesManagerView extends Table
 
 	        )->id('recent-files-div')
 	        ->class('dashboard-card p-4 mb-4 ml-0 sm:ml-4 w-1/4vw'),
-		)->class('ml-0');
+		)->class('ml-0 hidden md:block file-manager-right');
 	}
 
 	public function headers()
@@ -74,19 +77,40 @@ class FilesManagerView extends Table
 		$canView = auth()->user()->can('viewFileOf', $fileable);
 
 		return _TableRow(
-            _Html($file->name),
-            _Html(ucfirst($file->fileable_type ?: '-')),
-			$file->uploadedAt(),
+			$this->renderMobileCard($file),
+            _Html($file->name)->tdClass('desktop-only-cell'),
+            _Html(ucfirst($file->fileable_type ?: '-'))->tdClass('desktop-only-cell'),
+			$file->uploadedAt()->tdClass('desktop-only-cell'),
             _FlexBetween(
                 _Link()->class('mt-1 -mr-2')->col('col-md-3')
                     ->icon('arrow-down')
                     ->href('files.download', ['id' => $file->id, 'type' => $file->getMorphClass()]),
                 _Delete($file)->col('col-md-3'),
-            )->class('px-2 gap-4'),
+            )->class('px-2 gap-4')->tdClass('desktop-only-cell'),
 		)->class('text-sm cursor-pointer')
 		->selfGet('getFileInfo', [
 			'id' => $file->id,
 		])->inPanel('file-info-panel');
+	}
+
+	protected function renderMobileCard($file)
+	{
+		return _Rows(
+			_FlexBetween(
+				_Rows(
+					_Html($file->name)->class('font-semibold text-sm truncate'),
+					_Html(ucfirst($file->fileable_type ?: '-'))->class('text-xs text-gray-500 mt-0.5'),
+				)->class('min-w-0 flex-1'),
+				_Flex(
+					_Link()->icon(_Sax('arrow-down', 18))
+						->class('!bg-level4 !w-9 !h-9 !rounded-full !text-greenmain flex items-center justify-center')
+						->href('files.download', ['id' => $file->id, 'type' => $file->getMorphClass()]),
+					_Delete($file)->class('!bg-red-50 !w-9 !h-9 !rounded-full !text-danger flex items-center justify-center'),
+				)->class('gap-2 flex-shrink-0'),
+			)->class('items-center'),
+			_Html($file->created_at->translatedFormat('d M Y'))->class('text-xs text-gray-400 mt-1'),
+		)->class('p-3 bg-white rounded-xl shadow-sm border border-gray-100')
+		->tdClass('mobile-only-cell');
 	}
 
     public function getFileInfo()
