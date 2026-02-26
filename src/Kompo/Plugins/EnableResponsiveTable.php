@@ -55,6 +55,8 @@ class EnableResponsiveTable extends \Condoedge\Utils\Kompo\Plugins\Base\Componen
     {
         $wrapper = ($row instanceof Layout) ? $row::class : null;
         $elements = $wrapper ? $row->elements : $row;
+        // Cleaning indexes to avoid issues when mapping elements with headers
+        $elements = array_values($elements);
 
         $decoratedElements = collect($elements)->map(function ($element, $i) {
             return _Rows(
