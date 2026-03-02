@@ -7,6 +7,10 @@ use Illuminate\Support\Facades\Facade;
 
 /**
  * @method static mixed get(string $key, $default = null)
+ * @method static mixed getOrFail(string $key)
+ * @method static void forget(string $key)
+ * @method static bool has(string $key)
+ * @method static mixed set(string $key, $value)
  *
  * @see \App\GlobalConfig\GlobalConfigServiceContract
  */

@@ -2,7 +2,7 @@
 
 namespace Condoedge\Utils\Services\GlobalConfig;
 
-use GlobalConfig;
+use Condoedge\Utils\Models\GlobalConfig;
 
 class DbGlobalConfigService extends AbstractConfigService
 {

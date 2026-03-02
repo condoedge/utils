@@ -157,7 +157,7 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
 
             $driverClass = $driverConfig['class'];
 
-            return new $driverClass();
+            return app()->make($driverClass);
         });
 
         $this->app->bind('note-model', function () {
