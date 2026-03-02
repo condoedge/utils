@@ -3,16 +3,20 @@
 use Condoedge\Utils\Services\ComplianceValidation\ComplianceValidationService;
 use Condoedge\Utils\Services\GlobalConfig\DbGlobalConfigService;
 use Condoedge\Utils\Services\GlobalConfig\FileGlobalConfigService;
+use Condoedge\Utils\Services\GlobalConfig\HybridGlobalConfigService;
 
 return [
     'global_config_service' => [
-        'driver' => env('GLOBAL_CONFIG_SERVICE_DRIVER', 'file'),
+        'driver' => env('GLOBAL_CONFIG_SERVICE_DRIVER', 'hybrid'),
         'drivers' => [
             'file' => [
                 'class' => FileGlobalConfigService::class,
             ],
             'db' => [
                 'class' => DbGlobalConfigService::class,
+            ],
+            'hybrid' => [
+                'class' => HybridGlobalConfigService::class,
             ],
         ],
     ],
