@@ -98,10 +98,16 @@ class Collapsible extends Rows
         ]);
     }
 
-    protected function titleEl($titleLabel)
+    public function titleEl($titleLabel)
     {
-        return $titleLabel instanceof Element ? $titleLabel : _Flex(
+        $titleEl = $titleLabel instanceof Element ? $titleLabel : _Flex(
             _Html($titleLabel)->class($this->titleElClass),
         )->class('py-2 w-full');
+
+        $this->config([
+            'titleEl' => $titleEl,
+        ]);
+
+        return $this;
     }
 }
