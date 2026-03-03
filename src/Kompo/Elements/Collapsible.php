@@ -39,7 +39,7 @@ class Collapsible extends Rows
     public function titleLabel(string|Element $titleLabel)
     {
         return $this->config([
-            'titleEl' => $this->titleEl($titleLabel),
+            'titleEl' => $this->buildTitleEl($titleLabel),
         ]);
     }
 
@@ -98,10 +98,10 @@ class Collapsible extends Rows
         ]);
     }
 
-    public function titleEl($titleLabel)
+    public function titleEl($titleEl)
     {
-        $titleEl = $titleLabel instanceof Element ? $titleLabel : _Flex(
-            _Html($titleLabel)->class($this->titleElClass),
+        $titleEl = $titleEl instanceof Element ? $titleEl : _Flex(
+            _Html($titleEl)->class($this->titleElClass),
         )->class('py-2 w-full');
 
         $this->config([
@@ -109,5 +109,12 @@ class Collapsible extends Rows
         ]);
 
         return $this;
+    }
+
+    protected function buildTitleEl($titleLabel)
+    {
+        return $titleLabel instanceof Element ? $titleLabel : _Flex(
+            _Html($titleLabel)->class($this->titleElClass),
+        )->class('py-2 w-full');
     }
 }
