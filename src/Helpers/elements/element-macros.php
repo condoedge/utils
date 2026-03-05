@@ -220,3 +220,15 @@ Layout::macro('fixChildrenSpinners', function () {
         $("#'.$id.'").find(".icon-spinner").addClass("hidden"); //remove loading spinner when the click is in the parent element
     }');
 });
+
+Kompo\Elements\BaseElement::macro('conditionToShow', function ($condition, $returnsNullInstead = false) {
+    if ($condition) {
+        return $this;
+    }
+
+    if ($returnsNullInstead) {
+        return null;
+    }
+
+    return (new ($this::class))->class('hidden');
+});

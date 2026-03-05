@@ -6,6 +6,23 @@ trait MemoizesResults
 {
     protected static array $_memoizedStatic = [];
 
+    public function refresh()
+    {
+        $this->clearMemoization();
+
+        return parent::refresh();
+    }
+
+    public function clearMemoization()
+    {
+        $instanceKey = static::class . ':' . ($this->getKey() ?? spl_object_id($this));
+        foreach (static::$_memoizedStatic as $key => $value) {
+            if (str_starts_with($key, $instanceKey . ':')) {
+                unset(static::$_memoizedStatic[$key]);
+            }
+        }
+    }
+
     protected function memoize(string $key, callable $callback)
     {
         $instanceKey = static::class . ':' . ($this->getKey() ?? spl_object_id($this));
