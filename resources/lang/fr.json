@@ -46,6 +46,8 @@
 	"maps-address-address1": "Adresse",
 	"maps-address-description": "Description de l'adresse",
 	"notes.content": "Contenu",
+	"translate.email-is-invalid": "Le courriel est invalide",
+	"translate.files-select-type-fileable-first": "Veuillez d'abord sélectionner un type de fichier",
 	"utils.direct-export": "Exporter le rapport ici",
 	"utils.email-is-required": "Courriel requis",
 	"utils.export-ready": "L'export Excel est prêt",
