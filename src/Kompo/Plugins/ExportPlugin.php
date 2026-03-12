@@ -203,6 +203,10 @@ class ExportPlugin extends ComponentPlugin
             return $exportableInstance->getHeavinessLevel();
         }
 
+        if (method_exists($exportableInstance, 'heavinessLevel')) {
+            return $exportableInstance->heavinessLevel();
+        }
+
         return ExportableHeaviness::MEDIUM;
     }
 
