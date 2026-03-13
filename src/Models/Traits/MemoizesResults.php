@@ -23,7 +23,7 @@ trait MemoizesResults
         }
     }
 
-    protected function memoize(string $key, callable $callback)
+    public function memoize(string $key, callable $callback)
     {
         $instanceKey = static::class . ':' . ($this->getKey() ?? spl_object_id($this));
         $fullKey = $instanceKey . ':' . $key;
