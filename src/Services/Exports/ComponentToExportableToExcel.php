@@ -210,29 +210,35 @@ class ComponentToExportableToExcel implements FromArray, WithHeadings, ShouldAut
 
     protected function getLabelsFromComponent($el)
     {
-        if (property_exists($el, 'elements') && !empty($el->elements)) {
-            $implodeUnion = (str_contains($el->bladeComponent, 'Flex') || str_contains($el->bladeComponent, 'Columns')) ? ' | ' : "\r\n ";
+        try {
+            if (property_exists($el, 'elements') && !empty($el->elements)) {
+                $implodeUnion = (str_contains($el->bladeComponent, 'Flex') || str_contains($el->bladeComponent, 'Columns')) ? ' | ' : "\r\n ";
 
-            $labels = [];
-            foreach ($el->elements as $childElement) {
-                $label = $this->getLabelsFromComponent($childElement);
-                if (!empty($label)) {
-                    $labels[] = $label;
+                $labels = [];
+                foreach ($el->elements as $childElement) {
+                    $label = $this->getLabelsFromComponent($childElement);
+                    if (!empty($label)) {
+                        $labels[] = $label;
+                    }
                 }
-            }
-            
-            return implode($implodeUnion, $labels);
-        }
-
-        if (property_exists($el, 'label')) {
-            if (preg_match('/<[^>]*>/', $el->label)) {
-                return $this->convertHtmlToPlainText($el->label);
+                
+                return implode($implodeUnion, $labels);
             }
 
-            return \Lang::has($el->label) ? __($el->label) : $el->label;
+            if (property_exists($el, 'label')) {
+                if (preg_match('/<[^>]*>/', $el->label)) {
+                    return $this->convertHtmlToPlainText($el->label);
+                }
+
+                return \Lang::has($el->label) ? __($el->label) : $el->label;
+            }
+
+            return "";
+        } catch (\Throwable $e) {
+            Log::error($e->getMessage(), ['class' => static::class, 'element' => $el, 'trace' => $e->getTraceAsString(), 'user' => auth()->user()]);
+            return "";
         }
 
-        return "";
     }
 
     protected function getItems($fromInstance = null, $perPage = 10000000)
@@ -280,26 +286,36 @@ class ComponentToExportableToExcel implements FromArray, WithHeadings, ShouldAut
 
     protected function getCurrencyFormat($text)
     {
-        if (preg_match(static::REGEX_CURRENCY, $text) || preg_match(static::REGEX_CURRENCY_FR, $text)) {
-            return $this->currencyFormat();
-        }
+        try {
+            if (preg_match(static::REGEX_CURRENCY, $text) || preg_match(static::REGEX_CURRENCY_FR, $text)) {
+                return $this->currencyFormat();
+            }
 
-        return null;
+            return null;
+        } catch (\Throwable $e) {
+            Log::error($e->getMessage(), ['class' => static::class, 'text' => $text, 'trace' => $e->getTraceAsString(), 'user' => auth()->user()]);
+            return null;
+        }
     }
 
     /* SANATIZE */
     protected function sanatizeText($text)
     {
-        if (preg_match(static::REGEX_CURRENCY, $text)) {
-            return floatval(preg_replace('/[^0-9.-]/', '', $text));
-        }
+        try {
+            if (preg_match(static::REGEX_CURRENCY, $text)) {
+                return floatval(preg_replace('/[^0-9.-]/', '', $text));
+            }
 
-        if (preg_match(static::REGEX_CURRENCY_FR, $text)) {
-            return floatval(str_replace(',', '.', preg_replace('/[^0-9.,-]/', '', $text)));
-        }
+            if (preg_match(static::REGEX_CURRENCY_FR, $text)) {
+                return floatval(str_replace(',', '.', preg_replace('/[^0-9.,-]/', '', $text)));
+            }
 
-        return  html_entity_decode(trim($text));
-        // return mb_convert_encoding(trim($text), 'ISO-8859-1', 'UTF-8');
+            return  html_entity_decode(trim($text));
+            // return mb_convert_encoding(trim($text), 'ISO-8859-1', 'UTF-8');
+        } catch (\Throwable $e) {
+            Log::error($e->getMessage(), ['class' => static::class, 'text' => $text, 'trace' => $e->getTraceAsString(), 'user' => auth()->user()]);
+            return $text;
+        }
     }
 
     protected function convertHtmlToPlainText($html)
