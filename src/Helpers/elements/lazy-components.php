@@ -175,9 +175,11 @@ function _LazyTabs(...$tabs)
                 $lazyElement = getPrivateProperty($tab, 'elements')[0] ?? null;
                 $closure = getPrivateProperty($lazyElement, 'closure') ?? null;
 
-                return _SwipeableTab(
-                    $closure(),
-                )->label(getPrivateProperty($tab, 'label'));
+                if ($closure) {
+                    return _SwipeableTab(
+                        $closure()
+                    )->label(getPrivateProperty($tab, 'label'));
+                }
             }
 
             return $tab;
