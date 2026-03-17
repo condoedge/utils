@@ -75,12 +75,21 @@ function removeLoadingScreen()
 import introJs from 'intro.js';
 window.introJs = introJs;
 
+import { gsap } from 'gsap';
+import { MotionPathPlugin } from 'gsap/MotionPathPlugin';
+import { MotionPathHelper } from 'gsap/MotionPathHelper';
+gsap.registerPlugin(MotionPathPlugin, MotionPathHelper);
+window.gsap = gsap;
+window.MotionPathPlugin = MotionPathPlugin;
+window.MotionPathHelper = MotionPathHelper;
+
 window.utils = {
 	getYesNoValue: getYesNoValue,
 	getToggle: getToggle,
 	getToggleValue: getToggleValue,
 	toggleYesNo: toggleYesNo,
 	introJs: introJs,
+	gsap: gsap,
 	setLoadingScreen: setLoadingScreen,
 	removeLoadingScreen: removeLoadingScreen
 };
