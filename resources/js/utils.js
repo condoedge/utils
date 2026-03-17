@@ -78,12 +78,17 @@ window.introJs = introJs;
 import { gsap } from 'gsap';
 import { MotionPathPlugin } from 'gsap/MotionPathPlugin';
 import { MotionPathHelper } from 'gsap/MotionPathHelper';
+
 gsap.registerPlugin(MotionPathPlugin, MotionPathHelper);
 window.gsap = gsap;
 window.MotionPathPlugin = MotionPathPlugin;
 window.MotionPathHelper = MotionPathHelper;
 
-window.utils = {
+import makeTutorialEngine from './tutorials/tutorial-engine';
+const TutorialEngine = makeTutorialEngine(gsap, introJs); // Required in the next line
+import initStepBuilder from './tutorials/tutorial-step-builder';
+
+const utils = {
 	getYesNoValue: getYesNoValue,
 	getToggle: getToggle,
 	getToggleValue: getToggleValue,
@@ -91,7 +96,21 @@ window.utils = {
 	introJs: introJs,
 	gsap: gsap,
 	setLoadingScreen: setLoadingScreen,
-	removeLoadingScreen: removeLoadingScreen
+	removeLoadingScreen: removeLoadingScreen,
+	TutorialEngine,
+	initStepBuilder
 };
 
+window.utils = utils;
+
 export default window.utils;
+
+export function decorateWindowWithUtils(window)
+{
+	window.utils = utils;
+	window.gsap = gsap;
+	window.MotionPathHelper = window.MotionPathHelper || (typeof MotionPathHelper !== 'undefined' ? MotionPathHelper : null);
+	window.TutorialEngine = TutorialEngine;
+	window.initStepBuilder = initStepBuilder;
+	// initStepBuilder(TutorialEngine);
+}

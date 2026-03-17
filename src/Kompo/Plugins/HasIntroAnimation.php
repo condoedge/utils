@@ -49,21 +49,8 @@ class HasIntroAnimation extends ComponentPlugin
         $replacedContent = $this->replaceContentWithVariables($translatedContent);
         $introJs = $this->managePhpInjections($replacedContent);
 
-        try {
-            $filesIncluded = array_diff(
-                scandir(resource_path('views/scripts/animation_dependencies')),
-                ['.', '..']
-            );
-
-            foreach ($filesIncluded as $file) {
-                $introJs = file_get_contents(resource_path("views/scripts/animation_dependencies/{$file}")) . "\n" . $introJs;
-            }
-        } catch (\Exception $e) {
-            // No dependencies found, continue
-        }
-
         if (config('app.debug')) {
-            $introJs = "window.__TUTORIAL_DEV = true;\n" . $introJs;
+            $introJs = "initStepBuilder()\n" . $introJs;
         }
 
         return $introJs;
