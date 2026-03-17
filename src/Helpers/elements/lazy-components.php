@@ -81,7 +81,7 @@ if (!function_exists('_LazyComponent')) {
             $lazyId = $registry->store($fn);
         }
 
-        return new \Condoedge\Utils\Kompo\Elements\LazyComponent($lazyId, $placeholder);
+        return new \Condoedge\Utils\Kompo\Elements\LazyComponent($lazyId, $placeholder, $fn instanceof \Closure ? $fn : null);
     }
 }
 
@@ -162,5 +162,41 @@ if (!function_exists('_lazyPlaceholder')) {
                     ->style("$bgDim; min-height: var(--lazy-h, 200px); width: var(--lazy-w, 100%)"),
             )->class('animate-pulse'),
         };
+    }
+}
+
+function _LazyTabs(...$tabs)
+{
+    $currentTab = request('tab_number', 0);
+
+    return _ResponsiveTabs(
+        ...collect($tabs)->map(function ($tab, $index) use ($currentTab) {
+            if ($index == $currentTab) {
+                $lazyElement = getPrivateProperty($tab, 'elements')[0] ?? null;
+                $closure = getPrivateProperty($lazyElement, 'closure') ?? null;
+
+                return _SwipeableTab(
+                    $closure(),
+                )->label(getPrivateProperty($tab, 'label'));
+            }
+
+            return $tab;
+        })->all(),
+    );
+}
+
+if (!function_exists('_LazyTab')) {
+    function _LazyTab($closure, $placeholderPreset = 'default')
+    {
+        return _SwipeableTab(
+            _LazyComponent($closure, $placeholderPreset),
+        )->style('--lazy-bg: #fff; --lazy-opacity: 0.65; --lazy-h: 300px');
+    }
+}
+
+if (!function_exists('_Tab')) {
+    function _Tab()
+    {
+        return _SwipeableTab(...func_get_args());
     }
 }

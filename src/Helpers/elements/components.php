@@ -22,6 +22,16 @@ if (!function_exists('_ResponsiveTabs')) {
     }
 }
 
+function _SwipeableTabs()
+{
+    return (\Condoedge\Utils\Kompo\Elements\SwipeableTabs::form(...func_get_args()))->swipeable();
+}
+
+function _SwipeableTab()
+{
+    return \Condoedge\Utils\Kompo\Elements\SwipeableTab::form(...func_get_args());
+}
+
 if (!function_exists('_ValidatedInput')) {
     function _ValidatedInput()
     {

@@ -9,6 +9,7 @@ class LazyComponent extends Rows
 {
     protected $lazyId;
     protected $lazyHasTrigger = true;
+    protected $closure; // Just to be able to execute directly if required
 
     /**
      * Create a lazy-loaded component from a pre-registered lazy ID.
@@ -16,9 +17,10 @@ class LazyComponent extends Rows
      * @param string        $lazyId      The HMAC-signed lazy component ID from the registry
      * @param string|object $placeholder  Preset name or custom placeholder element
      */
-    public function __construct(string $lazyId, $placeholder = 'default')
+    public function __construct(string $lazyId, $placeholder = 'default', $closure = null)
     {
         $this->lazyId = $lazyId;
+        $this->closure = $closure;
 
         $panelId = 'lazy-p-' . substr(md5($lazyId), 0, 10);
         $containerId = 'lazy-c-' . substr(md5($lazyId), 0, 10);

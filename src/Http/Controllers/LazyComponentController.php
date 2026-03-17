@@ -28,8 +28,10 @@ class LazyComponentController
         // Komponent class reference (sugar syntax)
         if (is_array($retrieved) && ($retrieved['_type'] ?? null) === 'komponent') {
             $komponentClass = $retrieved['class'];
-            return with(new Dispatcher($komponentClass))->bootKomponentForDisplay();
+            return $komponentClass::boot($retrieved['store'] ?? []);
         }
+        
+        app()->instance('bootFlag', true);
 
         // Closure — boot Komponent from KompoInfo to provide $this context
         $komponent = Dispatcher::bootKomponentForAction();
@@ -47,6 +49,8 @@ class LazyComponentController
         if (!$lazyItemsJson) {
             abort(400, 'Missing lazy batch items.');
         }
+
+        app()->instance('bootFlag', true);
 
         $lazyItems = json_decode($lazyItemsJson, true);
 
@@ -67,7 +71,7 @@ class LazyComponentController
             // Komponent class reference
             if (is_array($retrieved) && ($retrieved['_type'] ?? null) === 'komponent') {
                 $komponentClass = $retrieved['class'];
-                $results[$item['panelId']] = with(new Dispatcher($komponentClass))->bootKomponentForDisplay();
+                $results[$item['panelId']] = $komponentClass::boot($retrieved['store'] ?? []);
                 continue;
             }
 

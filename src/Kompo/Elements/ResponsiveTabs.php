@@ -108,13 +108,13 @@ class ResponsiveTabs extends Rows
     {
         $callback = $this->tabsCallbackDecoration;
 
-        return _Tabs(...$this->elements)
+        return _SwipeableTabs(...$this->elements)
             ->commonClass("hidden {$this->breakpoint}:block mr-8")
             ->when($this->tabsClass, fn ($el) => $el->class($this->tabsClass))
             ->when($this->tabsCommonClass, fn ($el) => $el->commonClass($this->tabsCommonClass . " hidden {$this->breakpoint}:block"))
             ->when($this->tabsSelectedClass, fn ($el) => $el->selectedClass($this->tabsSelectedClass, $this->tabsUnselectedClass))
             ->id('responsive-tabs-' . $this->uniqueId)
-            ->holdActualTab()
+            ->config(['selectId' => 'tabs-select-' . $this->uniqueId])
             ->when($callback && is_callable($callback), fn ($el) => $callback($el));
     }
 

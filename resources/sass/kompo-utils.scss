@@ -209,3 +209,18 @@ body::has(.loading-screen) {
     display: none !important;
   }
 }
+
+.vlTabContent--swipeable {
+    overflow: hidden;
+}
+
+.vlTabSwipeContainer {
+    display: flex;
+    will-change: transform;
+}
+
+.vlTab--swipeable {
+    flex-shrink: 0;
+    min-width: 100%;
+    width: 100%;
+}
