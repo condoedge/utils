@@ -15,3 +15,9 @@ Route::post('forget-intro-component', function () {
 Route::middleware(['auth'])->group(function () {
     Route::post('edit-place-fields', \Condoedge\Utils\Kompo\ContactInfo\Maps\AddressPlaceEditingForm::class)->name('edit-place-fields');
 });
+
+Route::post('_execute-lazy', [\Condoedge\Utils\Http\Controllers\LazyComponentController::class, 'execute'])
+    ->name('utils.execute-lazy');
+
+Route::post('_execute-lazy-batch', [\Condoedge\Utils\Http\Controllers\LazyComponentController::class, 'executeBatch'])
+    ->name('utils.execute-lazy-batch');

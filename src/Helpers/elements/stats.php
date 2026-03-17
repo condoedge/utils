@@ -59,7 +59,7 @@ function _LabelForBox($label, $value)
         _Html($label)
             ->class('text-sm leading-5 font-medium'),
         $value
-            ->class('mt-1 text-3xl leading-9 font-bold whitespace-nowrap box-label-val')
+            ->class('mt-1 text-3xl leading-9 font-bold whitespace-nowrap box-label-val flex justify-end')
     )->class('text-right rounded-2xl');
 }
 

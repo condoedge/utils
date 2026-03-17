@@ -33,7 +33,10 @@ use Condoedge\Utils\Services\Maps\GeocodioService;
 use Condoedge\Utils\Services\Maps\GoogleMapsService;
 use Condoedge\Utils\Services\Maps\NominatimService;
 use Illuminate\Support\Facades\Event;
+use Condoedge\Utils\Command\ClearLazyComponentsCommand;
 use Condoedge\Utils\Command\MissingTranslationAnalyzerCommand;
+use Condoedge\Utils\Kompo\Common\Grid;
+use Condoedge\Utils\Kompo\Plugins\LazyComponentPlugin;
 
 class CondoedgeUtilsServiceProvider extends ServiceProvider
 {
@@ -87,6 +90,7 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
             ExportPlugin::class,
             HasIntroAnimation::class,
             EnableWhiteTableStyle::class,
+            LazyComponentPlugin::class,
         ]);
 
         Table::setPlugins([
@@ -95,17 +99,24 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
             EnableResponsiveTable::class,
             TableIntoFormSetValuesPlugin::class,
             HasIntroAnimation::class,
+            LazyComponentPlugin::class,
         ]);
 
         Form::setPlugins([
             DebugReload::class,
             HasIntroAnimation::class,
+            LazyComponentPlugin::class,
         ]);
 
         Modal::setPlugins([
             HasScroll::class,
             DebugReload::class,
             HasIntroAnimation::class,
+            LazyComponentPlugin::class,
+        ]);
+
+        Grid::setPlugins([
+            LazyComponentPlugin::class,
         ]);
 
         $this->registerComplianceNotificationSystem();
@@ -257,6 +268,7 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
                 FixIncompleteAddressesCommand::class,
                 MissingTranslationAnalyzerCommand::class,
                 SendEmailForMissingTranslationsCommand::class,
+                ClearLazyComponentsCommand::class,
             ]);
         }
     }
