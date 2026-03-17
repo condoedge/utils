@@ -30,35 +30,43 @@ class HasIntroAnimation extends ComponentPlugin
             return;
         }
 
-        if (!in_array(HasUserSettings::class, class_uses(UserModel::getClass()))) {
-            \Log::error('The component must implement HasUserSettings trait to use HasIntroAnimation plugin. If you are not using it you can disable the plugin using `excludePlugins` method');
-            return;
-        }
+        $alwaysShow = $this->componentHasMethod('alwaysShowIntro') ? $this->callComponentMethod('alwaysShowIntro') : false;
 
-        if (!$skipIntro && !componentIntroViewed($this->component)) {
-            auth()->user()->saveSetting(componentIntroViewedKey($this->component), true);
-
-            $translatedContent = $this->translateContent(file_get_contents($filePath));
-            $replacedContent = $this->replaceContentWithVariables($translatedContent);
-        	$introJs = $this->managePhpInjections($replacedContent);
-
-            try {
-                $filesIncluded = array_diff(
-                    scandir(resource_path('views/scripts/animation_dependencies')), 
-                    ['.', '..']
-                );
-
-                foreach ($filesIncluded as $file) {
-                    $introJs = file_get_contents(resource_path("views/scripts/animation_dependencies/{$file}")) . "\n" . $introJs;
-                }
-            } catch (\Exception $e) {
-                // No dependencies found, continue
+        if (!$alwaysShow) {
+            if (!in_array(HasUserSettings::class, class_uses(UserModel::getClass()))) {
+                \Log::error('The component must implement HasUserSettings trait to use HasIntroAnimation plugin. If you are not using it you can disable the plugin using `excludePlugins` method');
+                return;
             }
 
-            return $introJs;
+            if ($skipIntro || componentIntroViewed($this->component)) {
+                return '';
+            }
+
+            auth()->user()->saveSetting(componentIntroViewedKey($this->component), true);
         }
 
-        return '';
+        $translatedContent = $this->translateContent(file_get_contents($filePath));
+        $replacedContent = $this->replaceContentWithVariables($translatedContent);
+        $introJs = $this->managePhpInjections($replacedContent);
+
+        try {
+            $filesIncluded = array_diff(
+                scandir(resource_path('views/scripts/animation_dependencies')),
+                ['.', '..']
+            );
+
+            foreach ($filesIncluded as $file) {
+                $introJs = file_get_contents(resource_path("views/scripts/animation_dependencies/{$file}")) . "\n" . $introJs;
+            }
+        } catch (\Exception $e) {
+            // No dependencies found, continue
+        }
+
+        if (config('app.debug')) {
+            $introJs = "window.__TUTORIAL_DEV = true;\n" . $introJs;
+        }
+
+        return $introJs;
     }
 
     protected function getPrefixFile()
