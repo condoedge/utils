@@ -18,6 +18,7 @@ export default (function() {
     TutorialEngine._onReady(function(ctx) {
 
         // --- Deep copy steps and augment with advance field ---
+        var originalSteps = JSON.parse(JSON.stringify(ctx.steps));
         var peSteps = JSON.parse(JSON.stringify(ctx.steps));
         peSteps.forEach(function(s) {
             if (s.autoNext) {
@@ -411,6 +412,31 @@ export default (function() {
             }, true);
         }
 
+        // --- Page info ---
+        var pagePath = window.location.pathname;
+
+        // --- Diff helper: list changed properties between original and current step ---
+        function getStepChanges(index) {
+            var orig = originalSteps[index];
+            var curr = peSteps[index];
+            if (!orig || !curr) return ['new step'];
+            var changes = [];
+            var allKeys = {};
+            Object.keys(orig).forEach(function(k) { allKeys[k] = true; });
+            Object.keys(curr).forEach(function(k) { allKeys[k] = true; });
+            Object.keys(allKeys).forEach(function(k) {
+                if (k === '_branch' || k === '_pe' || k === 'advance' || k === 'autoNextDelay') return;
+                var a = orig[k];
+                var b = curr[k];
+                // Treat empty array same as undefined/null
+                var aEmpty = a === undefined || a === null || (Array.isArray(a) && a.length === 0);
+                var bEmpty = b === undefined || b === null || (Array.isArray(b) && b.length === 0);
+                if (aEmpty && bEmpty) return;
+                if (JSON.stringify(a) !== JSON.stringify(b)) changes.push(k);
+            });
+            return changes;
+        }
+
         // --- Current step helper ---
         function cur() { return peSteps[selectedIndex] || {}; }
         function save(refreshLive) {
@@ -441,6 +467,9 @@ export default (function() {
                 live.scrollInside = pe.scrollInside ? JSON.parse(JSON.stringify(pe.scrollInside)) : null;
                 live.options = pe.options && pe.options.length ? JSON.parse(JSON.stringify(pe.options)) : null;
                 live.redirect = pe.redirect || null;
+                live.showBack = pe.showBack !== undefined && pe.showBack !== false ? pe.showBack : undefined;
+                live.silentClick = pe.silentClick || undefined;
+                live.hover = pe.hover || undefined;
                 delete live.autoNext;
                 delete live.afterAnimation;
                 if (pe.advance === 'auto') live.autoNext = pe.autoNextDelay || 3;
@@ -582,6 +611,14 @@ export default (function() {
         }, [
             el('span', { textContent: '\u2630', style: { fontSize: '14px', color: '#6c8aff', opacity: '0.6' } }),
             el('span', { textContent: 'Step Builder', style: { fontSize: '16px', fontWeight: '700', color: '#e0e4ec', flex: '1' } }),
+            (function() {
+                var devLabel = el('label', { style: { display: 'flex', alignItems: 'center', gap: '4px', fontSize: '10px', color: '#7a7f8e', cursor: 'pointer' } });
+                var devCb = el('input', { type: 'checkbox', checked: !!window._tutorialDevMode });
+                devCb.addEventListener('change', function() { window._tutorialDevMode = devCb.checked; });
+                devLabel.appendChild(devCb);
+                devLabel.appendChild(el('span', { textContent: 'Dev' }));
+                return devLabel;
+            })(),
             collapseBtn,
         ]);
         panel.appendChild(headerEl);
@@ -654,38 +691,103 @@ export default (function() {
 
         function renderStepList() {
             stepListContainer.innerHTML = '';
+            var lastBranch = null;
             peSteps.forEach(function(s, i) {
+                // Add branch separator when _branch changes
+                if (s._branch && s._branch !== lastBranch) {
+                    lastBranch = s._branch;
+                    var separator = el('div', {
+                        textContent: s._branch,
+                        style: {
+                            width: '100%',
+                            fontSize: '10px',
+                            fontWeight: '600',
+                            color: '#7a7f8e',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.5px',
+                            padding: '6px 0 2px 0',
+                            borderTop: lastBranch !== null && i > 0 ? '1px solid rgba(255,255,255,0.08)' : 'none',
+                            marginTop: i > 0 ? '4px' : '0',
+                        }
+                    });
+                    stepListContainer.appendChild(separator);
+                }
                 var icons = getStepIcons(s);
                 var btn = el('button', {
-                    textContent: (i + 1) + (icons ? ' ' + icons : ''),
+                    textContent: i + (icons ? ' ' + icons : ''),
                     className: 'sb-step-btn' + (i === selectedIndex ? ' active' : ''),
                     onClick: (function(idx) { return function() { selectStep(idx); }; })(i),
                 });
                 stepListContainer.appendChild(btn);
             });
-            // Add button
-            var addBtn = el('button', {
-                textContent: '+',
-                className: 'sb-step-btn',
-                style: { color: '#2ecc71', borderColor: 'rgba(46,204,113,0.2)' },
-                onClick: function() {
-                    var newStep = { html: '', overlay: true, position: 'left', align: 'center', advance: 'click', options: [] };
-                    peSteps.splice(selectedIndex + 1, 0, newStep);
-                    selectStep(selectedIndex + 1);
-                },
-            });
-            stepListContainer.appendChild(addBtn);
         }
 
         // Copy All / Copy Step / Spectator
         stepListActions.appendChild(makeBtn('\uD83D\uDCCB Copy All', 'sb-btn-green', function() {
-            copyToClipboard(generateFullCode());
+            var allChanges = [];
+            peSteps.forEach(function(s, i) {
+                var changes = getStepChanges(i);
+                if (changes.length) allChanges.push('Step ' + i + ': ' + changes.join(', '));
+            });
+            var parts = [];
+            parts.push('/tutorial-creator');
+            parts.push('');
+            parts.push('Page: ' + pagePath);
+            if (allChanges.length) {
+                parts.push('Changes:');
+                allChanges.forEach(function(c) { parts.push('  - ' + c); });
+            }
+            parts.push('');
+            parts.push(generateFullCode());
+            copyToClipboard(parts.join('\n'));
         }));
         stepListActions.appendChild(makeBtn('Copy Step', 'sb-btn-ghost sb-btn-sm', function() {
-            copyToClipboard(generateStepCode(cur()));
+            var s = cur();
+            var branch = s._branch || '';
+            var stepCode = generateStepCode(s);
+            var changes = getStepChanges(selectedIndex);
+            var parts = [];
+            parts.push('/tutorial-creator');
+            parts.push('');
+            parts.push('Page: ' + pagePath);
+            parts.push('Step ' + selectedIndex + (branch ? ' (branch: ' + branch + ')' : ''));
+            if (changes.length) {
+                parts.push('Changed: ' + changes.join(', '));
+            }
+            parts.push('');
+            parts.push(stepCode);
+            copyToClipboard(parts.join('\n'));
         }));
         stepListActions.appendChild(makeBtn('\uD83D\uDC41 Spectator', 'sb-btn-blue sb-btn-sm', function() {
             enterSpectatorMode();
+        }));
+        stepListActions.appendChild(makeBtn('Copy Changed', 'sb-btn-ghost sb-btn-sm', function() {
+            var changedSteps = [];
+            peSteps.forEach(function(s, i) {
+                var changes = getStepChanges(i);
+                if (changes.length) changedSteps.push(i);
+            });
+            if (!changedSteps.length) { copyToClipboard('No changes'); return; }
+            var parts = [];
+            parts.push('/tutorial-creator');
+            parts.push('');
+            parts.push('Page: ' + pagePath);
+            parts.push('Changed steps: ' + changedSteps.join(', '));
+            parts.push('');
+            changedSteps.forEach(function(i) {
+                var s = peSteps[i];
+                var branch = s._branch || '';
+                var changes = getStepChanges(i);
+                parts.push('Step ' + i + (branch ? ' (branch: ' + branch + ')' : '') + ' — Changed: ' + changes.join(', '));
+                parts.push(generateStepCode(s));
+                parts.push('');
+            });
+            copyToClipboard(parts.join('\n'));
+        }));
+        stepListActions.appendChild(makeBtn('+ Step', 'sb-btn-green sb-btn-sm', function() {
+            var newStep = { html: '', overlay: true, position: 'left', align: 'center', advance: 'click', options: [] };
+            peSteps.splice(selectedIndex + 1, 0, newStep);
+            selectStep(selectedIndex + 1);
         }));
 
         // =============================================
@@ -736,18 +838,36 @@ export default (function() {
 
             // Row: overlay + position + align
             var overlayCheck = makeCheckbox('overlay', s.overlay !== false, function(v) { s.overlay = v; save(true); });
-            var posSelect = makeSelect([{ value: 'left' }, { value: 'right' }], s.position || 'left', function(v) { s.position = v; save(true); });
+            var backVal = s.showBack === true ? 'prev' : (typeof s.showBack === 'number' ? 'goTo' : 'off');
+            var backGoToInput = null;
+            var backSelect = makeSelect(
+                [{ value: 'off', label: 'Back: off' }, { value: 'prev', label: 'Back: prev' }, { value: 'goTo', label: 'Back: go to' }],
+                backVal,
+                function(v) {
+                    if (v === 'off') s.showBack = undefined;
+                    else if (v === 'prev') s.showBack = true;
+                    else { s.showBack = 0; }
+                    save(true);
+                    renderBaseConfig();
+                }
+            );
+            backSelect.style.width = '100px';
+            if (backVal === 'goTo') {
+                backGoToInput = makeNumberInput(s.showBack, function(v) { s.showBack = v; save(true); }, { min: '0', step: '1' });
+                backGoToInput.style.width = '50px';
+            }
+            var posSelect = makeSelect([{ value: 'left' }, { value: 'right' }, { value: 'top' }, { value: 'bottom' }], s.position || 'left', function(v) { s.position = v; save(true); });
             posSelect.style.width = '75px';
             var alignSelect = makeSelect([{ value: 'left' }, { value: 'center' }, { value: 'right' }], s.align || 'center', function(v) { s.align = v; save(true); });
             alignSelect.style.width = '75px';
 
-            baseConfigDiv.appendChild(makeRow([
-                overlayCheck,
-                el('label', { textContent: 'pos', className: 'sb-label', style: { minWidth: 'auto', marginLeft: '8px' } }),
-                posSelect,
-                el('label', { textContent: 'align', className: 'sb-label', style: { minWidth: 'auto', marginLeft: '4px' } }),
-                alignSelect,
-            ]));
+            var backRow = [overlayCheck, backSelect];
+            if (backGoToInput) backRow.push(backGoToInput);
+            backRow.push(el('label', { textContent: 'pos', className: 'sb-label', style: { minWidth: 'auto', marginLeft: '8px' } }));
+            backRow.push(posSelect);
+            backRow.push(el('label', { textContent: 'align', className: 'sb-label', style: { minWidth: 'auto', marginLeft: '4px' } }));
+            backRow.push(alignSelect);
+            baseConfigDiv.appendChild(makeRow(backRow));
 
             // advance
             var advanceSelect = makeSelect(
@@ -777,6 +897,25 @@ export default (function() {
                 advanceRow.push(el('span', { textContent: 's', style: { color: '#7a7f8e', fontSize: '10px' } }));
             }
             baseConfigDiv.appendChild(makeRow(advanceRow));
+
+            // silentClick
+            var scDisplay = el('span', { textContent: s.silentClick || '\u2014', className: 'sb-selector', style: { flex: '1' } });
+            baseConfigDiv.appendChild(makeRow([
+                el('label', { textContent: 'silentClick', className: 'sb-label', style: { minWidth: 'auto' } }),
+                scDisplay,
+                makeBtn('Pick', 'sb-btn-yellow sb-btn-sm', function() {
+                    pickElement(function(sel) {
+                        s.silentClick = sel;
+                        save();
+                        renderBaseConfig();
+                    });
+                }),
+                s.silentClick ? makeBtn('\u2715', 'sb-btn-ghost sb-btn-icon sb-btn-sm', function() {
+                    delete s.silentClick;
+                    save();
+                    renderBaseConfig();
+                }) : null,
+            ]));
         }
 
         // =============================================
@@ -841,7 +980,7 @@ export default (function() {
             pe.points = []; pe.segments = []; pe.actions = []; pe.pauses = [];
             if (!c || !c.from) return;
 
-            var fromPos = TutorialEngine.resolveElementCenter(c.from, c.fromAnchor);
+            var fromPos = TutorialEngine.resolveElementCenter(c.from, c.fromAnchor, cur());
             if (!fromPos) return;
             pe.points.push(fromPos);
             pe.actions.push('path');
@@ -850,7 +989,7 @@ export default (function() {
             if (c.waypoints && c.waypoints.length) {
                 for (var i = 0; i < c.waypoints.length; i++) {
                     var wp = c.waypoints[i];
-                    var wpPos = TutorialEngine.resolveElementCenter(wp.target);
+                    var wpPos = TutorialEngine.resolveElementCenter(wp.target, null, cur());
                     if (!wpPos) continue;
                     pe.points.push(wpPos);
                     pe.actions.push(wp.action || 'path');
@@ -858,7 +997,7 @@ export default (function() {
                     pe.segments.push(parseSvgControlPoints(wp.svgPath));
                 }
             } else if (c.to) {
-                var toPos = TutorialEngine.resolveElementCenter(c.to, c.toAnchor);
+                var toPos = TutorialEngine.resolveElementCenter(c.to, c.toAnchor, cur());
                 if (!toPos) return;
                 pe.points.push(toPos);
                 pe.actions.push(c.click ? 'click' : 'path');
@@ -876,14 +1015,14 @@ export default (function() {
 
             // Update From (first point)
             if (c.from) {
-                var fromPos = TutorialEngine.resolveElementCenter(c.from, c.fromAnchor);
+                var fromPos = TutorialEngine.resolveElementCenter(c.from, c.fromAnchor, cur());
                 if (fromPos) pe.points[0] = fromPos;
             }
 
             // Update To (last point)
             var lastIdx = pe.points.length - 1;
             if (c.to) {
-                var toPos = TutorialEngine.resolveElementCenter(c.to, c.toAnchor);
+                var toPos = TutorialEngine.resolveElementCenter(c.to, c.toAnchor, cur());
                 if (toPos) pe.points[lastIdx] = toPos;
             }
 
@@ -892,7 +1031,7 @@ export default (function() {
                 for (var i = 0; i < c.waypoints.length && (i + 1) < lastIdx; i++) {
                     var wp = c.waypoints[i];
                     if (wp.target && wp.target.indexOf('screen:') !== 0) {
-                        var wpPos = TutorialEngine.resolveElementCenter(wp.target);
+                        var wpPos = TutorialEngine.resolveElementCenter(wp.target, null, cur());
                         if (wpPos) pe.points[i + 1] = wpPos;
                     }
                 }
@@ -900,18 +1039,8 @@ export default (function() {
 
             // Redraw without rebuilding DOM (just update positions)
             updatePathVisuals();
-            // Also update SVG endpoint dots
-            var dots = svgOverlay.querySelectorAll('circle');
-            if (dots.length >= 1 && pe.points[0]) {
-                dots[0].setAttribute('cx', pe.points[0].x);
-                dots[0].setAttribute('cy', pe.points[0].y);
-            }
-            if (dots.length >= 2 && pe.points[lastIdx]) {
-                dots[dots.length - 1].setAttribute('cx', pe.points[lastIdx].x);
-                dots[dots.length - 1].setAttribute('cy', pe.points[lastIdx].y);
-            }
-            // Update waypoint div positions
-            for (var j = 1; j < lastIdx; j++) {
+            // Update all point dot positions (all are div elements now)
+            for (var j = 0; j < pePointDots.length; j++) {
                 var dot = pePointDots[j];
                 if (dot && dot.style && pe.points[j]) {
                     dot.style.left = pe.points[j].x + 'px';
@@ -957,17 +1086,15 @@ export default (function() {
                 makeCpDraggable(h2, i, 'cp2');
             }
 
-            // Create point dots
+            // Create point dots (all draggable, including From/To)
             for (var j = 0; j < pe.points.length; j++) {
                 var isFirst = j === 0, isLast = j === pe.points.length - 1;
                 var color = isFirst ? '#4caf50' : (isLast ? '#f44336' : '#4fc3f7');
-                if (isFirst || isLast) {
-                    var dot = createSvgEl('circle', { r: '7', fill: color, cx: pe.points[j].x, cy: pe.points[j].y });
-                    svgOverlay.appendChild(dot); pePointDots.push(dot);
-                } else {
+                var size = (isFirst || isLast) ? '16px' : '14px';
+                {
                     var wpDiv = document.createElement('div');
                     Object.assign(wpDiv.style, {
-                        position: 'fixed', width: '14px', height: '14px', borderRadius: '50%',
+                        position: 'fixed', width: size, height: size, borderRadius: '50%',
                         backgroundColor: color, border: '2px solid #fff', cursor: 'grab',
                         zIndex: '99999', transform: 'translate(-50%, -50%)',
                         left: pe.points[j].x + 'px', top: pe.points[j].y + 'px',
@@ -1099,16 +1226,60 @@ export default (function() {
         }
 
 
-        function renderPickRow(container, label, selector, anchor, btnClass, onPick) {
-            var display = el('span', { textContent: selector || '\u2014', className: 'sb-selector', style: { flex: '1' } });
-            container.appendChild(makeRow([
+        function renderPickRow(container, label, selector, anchor, btnClass, onPick, showRefs) {
+            var isRef = selector && (selector.indexOf('highlight:') === 0 || selector.indexOf('hover:') === 0);
+            var displayText = selector || '\u2014';
+            var display = el('span', { textContent: displayText, className: 'sb-selector', style: { flex: '1', color: isRef ? '#6c8aff' : undefined } });
+            var row = makeRow([
                 el('label', { textContent: label, className: 'sb-label', style: { minWidth: '40px' } }),
                 display,
-                anchor ? el('span', { className: 'sb-badge', textContent: anchor.x + ',' + anchor.y }) : null,
+                anchor && !isRef ? el('span', { className: 'sb-badge', textContent: anchor.x + ',' + anchor.y }) : null,
                 makeBtn('Pick', 'sb-btn-' + btnClass + ' sb-btn-sm', function() {
                     pickElement(function(sel, anc) { onPick(sel, anc); });
                 }),
-            ]));
+            ]);
+            container.appendChild(row);
+
+            // Reference buttons for linking to highlight/hover elements
+            if (showRefs) {
+                var s = cur();
+                var refBtns = [];
+
+                // Highlight references
+                if (s.highlight && s.highlight.groups) {
+                    var hlIdx = 0;
+                    s.highlight.groups.forEach(function(g) {
+                        var elems = g.elements || g;
+                        if (Array.isArray(elems)) {
+                            elems.forEach(function(hlSel) {
+                                var idx = hlIdx;
+                                var shortSel = hlSel.length > 25 ? hlSel.substring(0, 22) + '...' : hlSel;
+                                refBtns.push(makeBtn('hl:' + idx + ' ' + shortSel, 'sb-btn-ghost sb-btn-sm', function() {
+                                    onPick('highlight:' + idx, null);
+                                }));
+                                hlIdx++;
+                            });
+                        }
+                    });
+                }
+
+                // Hover references
+                if (s.hover) {
+                    var hoverList = Array.isArray(s.hover) ? s.hover : [s.hover];
+                    hoverList.forEach(function(hvSel, i) {
+                        var shortSel = hvSel.length > 25 ? hvSel.substring(0, 22) + '...' : hvSel;
+                        refBtns.push(makeBtn('hv:' + i + ' ' + shortSel, 'sb-btn-ghost sb-btn-sm', function() {
+                            onPick('hover:' + i, null);
+                        }));
+                    });
+                }
+
+                if (refBtns.length) {
+                    var refRow = el('div', { style: { display: 'flex', flexWrap: 'wrap', gap: '4px', marginLeft: '44px', marginBottom: '6px' } });
+                    refBtns.forEach(function(btn) { refRow.appendChild(btn); });
+                    container.appendChild(refRow);
+                }
+            }
         }
 
         function renderCursorFromTo(container, s, c) {
@@ -1117,13 +1288,33 @@ export default (function() {
                 s.cursor.from = sel;
                 s.cursor.fromAnchor = anchor;
                 save(); loadPeFromCursor(); rebuildPathOverlay(); cursorSection.refresh();
-            });
+            }, true);
+
+            // Show waypoints between From and To
+            if (c.waypoints && c.waypoints.length) {
+                var wpList = el('div', { style: { marginLeft: '12px', borderLeft: '2px solid rgba(79,195,247,0.3)', paddingLeft: '8px', marginBottom: '4px' } });
+                c.waypoints.forEach(function(wp, i) {
+                    var wpRow = el('div', { style: { display: 'flex', alignItems: 'center', gap: '4px', padding: '2px 0' } });
+                    var ptColor = '#4fc3f7';
+                    wpRow.appendChild(el('span', { textContent: '\u25CF', style: { color: ptColor, fontSize: '10px', width: '12px' } }));
+                    wpRow.appendChild(el('span', { textContent: wp.target || ('Point ' + (i + 1)), className: 'sb-selector', style: { flex: '1', fontSize: '11px' } }));
+                    if (wp.action && wp.action !== 'path') {
+                        wpRow.appendChild(el('span', { className: 'sb-badge', textContent: wp.action }));
+                    }
+                    if (wp.pause && wp.pause > 0) {
+                        wpRow.appendChild(el('span', { className: 'sb-badge', textContent: wp.pause + 's' }));
+                    }
+                    wpList.appendChild(wpRow);
+                });
+                container.appendChild(wpList);
+            }
+
             renderPickRow(container, 'to', c.to, c.toAnchor, 'red', function(sel, anchor) {
                 ensureCursor(s);
                 s.cursor.to = sel;
                 s.cursor.toAnchor = anchor;
                 save(); loadPeFromCursor(); rebuildPathOverlay(); cursorSection.refresh();
-            });
+            }, true);
         }
 
         function renderCursorWaypoints(container, pe) {
@@ -1324,7 +1515,7 @@ export default (function() {
                         var grpInput = makeNumberInput(h._groups[i] || 1, (function(idx) {
                             return function(v) { h._groups[idx] = Math.max(1, v); rebuildHighlightGroups(s); save(); };
                         })(i), { min: '1', step: '1' });
-                        grpInput.style.width = '40px';
+                        grpInput.style.width = '55px';
                         row.appendChild(grpInput);
                     }
                     listDiv.appendChild(row);
@@ -1416,6 +1607,94 @@ export default (function() {
                 });
                 if (!s.highlight._mode) s.highlight._mode = 'together';
             }
+        }
+
+        // =============================================
+        // 5b. HOVER SECTION
+        // =============================================
+        var hoverSection = makeSection('\uD83D\uDC46', 'Hover', renderHoverContent);
+        body.appendChild(hoverSection.wrapper);
+
+        function renderHoverContent(container) {
+            container.innerHTML = '';
+            var s = cur();
+            var hoverList = s.hover ? (Array.isArray(s.hover) ? s.hover : [s.hover]) : [];
+
+            // List current hover selectors
+            if (hoverList.length) {
+                var listDiv = el('div', { style: { marginBottom: '8px' } });
+                hoverList.forEach(function(sel, i) {
+                    var row = el('div', { style: { display: 'flex', alignItems: 'center', gap: '4px', padding: '3px 0' } });
+                    row.appendChild(el('span', { textContent: (i + 1) + '.', style: { color: '#7a7f8e', fontSize: '10px', width: '16px' } }));
+                    row.appendChild(el('span', { textContent: sel, className: 'sb-selector', style: { flex: '1' } }));
+                    row.appendChild(makeBtn('\u2715', 'sb-btn-ghost sb-btn-icon sb-btn-sm', function() {
+                        hoverList.splice(i, 1);
+                        s.hover = hoverList.length ? (hoverList.length === 1 ? hoverList[0] : hoverList) : undefined;
+                        saveRefresh(hoverSection);
+                    }));
+                    listDiv.appendChild(row);
+                });
+                container.appendChild(listDiv);
+            }
+
+            // Pick / Clear
+            container.appendChild(makeRow([
+                makeBtn('+ Pick Element', 'sb-btn-yellow sb-btn-sm', function() {
+                    pickElement(function(sel) {
+                        // Walk up to the nearest parent that has :hover CSS rules
+                        var picked = document.querySelector(sel);
+                        if (picked) {
+                            var hoverable = TutorialEngine.findHoverableParent(picked);
+                            if (hoverable && hoverable !== picked) {
+                                var betterSel = TutorialEngine.bestSelector(hoverable);
+                                console.log('[Hover Pick] Upgraded selector from', sel, 'to', betterSel);
+                                sel = betterSel;
+                            } else if (!hoverable) {
+                                console.warn('[Hover Pick] No :hover CSS rules found on element or ancestors for', sel);
+                            }
+                        }
+                        var s2 = cur();
+                        var live = s2.hover ? (Array.isArray(s2.hover) ? s2.hover : [s2.hover]) : [];
+                        live.push(sel);
+                        s2.hover = live.length === 1 ? live[0] : live;
+                        saveRefresh(hoverSection);
+                    });
+                }),
+                makeBtn('Clear', 'sb-btn-red sb-btn-sm', function() {
+                    s.hover = undefined;
+                    saveRefresh(hoverSection);
+                }),
+            ]));
+
+            // Preview
+            container.appendChild(makeRow([
+                makeBtn('\u25B6 Preview', 'sb-btn-blue sb-btn-sm', function() {
+                    var s2 = cur();
+                    var liveList = s2.hover ? (Array.isArray(s2.hover) ? s2.hover : [s2.hover]) : [];
+                    // Clean previous
+                    document.querySelectorAll('.tutorial-force-hover').forEach(function(hEl) {
+                        TutorialEngine.removeForceHoverStyles(hEl);
+                        hEl.classList.remove('tutorial-force-hover');
+                    });
+                    liveList.forEach(function(sel) {
+                        var hEl = document.querySelector(sel);
+                        if (hEl) {
+                            TutorialEngine.forceHoverStyles(hEl);
+                            hEl.classList.add('tutorial-force-hover');
+                            hEl.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
+                            hEl.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+                        }
+                    });
+                }),
+                makeBtn('Stop', 'sb-btn-ghost sb-btn-sm', function() {
+                    document.querySelectorAll('.tutorial-force-hover').forEach(function(hEl) {
+                        TutorialEngine.removeForceHoverStyles(hEl);
+                        hEl.classList.remove('tutorial-force-hover');
+                        hEl.dispatchEvent(new MouseEvent('mouseleave', { bubbles: true }));
+                        hEl.dispatchEvent(new MouseEvent('mouseout', { bubbles: true }));
+                    });
+                }),
+            ]));
         }
 
         // =============================================
@@ -1522,14 +1801,15 @@ export default (function() {
                 labelInput.style.flex = '1';
                 row.appendChild(labelInput);
 
-                var actionVal = opt.redirect ? 'redirect' : (opt.goToStep !== undefined ? 'goToStep' : 'next');
+                var actionVal = opt.redirect ? 'redirect' : (opt.goToStep !== undefined ? 'goToStep' : (opt.done ? 'done' : 'next'));
                 var actionSel = makeSelect(
-                    [{ value: 'next', label: 'Next' }, { value: 'goToStep', label: 'Go to' }, { value: 'redirect', label: 'URL' }],
+                    [{ value: 'next', label: 'Next' }, { value: 'goToStep', label: 'Go to' }, { value: 'redirect', label: 'URL' }, { value: 'done', label: 'Done' }],
                     actionVal,
                     function(v) {
-                        delete opt.redirect; delete opt.goToStep;
+                        delete opt.redirect; delete opt.goToStep; delete opt.done;
                         if (v === 'redirect') opt.redirect = '';
                         else if (v === 'goToStep') opt.goToStep = 0;
+                        else if (v === 'done') opt.done = true;
                         saveRefresh(optionsSection);
                     }
                 );
@@ -1603,8 +1883,15 @@ export default (function() {
         function generateStepCode(s) {
             var lines = [];
             lines.push('{');
+            if (s.silentClick) {
+                lines.push('    silentClick: \'' + escStr(s.silentClick) + '\',');
+                lines.push('}');
+                return lines.join('\n');
+            }
             if (s.html) lines.push('    html: \'' + escStr(s.html) + '\',');
             if (s.overlay === false) lines.push('    overlay: false,');
+            if (typeof s.showBack === 'number') lines.push('    showBack: ' + s.showBack + ',');
+            else if (s.showBack) lines.push('    showBack: true,');
             if (s.position && s.position !== 'left') lines.push('    position: \'' + s.position + '\',');
             if (s.align && s.align !== 'center') lines.push('    align: \'' + s.align + '\',');
 
@@ -1651,6 +1938,15 @@ export default (function() {
                 lines.push('    },');
             }
 
+            if (s.hover) {
+                var hList = Array.isArray(s.hover) ? s.hover : [s.hover];
+                if (hList.length === 1) {
+                    lines.push('    hover: \'' + escStr(hList[0]) + '\',');
+                } else if (hList.length > 1) {
+                    lines.push('    hover: [\'' + hList.map(escStr).join('\', \'') + '\'],');
+                }
+            }
+
             if (s.scrollTo) lines.push('    scrollTo: \'' + escStr(s.scrollTo) + '\',');
 
             if (s.scrollInside && s.scrollInside.selector) {
@@ -1667,8 +1963,9 @@ export default (function() {
                 s.options.forEach(function(opt) {
                     var parts = [];
                     if (opt.label) parts.push('label: \'' + escStr(opt.label) + '\'');
-                    if (opt.redirect !== undefined) parts.push('redirect: \'' + escStr(opt.redirect) + '\'');
-                    if (opt.goToStep !== undefined) parts.push('goToStep: ' + opt.goToStep);
+                    if (opt.done) parts.push('done: true');
+                    else if (opt.redirect !== undefined) parts.push('redirect: \'' + escStr(opt.redirect) + '\'');
+                    else if (opt.goToStep !== undefined) parts.push('goToStep: ' + opt.goToStep);
                     lines.push('        { ' + parts.join(', ') + ' },');
                 });
                 lines.push('    ],');
@@ -1690,7 +1987,7 @@ export default (function() {
             lines.push('');
             lines.push('    var steps = [');
             peSteps.forEach(function(s, i) {
-                lines.push('        // Step ' + (i + 1));
+                lines.push('        // Step ' + i);
                 var stepCode = generateStepCode(s);
                 var stepLines = stepCode.split('\n');
                 stepLines.forEach(function(l) { lines.push('        ' + l); });
@@ -1761,11 +2058,12 @@ export default (function() {
         }
 
         function refreshAll() {
-            stepDetailLabel.textContent = 'Step ' + (selectedIndex + 1) + ' / ' + peSteps.length;
+            stepDetailLabel.textContent = 'Step ' + selectedIndex + ' / ' + peSteps.length;
             renderStepList();
             renderBaseConfig();
             cursorSection.refresh();
             highlightSection.refresh();
+            hoverSection.refresh();
             scrollSection.refresh();
             optionsSection.refresh();
             updateOutput();
@@ -1855,4 +2153,4 @@ export default (function() {
     } // end _initStepBuilder
     _waitForEngine();
 
-});
+})();

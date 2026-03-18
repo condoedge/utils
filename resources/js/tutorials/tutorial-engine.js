@@ -47,7 +47,9 @@ export default function(gsap) {
     var DEBOUNCE_MS = 50;
 
     // === CONFIGURATION DEFAULTS ===
-    var DEFAULTS = {
+    // Projects can override defaults via window.TutorialDefaults before loading
+    var projectDefaults = (typeof window !== 'undefined' && window.TutorialDefaults) || {};
+    var _hardDefaults = {
         avatar: '/images/Benoit helper.png',
         cursorImage: '/images/Cursor tutoriel.png',
         cursorSize: 'clamp(32px, 8vw, 48px)',
@@ -62,6 +64,205 @@ export default function(gsap) {
         bubbleMaxWidth: 'clamp(260px, 85vw, 550px)',
         bubbleMinWidth: 'clamp(200px, 70vw, 350px)',
     };
+    var DEFAULTS = {};
+    var k; for (k in _hardDefaults) DEFAULTS[k] = _hardDefaults[k];
+    for (k in projectDefaults) DEFAULTS[k] = projectDefaults[k];
+
+    // === FORCE HOVER STYLES ===
+
+    /**
+     * Force :hover CSS styles onto an element by scanning stylesheets for matching :hover rules
+     * and applying them inline. Stores original values for cleanup.
+     */
+    // Shared stylesheet for injecting .tutorial-force-hover rules
+    var _hoverStyleSheet = null;
+    function getHoverStyleSheet() {
+        if (!_hoverStyleSheet) {
+            var styleEl = document.createElement('style');
+            styleEl.setAttribute('data-tutorial-hover', '');
+            document.head.appendChild(styleEl);
+            _hoverStyleSheet = styleEl.sheet;
+        }
+        return _hoverStyleSheet;
+    }
+
+    function forceHoverStyles(el) {
+        var sheet = getHoverStyleSheet();
+        var injectedRules = [];
+
+        try {
+            var sheets = document.styleSheets;
+            for (var i = 0; i < sheets.length; i++) {
+                var rules;
+                try { rules = sheets[i].cssRules || sheets[i].rules; } catch(e) { continue; }
+                if (!rules) continue;
+                for (var j = 0; j < rules.length; j++) {
+                    var rule = rules[j];
+                    if (!rule.selectorText || rule.selectorText.indexOf(':hover') === -1) continue;
+                    // Check if element is the hovered target in any part of the selector
+                    var selectorParts = rule.selectorText.split(',');
+                    var matches = false;
+                    for (var p = 0; p < selectorParts.length; p++) {
+                        var part = selectorParts[p].trim();
+                        if (part.indexOf(':hover') === -1) continue;
+                        // Extract segment before :hover to check if el is the hovered element
+                        var hoverSegment = part.split(':hover')[0].trim();
+                        var lastSegment = hoverSegment.split(/[\s>+~]/).pop().trim();
+                        try { if (lastSegment && el.matches(lastSegment)) { matches = true; break; } } catch(e) {}
+                        // Also try direct match on full base selector
+                        var baseSelector = part.replace(/:hover/g, '');
+                        try { if (el.matches(baseSelector)) { matches = true; break; } } catch(e) {}
+                    }
+                    if (!matches) continue;
+                    // Duplicate the rule replacing :hover with .tutorial-force-hover
+                    var newSelector = rule.selectorText.replace(/:hover/g, '.tutorial-force-hover');
+                    try {
+                        var idx = sheet.insertRule(newSelector + ' { ' + rule.style.cssText + ' }', sheet.cssRules.length);
+                        injectedRules.push(idx);
+                    } catch(e) { /* skip invalid rules */ }
+                }
+            }
+        } catch(e) {
+            console.warn('TutorialEngine: forceHoverStyles failed', e);
+        }
+        // Store injected rule indices for cleanup
+        el._tutorialHoverRules = injectedRules;
+    }
+
+    /**
+     * Check if an element has visible hover effects by comparing computed styles
+     * in normal state vs simulated :hover state.
+     */
+    function elementHasHoverEffect(el) {
+        // Capture normal computed style snapshot
+        var normalStyle = window.getComputedStyle(el);
+        var propsToCheck = [
+            'color', 'background-color', 'background', 'border-color',
+            'box-shadow', 'text-decoration', 'opacity', 'transform',
+            'outline', 'visibility', 'display'
+        ];
+        var normalValues = {};
+        propsToCheck.forEach(function(p) { normalValues[p] = normalStyle.getPropertyValue(p); });
+
+        // Temporarily inject a rule that forces :hover via a unique class
+        var testClass = '_tut_hover_test_' + Date.now();
+        var styleEl = document.createElement('style');
+        document.head.appendChild(styleEl);
+        // Copy all :hover rules that match this element
+        var hasChange = false;
+        try {
+            var sheets = document.styleSheets;
+            for (var i = 0; i < sheets.length; i++) {
+                var rules;
+                try { rules = sheets[i].cssRules || sheets[i].rules; } catch(e) { continue; }
+                if (!rules) continue;
+                for (var j = 0; j < rules.length; j++) {
+                    var rule = rules[j];
+                    if (!rule.selectorText || rule.selectorText.indexOf(':hover') === -1) continue;
+                    var baseSelector = rule.selectorText.replace(/:hover/g, '');
+                    try { if (!el.matches(baseSelector)) continue; } catch(e) { continue; }
+                    var newSel = rule.selectorText.replace(/:hover/g, '.' + testClass);
+                    try { styleEl.sheet.insertRule(newSel + '{' + rule.style.cssText + '}', styleEl.sheet.cssRules.length); } catch(e) {}
+                }
+            }
+
+            el.classList.add(testClass);
+            var hoverStyle = window.getComputedStyle(el);
+            propsToCheck.forEach(function(p) {
+                if (hoverStyle.getPropertyValue(p) !== normalValues[p]) hasChange = true;
+            });
+            el.classList.remove(testClass);
+        } catch(e) {}
+        document.head.removeChild(styleEl);
+
+        // Fallback: check for Tailwind hover: classes or common hover class names
+        if (!hasChange && el.className && typeof el.className === 'string') {
+            if (el.className.match(/hover[:\\]|vlOpenOnHover|hover-/)) hasChange = true;
+        }
+        if (!hasChange && el.classList) {
+            for (var ci = 0; ci < el.classList.length; ci++) {
+                if (el.classList[ci].match(/hover[:\\]|vlOpenOnHover|hover-/)) { hasChange = true; break; }
+            }
+        }
+
+        return hasChange;
+    }
+
+    /**
+     * Walk up the DOM from a given element to find the closest ancestor (or self)
+     * that has hover effects. Stops at <body>.
+     */
+    function findHoverableParent(el) {
+        var current = el;
+        while (current && current !== document.body) {
+            if (elementHasHoverEffect(current)) return current;
+            current = current.parentElement;
+        }
+        return null;
+    }
+
+    /**
+     * Remove forced hover styles and restore original values.
+     */
+    function removeForceHoverStyles(el) {
+        if (!el._tutorialHoverRules) return;
+        var sheet = getHoverStyleSheet();
+        // Remove in reverse order to keep indices valid
+        var indices = el._tutorialHoverRules.slice().sort(function(a, b) { return b - a; });
+        indices.forEach(function(idx) {
+            try { sheet.deleteRule(idx); } catch(e) { /* already removed */ }
+        });
+        delete el._tutorialHoverRules;
+    }
+
+    // === STABILITY CHECKER ===
+
+    /**
+     * Wait for all highlight target elements to be stable (position/size not changing)
+     * before calling the callback. Polls every 50ms, max 1.5s.
+     */
+    function waitForStableHighlight(highlightConfig, callback) {
+        var allSelectors = [];
+        (highlightConfig.groups || []).forEach(function(g) {
+            var elems = g.elements || g;
+            if (Array.isArray(elems)) elems.forEach(function(s) { allSelectors.push(s); });
+        });
+
+        var lastRects = null;
+        var stableCount = 0;
+        var maxAttempts = 30; // 30 * 50ms = 1.5s max
+        var attempts = 0;
+
+        function snapshot() {
+            return allSelectors.map(function(sel) {
+                var el = document.querySelector(sel);
+                if (!el) return '0,0,0,0';
+                var r = el.getBoundingClientRect();
+                return Math.round(r.left) + ',' + Math.round(r.top) + ',' + Math.round(r.width) + ',' + Math.round(r.height);
+            }).join('|');
+        }
+
+        function check() {
+            attempts++;
+            var current = snapshot();
+            if (current === lastRects) {
+                stableCount++;
+            } else {
+                stableCount = 0;
+            }
+            lastRects = current;
+
+            // Stable for 3 consecutive checks (150ms) or max attempts reached
+            if (stableCount >= 3 || attempts >= maxAttempts) {
+                callback();
+            } else {
+                setTimeout(check, 50);
+            }
+        }
+
+        // Start after a minimum initial delay for CSS transitions to begin
+        setTimeout(check, 50);
+    }
 
     // === UTILITY FUNCTIONS ===
 
@@ -72,7 +273,47 @@ export default function(gsap) {
      * @param {Object} [anchor] - Optional {x, y} anchor ratios (0-1)
      * @returns {{x: number, y: number}|null}
      */
-    function resolveElementCenter(selector, anchor) {
+    /**
+     * Resolve a reference selector like "highlight:0", "hover:1" into a real CSS selector
+     * using the step's highlight/hover config.
+     * @param {string} selector - A CSS selector, "screen:x,y", "highlight:N", or "hover:N"
+     * @param {Object} [step] - Current step object for resolving references
+     * @returns {string} Resolved CSS selector
+     */
+    function resolveRef(selector, step) {
+        if (!step || typeof selector !== 'string') return selector;
+
+        // highlight:N — resolve to the Nth element in highlight groups
+        var hlMatch = selector.match(/^highlight:(\d+)$/);
+        if (hlMatch && step.highlight && step.highlight.groups) {
+            var hlIdx = parseInt(hlMatch[1], 10);
+            var allHlSelectors = [];
+            step.highlight.groups.forEach(function(g) {
+                var elems = g.elements || g;
+                if (Array.isArray(elems)) elems.forEach(function(s) { allHlSelectors.push(s); });
+            });
+            if (allHlSelectors[hlIdx]) return allHlSelectors[hlIdx];
+            console.warn('TutorialEngine: highlight:' + hlIdx + ' not found, ' + allHlSelectors.length + ' elements available');
+            return selector;
+        }
+
+        // hover:N — resolve to the Nth hover selector
+        var hvMatch = selector.match(/^hover:(\d+)$/);
+        if (hvMatch && step.hover) {
+            var hvIdx = parseInt(hvMatch[1], 10);
+            var hoverList = Array.isArray(step.hover) ? step.hover : [step.hover];
+            if (hoverList[hvIdx]) return hoverList[hvIdx];
+            console.warn('TutorialEngine: hover:' + hvIdx + ' not found, ' + hoverList.length + ' elements available');
+            return selector;
+        }
+
+        return selector;
+    }
+
+    function resolveElementCenter(selector, anchor, step) {
+        // Resolve references first
+        selector = resolveRef(selector, step);
+
         if (typeof selector === 'string' && selector.indexOf('screen:') === 0) {
             var parts = selector.replace('screen:', '').split(',');
             return { x: parseFloat(parts[0]), y: parseFloat(parts[1]) };
@@ -490,8 +731,8 @@ export default function(gsap) {
             return null;
         }
 
-        var fromPos = resolveElementCenter(cfg.from, cfg.fromAnchor);
-        var toPos = resolveElementCenter(cfg.to, cfg.toAnchor);
+        var fromPos = resolveElementCenter(cfg.from, cfg.fromAnchor, step);
+        var toPos = resolveElementCenter(cfg.to, cfg.toAnchor, step);
         if (!fromPos || !toPos) {
             console.warn('TutorialEngine.animateCursor: could not resolve from/to selectors', cfg.from, cfg.to);
             if (onComplete) onComplete();
@@ -513,8 +754,8 @@ export default function(gsap) {
                     gsap.to(cursorEl, {
                         scale: 0.7, duration: 0.1, yoyo: true, repeat: 1,
                         onComplete: function() {
-                            var targetEl = document.querySelector(cfg.to);
-                            if (targetEl) targetEl.click();
+                            var targetEl = document.querySelector(resolveRef(cfg.to, step));
+                            if (targetEl && typeof targetEl.click === 'function') targetEl.click();
                             if (cfg.loop) {
                                 gsap.set(cursorEl, { x: fromPos.x, y: fromPos.y, scale: 1 });
                                 timeline.restart();
@@ -575,7 +816,7 @@ export default function(gsap) {
 
         var cursorEl = createCursorElement(cfg);
 
-        var fromPos = resolveElementCenter(cfg.from);
+        var fromPos = resolveElementCenter(cfg.from, null, step);
         if (!fromPos) {
             cursorEl.remove();
             if (onComplete) onComplete();
@@ -599,7 +840,7 @@ export default function(gsap) {
 
         var currentFrom = fromPos;
         cfg.waypoints.forEach(function(wp) {
-            var wpPos = resolveElementCenter(wp.target);
+            var wpPos = resolveElementCenter(wp.target, null, step);
             if (!wpPos) return;
             var wpPath = wp.svgPath || 'M 0,0 C 0.3,0.1 0.7,0.9 1,1';
             var realPath = denormalizeSvgPath(wpPath, currentFrom, wpPos);
@@ -629,6 +870,8 @@ export default function(gsap) {
                     timeline.call(function() {
                         var el = document.querySelector(target);
                         if (el) {
+                            forceHoverStyles(el);
+                            el.classList.add('tutorial-force-hover');
                             el.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
                             el.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
                         }
@@ -691,6 +934,13 @@ export default function(gsap) {
             function cleanupAnimations() {
                 if (activeCursor) { activeCursor.destroy(); activeCursor = null; }
                 if (activeHighlight) { activeHighlight.destroy(); activeHighlight = null; }
+                // Remove forced hover states
+                document.querySelectorAll('.tutorial-force-hover').forEach(function(el) {
+                    removeForceHoverStyles(el);
+                    el.classList.remove('tutorial-force-hover');
+                    el.dispatchEvent(new MouseEvent('mouseleave', { bubbles: true }));
+                    el.dispatchEvent(new MouseEvent('mouseout', { bubbles: true }));
+                });
             }
 
             // --- DOM Creation ---
@@ -703,6 +953,22 @@ export default function(gsap) {
             var optionsRow = domRefs.optionsRow;
             var btnRow = domRefs.btnRow;
             var actionBtn = domRefs.actionBtn;
+            var pauseBtn = domRefs.pauseBtn;
+            pauseBtn.addEventListener('click', function() {
+                if (autoNextPaused) { resumeAutoNext(); } else { pauseAutoNext(); }
+            });
+            var backBtn = domRefs.backBtn;
+            backBtn.addEventListener('click', function() {
+                var step = steps[currentStep];
+                var target = (typeof step.showBack === 'number') ? step.showBack : currentStep - 1;
+                if (target >= 0) {
+                    clearAutoNext();
+                    cleanupAnimations();
+                    bubble.style.opacity = '0';
+                    bubble.style.transform = 'scale(0.8)';
+                    setTimeout(function() { showStep(target); }, STEP_TRANSITION_MS);
+                }
+            });
             var img = domRefs.img;
             var videoEl = domRefs.videoEl;
 
@@ -853,7 +1119,22 @@ export default function(gsap) {
                 var alignMap = { left: 'flex-start', center: 'center', right: 'flex-end' };
                 overlay.style.justifyContent = alignMap[align] || 'center';
 
-                if (side === 'right') {
+                if (side === 'top') {
+                    // Bubble above avatar
+                    container.style.flexDirection = 'row';
+                    bubble.style.left = 'auto';
+                    bubble.style.right = '100%';
+                    bubble.style.bottom = 'auto';
+                    bubble.style.top = '0';
+                    bubble.style.marginLeft = '0';
+                    bubble.style.marginRight = 'clamp(10px, 3vw, 20px)';
+                    bubble.style.transformOrigin = 'top right';
+                    arrow.style.left = 'auto';
+                    arrow.style.right = '-18px';
+                    arrow.style.borderRight = 'none';
+                    arrow.style.borderLeft = '20px solid #ffffff';
+                    overlay.style.alignItems = 'flex-start';
+                } else if (side === 'right') {
                     // Bubble on right, avatar on left
                     container.style.flexDirection = 'row-reverse';
                     bubble.style.right = 'auto';
@@ -883,11 +1164,40 @@ export default function(gsap) {
             var autoNextTimer = null;
             var autoNextBar = null;
             var autoNextTween = null;
+            var autoNextPaused = false;
+            var autoNextRemainingMs = 0;
+            var autoNextStartedAt = 0;
 
             function clearAutoNext() {
                 if (autoNextTimer) { clearTimeout(autoNextTimer); autoNextTimer = null; }
                 if (autoNextTween) { autoNextTween.kill(); autoNextTween = null; }
                 if (autoNextBar) { autoNextBar.remove(); autoNextBar = null; }
+                autoNextPaused = false;
+                autoNextRemainingMs = 0;
+                if (pauseBtn) pauseBtn.style.display = 'none';
+            }
+
+            function pauseAutoNext() {
+                if (!autoNextTimer || autoNextPaused) return;
+                autoNextPaused = true;
+                autoNextRemainingMs = Math.max(0, autoNextRemainingMs - (Date.now() - autoNextStartedAt));
+                clearTimeout(autoNextTimer);
+                autoNextTimer = -1; // marker: paused
+                if (autoNextTween) autoNextTween.pause();
+                pauseBtn.textContent = '\u25B6'; // ▶
+                pauseBtn.setAttribute('aria-label', 'Resume');
+            }
+
+            function resumeAutoNext() {
+                if (!autoNextPaused) return;
+                autoNextPaused = false;
+                autoNextStartedAt = Date.now();
+                if (autoNextTween) autoNextTween.resume();
+                autoNextTimer = setTimeout(function() {
+                    actionBtn.click();
+                }, autoNextRemainingMs);
+                pauseBtn.textContent = '\u275A\u275A'; // ❚❚
+                pauseBtn.setAttribute('aria-label', 'Pause');
             }
 
             /**
@@ -950,23 +1260,27 @@ export default function(gsap) {
              */
             function selectMobileTab(mobileTab) {
                 if (!mobileTab || !mobileTab.isMobileTab) return;
-                // Use Vue's selectTab method directly — much more reliable than simulating clicks
-                var vue = mobileTab.tabsContainer.__vue__;
-                if (vue && typeof vue.selectTab === 'function' && mobileTab.tabIndex >= 0) {
-                    vue.selectTab(mobileTab.tabIndex);
-                    return;
-                }
-                // Fallback: click the dropdown option
+                // Step 1: Click the select dropdown to open it
                 mobileTab.taggable.click();
+                // Step 2: Wait for options to render, then click the matching option
                 setTimeout(function() {
                     var options = mobileTab.dropdown.querySelectorAll('.vlOption');
+                    var clicked = false;
                     for (var i = 0; i < options.length; i++) {
                         if (options[i].textContent.trim() === mobileTab.optionText) {
                             options[i].click();
+                            clicked = true;
                             break;
                         }
                     }
-                }, 150);
+                    // Fallback: use Vue selectTab if click didn't work
+                    if (!clicked) {
+                        var vue = mobileTab.tabsContainer.__vue__;
+                        if (vue && typeof vue.selectTab === 'function' && mobileTab.tabIndex >= 0) {
+                            vue.selectTab(mobileTab.tabIndex);
+                        }
+                    }
+                }, 200);
             }
 
             function showStep(index) {
@@ -999,6 +1313,16 @@ export default function(gsap) {
                     }
                 }
 
+                // Silent click: click element and advance immediately, no UI shown
+                if (step.silentClick) {
+                    var silentEl = document.querySelector(step.silentClick);
+                    if (silentEl && typeof silentEl.click === 'function') silentEl.click();
+                    if (!isLast) {
+                        showStep(currentStep + 1);
+                    }
+                    return;
+                }
+
                 // Toggle overlay backdrop
                 var showOverlay = step.overlay !== false;
                 overlay.style.backgroundColor = showOverlay ? 'rgba(0, 0, 0, 0.5)' : 'transparent';
@@ -1013,9 +1337,12 @@ export default function(gsap) {
                 optionsRow.innerHTML = '';
                 optionsRow.style.display = 'none';
                 btnRow.style.opacity = '0';
+                btnRow.style.pointerEvents = 'none';
                 actionBtn.textContent = isLast ? opts.doneLabel : opts.nextLabel;
                 // Hide next/done button if step has options (options replace it)
                 actionBtn.style.display = step.options ? 'none' : '';
+                // Show/hide back button
+                backBtn.style.display = (step.showBack === true || typeof step.showBack === 'number') ? '' : 'none';
 
                 // Mobile tab→dropdown auto-conversion
                 // If highlight or cursor targets a hidden tab, swap to the dropdown
@@ -1051,9 +1378,8 @@ export default function(gsap) {
                             step = typeof step._mobileCloned === 'undefined' ? JSON.parse(JSON.stringify(step)) : step;
                             step._mobileCloned = true;
                             step.cursor.to = cTab.selector;
-                            // After cursor click, select the tab
-                            var origClick = step.cursor.click;
-                            step.cursor.click = true;
+                            step.cursor.click = false; // Don't do a raw click — we handle it ourselves
+                            step._mobileTabToSelect = cTab; // Store for after cursor animation
                         }
                     }
                 }
@@ -1102,10 +1428,37 @@ export default function(gsap) {
                 peekBtn.style.display = isMobile() ? 'flex' : 'none';
                 peekBtn.style.opacity = '1';
 
+                // Force hover on elements for this step (before highlight so DOM updates first)
+                if (step.hover) {
+                    var hoverSelectors = Array.isArray(step.hover) ? step.hover : [step.hover];
+                    hoverSelectors.forEach(function(sel) {
+                        var el = document.querySelector(sel);
+                        if (el) {
+                            forceHoverStyles(el);
+                            el.classList.add('tutorial-force-hover');
+                            el.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
+                            el.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+                        }
+                    });
+                }
+
+                // Launch highlight after hover elements are stable
+                if (step.highlight) {
+                    if (step.hover) {
+                        waitForStableHighlight(step.highlight, function() {
+                            activeHighlight = createHighlight(step.highlight);
+                        });
+                    } else {
+                        activeHighlight = createHighlight(step.highlight);
+                    }
+                }
+
                 // Typewrite from top to bottom
                 setTimeout(function() {
-                    typewriteHtml(textEl, step.html, opts.typewriteSpeed, function() {
+                    var twSpeed = window._tutorialDevMode ? 0 : opts.typewriteSpeed;
+                    typewriteHtml(textEl, step.html, twSpeed, function() {
                         btnRow.style.opacity = '1';
+                        btnRow.style.pointerEvents = 'auto';
                         // Render option buttons
                         if (step.options && step.options.length) {
                             renderStepOptions(step.options, optionsRow, actionBtn, bubble, showStep);
@@ -1114,16 +1467,23 @@ export default function(gsap) {
                         if (step.cursor && !step.afterAnimation) {
                             var cursorDelay = (step.cursor.delay || 0) * 1000;
                             setTimeout(function() {
-                                activeCursor = launchCursor(step, overlay);
+                                // If mobile tab conversion stored a tab to select, do it after cursor finishes
+                                var mobileTabCb = step._mobileTabToSelect ? function() {
+                                    selectMobileTab(step._mobileTabToSelect);
+                                } : null;
+                                activeCursor = launchCursor(step, overlay, mobileTabCb);
                             }, cursorDelay);
-                        }
-                        // Launch highlight
-                        if (step.highlight) {
-                            activeHighlight = createHighlight(step.highlight);
                         }
                         // Auto-next: advance to next step after delay
                         if (step.autoNext && !isLast) {
                             var delay = (typeof step.autoNext === 'number') ? step.autoNext : 3;
+                            var delayMs = delay * 1000;
+                            // Show pause button
+                            pauseBtn.style.display = '';
+                            pauseBtn.textContent = '\u275A\u275A';
+                            autoNextPaused = false;
+                            autoNextRemainingMs = delayMs;
+                            autoNextStartedAt = Date.now();
                             // Progress bar
                             autoNextBar = document.createElement('div');
                             Object.assign(autoNextBar.style, {
@@ -1142,9 +1502,13 @@ export default function(gsap) {
                                 duration: delay,
                                 ease: 'none',
                             });
-                            autoNextTimer = setTimeout(function() {
-                                actionBtn.click();
-                            }, delay * 1000);
+                            if (window._tutorialDevMode) {
+                                pauseAutoNext();
+                            } else {
+                                autoNextTimer = setTimeout(function() {
+                                    actionBtn.click();
+                                }, delayMs);
+                            }
                         }
                         // afterAnimation: auto-advance after cursor animation completes
                         if (step.afterAnimation && !isLast) {
@@ -1339,9 +1703,8 @@ export default function(gsap) {
             Object.assign(textEl.style, {
                 margin: '0',
                 minHeight: 'clamp(100px, 30vh, 180px)',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'flex-start',
+                maxHeight: 'clamp(150px, 40vh, 300px)',
+                overflowY: 'auto',
             });
             bubble.appendChild(textEl);
 
@@ -1380,6 +1743,39 @@ export default function(gsap) {
                 fontSize: '14px',
                 fontWeight: '600',
             });
+            var pauseBtn = document.createElement('button');
+            pauseBtn.textContent = '\u275A\u275A'; // ❚❚
+            pauseBtn.setAttribute('aria-label', 'Pause');
+            Object.assign(pauseBtn.style, {
+                padding: '0.75rem 1rem',
+                minHeight: '44px',
+                backgroundColor: 'transparent',
+                color: '#07499e',
+                border: '2px solid #07499e',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '600',
+                display: 'none',
+            });
+            // Click handler wired in start() where pause/resume functions are defined
+            var backBtn = document.createElement('button');
+            backBtn.textContent = '\u2190'; // ←
+            backBtn.setAttribute('aria-label', 'Previous step');
+            Object.assign(backBtn.style, {
+                padding: '0.75rem 1rem',
+                minHeight: '44px',
+                backgroundColor: 'transparent',
+                color: '#07499e',
+                border: '2px solid #07499e',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '600',
+                display: 'none',
+            });
+            btnRow.appendChild(backBtn);
+            btnRow.appendChild(pauseBtn);
             btnRow.appendChild(actionBtn);
             bubble.appendChild(btnRow);
 
@@ -1399,6 +1795,8 @@ export default function(gsap) {
                 optionsRow: optionsRow,
                 btnRow: btnRow,
                 actionBtn: actionBtn,
+                pauseBtn: pauseBtn,
+                backBtn: backBtn,
                 img: img,
                 videoEl: videoEl,
             };
@@ -1448,7 +1846,11 @@ export default function(gsap) {
                     optBtn.style.color = opt.textColor || '#07499e';
                 }, { passive: true });
                 optBtn.addEventListener('click', function() {
-                    if (opt.redirect) {
+                    if (opt.done) {
+                        overlay.remove();
+                        peekBtn.remove();
+                        document.body.style.overflow = '';
+                    } else if (opt.redirect) {
                         window.location.href = opt.redirect;
                     } else if (opt.goToStep !== undefined) {
                         bubble.style.opacity = '0';
@@ -1582,12 +1984,16 @@ export default function(gsap) {
         start: start,
         DEFAULTS: DEFAULTS,
         DEBOUNCE_MS: DEBOUNCE_MS,
+        resolveRef: resolveRef,
         resolveElementCenter: resolveElementCenter,
         denormalizeSvgPath: denormalizeSvgPath,
         typewriteHtml: typewriteHtml,
         animateCursor: animateCursor,
         animateCursorWaypoints: animateCursorWaypoints,
         createHighlight: createHighlight,
+        forceHoverStyles: forceHoverStyles,
+        removeForceHoverStyles: removeForceHoverStyles,
+        findHoverableParent: findHoverableParent,
         createSvgEl: createSvgEl,
         onScrollResize: onScrollResize,
         bestSelector: bestSelector,
