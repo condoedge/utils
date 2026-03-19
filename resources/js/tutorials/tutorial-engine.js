@@ -576,17 +576,21 @@ export default function(gsap) {
      * @returns {Function} cleanup - Removes listeners and clears timer
      */
     function onScrollResize(callback) {
-        var timer = null;
+        var rafId = null;
         function handler() {
-            if (timer) clearTimeout(timer);
-            timer = setTimeout(callback, DEBOUNCE_MS);
+            if (!rafId) {
+                rafId = requestAnimationFrame(function() {
+                    rafId = null;
+                    callback();
+                });
+            }
         }
         window.addEventListener('scroll', handler, true);
         window.addEventListener('resize', handler);
         return function cleanup() {
             window.removeEventListener('scroll', handler, true);
             window.removeEventListener('resize', handler);
-            if (timer) clearTimeout(timer);
+            if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
         };
     }
 
@@ -1001,18 +1005,18 @@ export default function(gsap) {
             overlay.style.overscrollBehavior = 'contain';
 
             window.addEventListener('orientationchange', function() {
-                setTimeout(function() { positionBubble(steps[currentStep].position || 'left', steps[currentStep].align || 'center'); }, 300);
+                setTimeout(function() { positionBubble(steps[currentStep].position || 'left', steps[currentStep].align || 'center', false, steps[currentStep].positionTarget); }, 300);
             });
 
             window.addEventListener('resize', function() {
                 setTimeout(function() {
-                    positionBubble(steps[currentStep].position || 'left', steps[currentStep].align || 'center');
+                    positionBubble(steps[currentStep].position || 'left', steps[currentStep].align || 'center', false, steps[currentStep].positionTarget);
                 }, 100);
             });
 
             // Position bubble: arrow at mouth level, bubble grows upward
             // highlightBottom: true if highlighted element is in lower half of screen
-            function positionBubble(side, align, highlightBottom) {
+            function positionBubble(side, align, highlightBottom, positionTarget) {
                 if (isMobile()) {
                     container.style.alignItems = 'center';
                     container.style.flexDirection = 'row';
@@ -1085,6 +1089,7 @@ export default function(gsap) {
                 img.style.alignSelf = '';
                 bubble.style.order = '';
                 bubble.style.width = '';
+                bubble.style.alignSelf = '';
                 if (videoEl) { videoEl.style.transform = 'none'; videoEl.style.order = ''; }
 
                 // Reset mobile overrides for desktop
@@ -1095,6 +1100,91 @@ export default function(gsap) {
                     videoEl.style.maxHeight = opts.avatarMaxHeight;
                 }
 
+                var isChatMode = steps[currentStep] && steps[currentStep].chatMode;
+
+                // Chat mode: bubble is relative, skip all avatar-based positioning
+                if (isChatMode) {
+                    bubble.style.position = 'relative';
+                    bubble.style.top = 'auto';
+                    bubble.style.bottom = 'auto';
+                    bubble.style.left = 'auto';
+                    bubble.style.right = 'auto';
+                    bubble.style.transform = 'none';
+                    bubble.style.marginLeft = '0';
+                    bubble.style.marginRight = '0';
+                    bubble.style.padding = opts._bubblePadding;
+                    bubble.style.fontSize = opts.bubbleFontSize;
+                    bubble.style.maxWidth = opts.bubbleMaxWidth;
+                    bubble.style.minWidth = opts.bubbleMinWidth;
+                    textEl.style.minHeight = '0';
+                    arrow.style.display = 'none';
+                    container.style.alignItems = 'stretch';
+                    container.style.overflow = '';
+                    overlay.style.padding = '0';
+
+                    if (positionTarget) {
+                        var ptEl = document.querySelector(positionTarget);
+                        if (ptEl) {
+                            var ptRect = ptEl.getBoundingClientRect();
+                            var availW;
+                            container.style.position = 'fixed';
+                            container.style.bottom = 'auto';
+                            container.style.right = 'auto';
+                            container.style.maxHeight = '';
+                            container.style.overflow = '';
+                            if (side === 'top' || side === 'bottom') {
+                                // Centered above/below: use available width around target center
+                                var centerX = ptRect.left + ptRect.width / 2;
+                                availW = Math.min(centerX, window.innerWidth - centerX) * 2 - 16;
+                                container.style.left = Math.max(8, centerX) + 'px';
+                                container.style.transform = 'translateX(-50%)';
+                                container.style.top = side === 'top'
+                                    ? Math.max(8, ptRect.top - 10) + 'px'
+                                    : (ptRect.bottom + 10) + 'px';
+                            } else if (side === 'right') {
+                                availW = window.innerWidth - ptRect.right - 20;
+                                container.style.left = (ptRect.right + 10) + 'px';
+                                container.style.top = Math.max(8, ptRect.top) + 'px';
+                                container.style.transform = 'none';
+                            } else {
+                                // left
+                                availW = ptRect.left - 20;
+                                container.style.left = 'auto';
+                                container.style.right = (window.innerWidth - ptRect.left + 10) + 'px';
+                                container.style.top = Math.max(8, ptRect.top) + 'px';
+                                container.style.transform = 'none';
+                            }
+                            // Constrain bubble width to available space so it grows taller, not wider
+                            bubble.style.maxWidth = Math.max(200, availW) + 'px';
+                            bubble.style.minWidth = Math.min(200, availW) + 'px';
+                            overlay.style.justifyContent = '';
+                            overlay.style.alignItems = '';
+                            requestAnimationFrame(function() {
+                                var cr = container.getBoundingClientRect();
+                                if (cr.left < 8) { container.style.left = '8px'; container.style.transform = 'none'; }
+                                if (cr.right > window.innerWidth - 8) { container.style.left = (window.innerWidth - cr.width - 8) + 'px'; container.style.transform = 'none'; }
+                                if (cr.bottom > window.innerHeight - 8) { container.style.top = (window.innerHeight - cr.height - 8) + 'px'; }
+                            });
+                        }
+                    } else {
+                        container.style.position = 'relative';
+                        container.style.left = '';
+                        container.style.right = '';
+                        container.style.top = '';
+                        container.style.bottom = '';
+                        container.style.transform = '';
+                        container.style.maxHeight = '';
+                        // Chat mode without target: use position as vertical, align as horizontal
+                        // position: top/left/right = top, bottom = bottom, else = center (vertical)
+                        var vMap = { top: 'flex-start', bottom: 'flex-end' };
+                        var hMap = { left: 'flex-start', center: 'center', right: 'flex-end' };
+                        overlay.style.alignItems = vMap[side] || 'center';
+                        overlay.style.justifyContent = hMap[align] || 'center';
+                        overlay.style.padding = '16px';
+                    }
+                    return;
+                }
+
                 var imgHeight = img.offsetHeight;
                 if (videoEl && videoEl.style.display !== 'none') {
                     imgHeight = videoEl.offsetHeight || imgHeight;
@@ -1102,6 +1192,7 @@ export default function(gsap) {
                 var mouthY = imgHeight * opts.mouthPosition;
                 bubble.style.top = 'auto';
                 bubble.style.bottom = (imgHeight - mouthY - 18) + 'px';
+                bubble.style.transform = 'none';
 
                 // Reset mobile overrides for desktop
                 container.style.alignItems = 'flex-start';
@@ -1111,29 +1202,89 @@ export default function(gsap) {
                 bubble.style.fontSize = opts.bubbleFontSize;
                 bubble.style.maxWidth = opts.bubbleMaxWidth;
                 bubble.style.minWidth = opts.bubbleMinWidth;
-                textEl.style.minHeight = opts._textMinHeight;
+                textEl.style.minHeight = '0';
                 arrow.style.display = '';
+                // Reset arrow to default horizontal state (overridden by 'top' branch)
+                arrow.style.bottom = '18px';
+                arrow.style.transform = 'none';
+                arrow.style.borderTop = '14px solid transparent';
+                arrow.style.borderBottom = '14px solid transparent';
                 overlay.style.padding = '0';
 
                 // Horizontal alignment of the whole avatar+bubble group
                 var alignMap = { left: 'flex-start', center: 'center', right: 'flex-end' };
                 overlay.style.justifyContent = alignMap[align] || 'center';
 
+                // Position target: anchor container near a DOM element
+                if (positionTarget) {
+                    var targetEl = document.querySelector(positionTarget);
+                    if (targetEl) {
+                        var targetRect = targetEl.getBoundingClientRect();
+                        container.style.position = 'fixed';
+                        container.style.bottom = 'auto';
+                        container.style.right = 'auto';
+                        container.style.maxHeight = (window.innerHeight - 16) + 'px';
+                        container.style.overflow = 'auto';
+                        // All sides use top-anchored positioning so bubble grows downward
+                        if (side === 'top') {
+                            container.style.left = Math.max(8, targetRect.left + targetRect.width / 2) + 'px';
+                            container.style.transform = 'translateX(-50%)';
+                            container.style.top = Math.max(8, targetRect.top - 10) + 'px';
+                        } else if (side === 'bottom') {
+                            container.style.left = Math.max(8, targetRect.left + targetRect.width / 2) + 'px';
+                            container.style.transform = 'translateX(-50%)';
+                            container.style.top = (targetRect.bottom + 10) + 'px';
+                        } else if (side === 'right') {
+                            container.style.left = (targetRect.right + 10) + 'px';
+                            container.style.top = Math.max(8, targetRect.top) + 'px';
+                            container.style.transform = 'none';
+                        } else {
+                            // left (default)
+                            container.style.left = 'auto';
+                            container.style.right = (window.innerWidth - targetRect.left + 10) + 'px';
+                            container.style.top = Math.max(8, targetRect.top) + 'px';
+                            container.style.transform = 'none';
+                        }
+                        overlay.style.justifyContent = '';
+                        overlay.style.alignItems = '';
+                        // Clamp horizontally within viewport
+                        requestAnimationFrame(function() {
+                            var cr = container.getBoundingClientRect();
+                            if (cr.left < 8) { container.style.left = '8px'; container.style.transform = 'none'; }
+                            if (cr.right > window.innerWidth - 8) { container.style.left = (window.innerWidth - cr.width - 8) + 'px'; container.style.transform = 'none'; }
+                        });
+                    }
+                } else {
+                    container.style.position = 'relative';
+                    container.style.left = '';
+                    container.style.right = '';
+                    container.style.top = '';
+                    container.style.bottom = '';
+                    container.style.transform = '';
+                    container.style.maxHeight = '';
+                    container.style.overflow = '';
+                }
+
                 if (side === 'top') {
-                    // Bubble above avatar
+                    // Bubble directly above avatar, centered horizontally on imgWrapper
                     container.style.flexDirection = 'row';
-                    bubble.style.left = 'auto';
-                    bubble.style.right = '100%';
-                    bubble.style.bottom = 'auto';
-                    bubble.style.top = '0';
-                    bubble.style.marginLeft = '0';
-                    bubble.style.marginRight = 'clamp(10px, 3vw, 20px)';
-                    bubble.style.transformOrigin = 'top right';
-                    arrow.style.left = 'auto';
-                    arrow.style.right = '-18px';
-                    arrow.style.borderRight = 'none';
-                    arrow.style.borderLeft = '20px solid #ffffff';
-                    overlay.style.alignItems = 'flex-start';
+                    bubble.style.left = '0';
+                    bubble.style.right = '0';
+                    bubble.style.marginLeft = 'auto';
+                    bubble.style.marginRight = 'auto';
+                    bubble.style.bottom = (imgHeight + 10) + 'px';
+                    bubble.style.top = 'auto';
+                    bubble.style.transform = 'none';
+                    bubble.style.transformOrigin = 'bottom center';
+                    // Arrow points down toward avatar
+                    arrow.style.left = '50%';
+                    arrow.style.right = 'auto';
+                    arrow.style.bottom = '-18px';
+                    arrow.style.transform = 'translateX(-50%)';
+                    arrow.style.borderLeft = '14px solid transparent';
+                    arrow.style.borderRight = '14px solid transparent';
+                    arrow.style.borderTop = '20px solid #ffffff';
+                    arrow.style.borderBottom = 'none';
                 } else if (side === 'right') {
                     // Bubble on right, avatar on left
                     container.style.flexDirection = 'row-reverse';
@@ -1332,6 +1483,71 @@ export default function(gsap) {
                 // Cleanup previous cursor and highlight
                 cleanupAnimations();
 
+                // Chat mode: show avatar inside bubble instead of beside it
+                var chatAvatarEl = bubble.querySelector('.tutorial-chat-avatar');
+                if (step.chatMode) {
+                    img.style.display = 'none';
+                    if (videoEl) videoEl.style.display = 'none';
+                    arrow.style.display = 'none';
+                    textEl.style.minHeight = '0';
+                    if (!chatAvatarEl) {
+                        chatAvatarEl = document.createElement('div');
+                        chatAvatarEl.className = 'tutorial-chat-avatar';
+                        Object.assign(chatAvatarEl.style, {
+                            width: '80px',
+                            height: '80px',
+                            minWidth: '80px',
+                            borderRadius: '50%',
+                            overflow: 'hidden',
+                            border: '3px solid #07499e',
+                            flexShrink: '0',
+                            alignSelf: 'center',
+                        });
+                        var chatImg = document.createElement('img');
+                        chatImg.src = img.src;
+                        Object.assign(chatImg.style, {
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                            objectPosition: 'top center',
+                        });
+                        chatAvatarEl.appendChild(chatImg);
+                        // Insert before the arrow (first child)
+                        bubble.insertBefore(chatAvatarEl, arrow);
+                    }
+                    chatAvatarEl.style.display = 'block';
+                    // In chat mode, bubble must be relative (no avatar to anchor absolute positioning)
+                    bubble.style.position = 'relative';
+                    bubble.style.bottom = 'auto';
+                    bubble.style.left = 'auto';
+                    bubble.style.right = 'auto';
+                    bubble.style.top = 'auto';
+                    // Use CSS grid: avatar on the left, content stacked on the right
+                    bubble.style.display = 'grid';
+                    bubble.style.gridTemplateColumns = '80px 1fr';
+                    bubble.style.gap = '1rem';
+                    bubble.style.alignItems = 'start';
+                    // Make all direct children except avatar span the right column
+                    chatAvatarEl.style.gridRow = '1 / -1';
+                    chatAvatarEl.style.gridColumn = '1';
+                    // text, options, btnRow go to column 2
+                    textEl.style.gridColumn = '2';
+                    optionsRow.style.gridColumn = '2';
+                    btnRow.style.gridColumn = '2';
+                    arrow.style.gridColumn = '1 / -1';
+                } else {
+                    img.style.display = 'block';
+                    if (chatAvatarEl) chatAvatarEl.style.display = 'none';
+                    bubble.style.display = 'flex';
+                    bubble.style.flexDirection = 'column';
+                    bubble.style.alignItems = '';
+                    bubble.style.gap = '';
+                    textEl.style.gridColumn = '';
+                    optionsRow.style.gridColumn = '';
+                    btnRow.style.gridColumn = '';
+                    arrow.style.gridColumn = '';
+                }
+
                 // Clear text and options
                 textEl.innerHTML = '';
                 optionsRow.innerHTML = '';
@@ -1418,7 +1634,7 @@ export default function(gsap) {
                 }
 
                 // Position & show bubble
-                positionBubble(step.position || 'left', step.align || 'center', highlightBottom);
+                positionBubble(step.position || 'left', step.align || 'center', highlightBottom, step.positionTarget);
                 bubble.style.opacity = '1';
                 bubble.style.transform = 'scale(1)';
 
@@ -1461,7 +1677,13 @@ export default function(gsap) {
                         btnRow.style.pointerEvents = 'auto';
                         // Render option buttons
                         if (step.options && step.options.length) {
-                            renderStepOptions(step.options, optionsRow, actionBtn, bubble, showStep);
+                            renderStepOptions(step.options, optionsRow, actionBtn, bubble, showStep, function() {
+                                clearAutoNext();
+                                cleanupAnimations();
+                                overlay.remove();
+                                peekBtn.remove();
+                                document.body.style.overflow = '';
+                            });
                         }
                         // Launch cursor animation after text is done (skip if afterAnimation handles it)
                         if (step.cursor && !step.afterAnimation) {
@@ -1555,9 +1777,18 @@ export default function(gsap) {
                 }
             });
 
-            // Start first step
+            // Start from specified step, autostart redirect, or first step
+            var startFrom = opts.fromStep || 0;
+            var autostart = localStorage.getItem('tutorial-autostart');
+            if (autostart) {
+                localStorage.removeItem('tutorial-autostart');
+                try {
+                    var parsed = JSON.parse(autostart);
+                    if (parsed.fromStep !== undefined) startFrom = parsed.fromStep;
+                } catch(e) {}
+            }
             requestAnimationFrame(function() {
-                showStep(0);
+                showStep(startFrom);
             });
 
             // Fire _onReady callbacks for dev tools (always save context for late subscribers)
@@ -1575,6 +1806,7 @@ export default function(gsap) {
                 textEl: textEl,
                 optionsRow: optionsRow,
                 currentStep: function() { return currentStep; },
+                opts: opts,
             };
             _readyContext = context;
             _onReadyCallbacks.forEach(function(cb) { cb(context); });
@@ -1702,7 +1934,6 @@ export default function(gsap) {
             textEl.id = 'tutorial-text';
             Object.assign(textEl.style, {
                 margin: '0',
-                minHeight: 'clamp(100px, 30vh, 180px)',
                 maxHeight: 'clamp(150px, 40vh, 300px)',
                 overflowY: 'auto',
             });
@@ -1805,7 +2036,7 @@ export default function(gsap) {
         /**
          * Render option buttons for a step into the options row.
          */
-        function renderStepOptions(options, optionsRow, actionBtn, bubble, showStep) {
+        function renderStepOptions(options, optionsRow, actionBtn, bubble, showStep, closeTutorial) {
             optionsRow.style.display = 'flex';
             optionsRow.style.pointerEvents = 'none';
             var totalOpts = options.length;
@@ -1847,10 +2078,13 @@ export default function(gsap) {
                 }, { passive: true });
                 optBtn.addEventListener('click', function() {
                     if (opt.done) {
-                        overlay.remove();
-                        peekBtn.remove();
-                        document.body.style.overflow = '';
+                        closeTutorial();
                     } else if (opt.redirect) {
+                        if (opt.startTutorial !== undefined && opt.startTutorial !== false) {
+                            localStorage.setItem('tutorial-autostart', JSON.stringify({
+                                fromStep: typeof opt.startTutorial === 'number' ? opt.startTutorial : 0
+                            }));
+                        }
                         window.location.href = opt.redirect;
                     } else if (opt.goToStep !== undefined) {
                         bubble.style.opacity = '0';
@@ -1978,6 +2212,22 @@ export default function(gsap) {
         }
         return path.join(' > ');
     }
+
+    // === AUTO-START FROM REDIRECT ===
+    // If tutorial was already viewed (PHP won't inject it), click help button to reset + reload
+    $(function() {
+        var autostart = localStorage.getItem('tutorial-autostart');
+        if (autostart) {
+            // Wait a moment — if start() runs, it will consume the flag
+            setTimeout(function() {
+                var flag = localStorage.getItem('tutorial-autostart');
+                if (!flag) return; // start() already consumed it
+                // Keep the flag for after reload, then click help to reset user setting
+                var helpLink = document.querySelector('#intro-dashboard-help1 a');
+                if (helpLink) helpLink.click();
+            }, 2000);
+        }
+    });
 
     // === PUBLIC API ===
     return {

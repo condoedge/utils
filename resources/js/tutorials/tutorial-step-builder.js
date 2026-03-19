@@ -17,6 +17,13 @@ export default (function() {
 
     TutorialEngine._onReady(function(ctx) {
 
+        // Store initial opts for change detection in export
+        var initialOpts = {
+            bubbleMaxWidth: ctx.opts.bubbleMaxWidth,
+            bubbleMinWidth: ctx.opts.bubbleMinWidth,
+            bubbleFontSize: ctx.opts.bubbleFontSize,
+        };
+
         // --- Deep copy steps and augment with advance field ---
         var originalSteps = JSON.parse(JSON.stringify(ctx.steps));
         var peSteps = JSON.parse(JSON.stringify(ctx.steps));
@@ -470,6 +477,8 @@ export default (function() {
                 live.showBack = pe.showBack !== undefined && pe.showBack !== false ? pe.showBack : undefined;
                 live.silentClick = pe.silentClick || undefined;
                 live.hover = pe.hover || undefined;
+                live.chatMode = pe.chatMode || undefined;
+                live.positionTarget = pe.positionTarget || undefined;
                 delete live.autoNext;
                 delete live.afterAnimation;
                 if (pe.advance === 'auto') live.autoNext = pe.autoNextDelay || 3;
@@ -679,6 +688,9 @@ export default (function() {
         stepListBar.appendChild(stepListContainer);
         stepListBar.appendChild(stepListActions);
         body.appendChild(stepListBar);
+        // Global opts (created here, populated later at line ~807)
+        var globalOptsDiv = el('div', { style: { padding: '6px 0', borderBottom: '1px solid rgba(255,255,255,0.06)', marginBottom: '6px' } });
+        body.appendChild(globalOptsDiv);
 
         function getStepIcons(s) {
             var icons = '';
@@ -791,6 +803,29 @@ export default (function() {
         }));
 
         // =============================================
+        // GLOBAL TUTORIAL OPTIONS (width + font size)
+        // =============================================
+        var goWidthInput = makeInput(ctx.opts.bubbleMaxWidth, function(v) {
+            ctx.opts.bubbleMaxWidth = v;
+            ctx.opts.bubbleMinWidth = v;
+            ctx.showStep(selectedIndex);
+        });
+        goWidthInput.style.flex = '1';
+        goWidthInput.style.fontSize = '10px';
+        var goFontInput = makeInput(ctx.opts.bubbleFontSize, function(v) {
+            ctx.opts.bubbleFontSize = v;
+            ctx.showStep(selectedIndex);
+        });
+        goFontInput.style.flex = '1';
+        goFontInput.style.fontSize = '10px';
+        globalOptsDiv.appendChild(makeRow([
+            el('label', { textContent: 'width', className: 'sb-label', style: { minWidth: 'auto' } }),
+            goWidthInput,
+            el('label', { textContent: 'font', className: 'sb-label', style: { minWidth: 'auto', marginLeft: '8px' } }),
+            goFontInput,
+        ]));
+
+        // =============================================
         // 2. STEP DETAIL HEADER
         // =============================================
         var stepDetailHeader = el('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' } });
@@ -896,6 +931,8 @@ export default (function() {
                 advanceRow.push(delayInput);
                 advanceRow.push(el('span', { textContent: 's', style: { color: '#7a7f8e', fontSize: '10px' } }));
             }
+            var chatModeCheck = makeCheckbox('chat', !!s.chatMode, function(v) { s.chatMode = v || undefined; save(true); });
+            advanceRow.push(chatModeCheck);
             baseConfigDiv.appendChild(makeRow(advanceRow));
 
             // silentClick
@@ -913,6 +950,25 @@ export default (function() {
                 s.silentClick ? makeBtn('\u2715', 'sb-btn-ghost sb-btn-icon sb-btn-sm', function() {
                     delete s.silentClick;
                     save();
+                    renderBaseConfig();
+                }) : null,
+            ]));
+
+            // positionTarget
+            var ptDisplay = el('span', { textContent: s.positionTarget || '\u2014', className: 'sb-selector', style: { flex: '1' } });
+            baseConfigDiv.appendChild(makeRow([
+                el('label', { textContent: 'target', className: 'sb-label', style: { minWidth: 'auto' } }),
+                ptDisplay,
+                makeBtn('Pick', 'sb-btn-green sb-btn-sm', function() {
+                    pickElement(function(sel) {
+                        s.positionTarget = sel;
+                        save(true);
+                        renderBaseConfig();
+                    });
+                }),
+                s.positionTarget ? makeBtn('\u2715', 'sb-btn-ghost sb-btn-icon sb-btn-sm', function() {
+                    delete s.positionTarget;
+                    save(true);
                     renderBaseConfig();
                 }) : null,
             ]));
@@ -1820,6 +1876,7 @@ export default (function() {
                     var valInput = makeInput(opt.redirect, function(v) { opt.redirect = v; save(); }, { placeholder: '/path' });
                     valInput.style.width = '70px';
                     row.appendChild(valInput);
+                    row.appendChild(makeCheckbox('tutorial', !!opt.startTutorial, function(v) { opt.startTutorial = v || undefined; save(); }));
                 } else if (opt.goToStep !== undefined) {
                     row.appendChild(makeNumberInput(opt.goToStep, function(v) { opt.goToStep = v; save(); }, { min: '0', step: '1' }));
                 }
@@ -1894,6 +1951,8 @@ export default (function() {
             else if (s.showBack) lines.push('    showBack: true,');
             if (s.position && s.position !== 'left') lines.push('    position: \'' + s.position + '\',');
             if (s.align && s.align !== 'center') lines.push('    align: \'' + s.align + '\',');
+            if (s.chatMode) lines.push('    chatMode: true,');
+            if (s.positionTarget) lines.push('    positionTarget: \'' + escStr(s.positionTarget) + '\',');
 
             if (s.cursor && s.cursor.from) {
                 lines.push('    cursor: {');
@@ -1964,7 +2023,10 @@ export default (function() {
                     var parts = [];
                     if (opt.label) parts.push('label: \'' + escStr(opt.label) + '\'');
                     if (opt.done) parts.push('done: true');
-                    else if (opt.redirect !== undefined) parts.push('redirect: \'' + escStr(opt.redirect) + '\'');
+                    else if (opt.redirect !== undefined) {
+                        parts.push('redirect: \'' + escStr(opt.redirect) + '\'');
+                        if (opt.startTutorial) parts.push('startTutorial: true');
+                    }
                     else if (opt.goToStep !== undefined) parts.push('goToStep: ' + opt.goToStep);
                     lines.push('        { ' + parts.join(', ') + ' },');
                 });
@@ -2000,6 +2062,13 @@ export default (function() {
             lines.push('    TutorialEngine.start(steps, {');
             lines.push('        nextLabel: \'tutorial.next\',');
             lines.push('        doneLabel: \'tutorial.done\',');
+            if (ctx.opts.bubbleMaxWidth !== initialOpts.bubbleMaxWidth) {
+                lines.push('        bubbleMaxWidth: \'' + ctx.opts.bubbleMaxWidth + '\',');
+                lines.push('        bubbleMinWidth: \'' + ctx.opts.bubbleMinWidth + '\',');
+            }
+            if (ctx.opts.bubbleFontSize !== initialOpts.bubbleFontSize) {
+                lines.push('        bubbleFontSize: \'' + ctx.opts.bubbleFontSize + '\',');
+            }
             lines.push('    });');
             lines.push('');
             lines.push('});');
