@@ -423,6 +423,17 @@ export default (function() {
         var pagePath = window.location.pathname;
 
         // --- Diff helper: list changed properties between original and current step ---
+        function normalizeHighlight(hl) {
+            if (!hl || !hl.groups) return hl;
+            var normalized = JSON.parse(JSON.stringify(hl));
+            normalized.groups = normalized.groups.map(function(g) {
+                // Convert {elements: [...]} to plain array, or keep array as-is
+                var elems = g.elements || g;
+                return Array.isArray(elems) ? elems.slice().sort() : elems;
+            });
+            return normalized;
+        }
+
         function getStepChanges(index) {
             var orig = originalSteps[index];
             var curr = peSteps[index];
@@ -439,7 +450,12 @@ export default (function() {
                 var aEmpty = a === undefined || a === null || (Array.isArray(a) && a.length === 0);
                 var bEmpty = b === undefined || b === null || (Array.isArray(b) && b.length === 0);
                 if (aEmpty && bEmpty) return;
-                if (JSON.stringify(a) !== JSON.stringify(b)) changes.push(k);
+                // Normalize highlights before comparing
+                if (k === 'highlight') {
+                    if (JSON.stringify(normalizeHighlight(a)) !== JSON.stringify(normalizeHighlight(b))) changes.push(k);
+                } else {
+                    if (JSON.stringify(a) !== JSON.stringify(b)) changes.push(k);
+                }
             });
             return changes;
         }
