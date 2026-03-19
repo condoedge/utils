@@ -1118,7 +1118,8 @@ export default function(gsap) {
                     bubble.style.marginRight = '0';
                     bubble.style.padding = opts._bubblePadding;
                     bubble.style.fontSize = opts.bubbleFontSize;
-                    bubble.style.maxWidth = opts.bubbleMaxWidth;
+                    var chatStep = steps[currentStep];
+                    bubble.style.maxWidth = chatStep.chatMaxWidth || opts.bubbleMaxWidth;
                     bubble.style.minWidth = opts.bubbleMinWidth;
                     textEl.style.minHeight = '0';
                     arrow.style.display = 'none';

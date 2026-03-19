@@ -494,6 +494,7 @@ export default (function() {
                 live.silentClick = pe.silentClick || undefined;
                 live.hover = pe.hover || undefined;
                 live.chatMode = pe.chatMode || undefined;
+                live.chatMaxWidth = pe.chatMaxWidth || undefined;
                 live.positionTarget = pe.positionTarget || undefined;
                 live.showIf = pe.showIf || undefined;
                 live.clearOverlay = pe.clearOverlay || undefined;
@@ -950,8 +951,14 @@ export default (function() {
                 advanceRow.push(delayInput);
                 advanceRow.push(el('span', { textContent: 's', style: { color: '#7a7f8e', fontSize: '10px' } }));
             }
-            var chatModeCheck = makeCheckbox('chat', !!s.chatMode, function(v) { s.chatMode = v || undefined; save(true); });
+            var chatModeCheck = makeCheckbox('chat', !!s.chatMode, function(v) { s.chatMode = v || undefined; if (!v) s.chatMaxWidth = undefined; save(true); renderBaseConfig(); });
             advanceRow.push(chatModeCheck);
+            if (s.chatMode) {
+                var chatMaxWInput = makeInput(s.chatMaxWidth || '', function(v) { s.chatMaxWidth = v || undefined; save(true); }, { placeholder: 'maxW' });
+                chatMaxWInput.style.width = '80px';
+                chatMaxWInput.style.fontSize = '10px';
+                advanceRow.push(chatMaxWInput);
+            }
             baseConfigDiv.appendChild(makeRow(advanceRow));
 
             // silentClick
@@ -1990,6 +1997,7 @@ export default (function() {
             if (s.position && s.position !== 'left') lines.push('    position: \'' + s.position + '\',');
             if (s.align && s.align !== 'center') lines.push('    align: \'' + s.align + '\',');
             if (s.chatMode) lines.push('    chatMode: true,');
+            if (s.chatMaxWidth) lines.push('    chatMaxWidth: \'' + escStr(s.chatMaxWidth) + '\',');
             if (s.clearOverlay) lines.push('    clearOverlay: true,');
             if (s.positionTarget) lines.push('    positionTarget: \'' + escStr(s.positionTarget) + '\',');
             if (s.showIf) lines.push('    showIf: \'' + escStr(s.showIf) + '\',');
