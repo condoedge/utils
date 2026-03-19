@@ -1155,14 +1155,23 @@ export default function(gsap) {
                                 container.style.transform = 'none';
                             }
                             // Constrain bubble width to available space so it grows taller, not wider
-                            bubble.style.maxWidth = Math.max(200, availW) + 'px';
-                            bubble.style.minWidth = Math.min(200, availW) + 'px';
+                            var maxAvail = Math.min(availW, window.innerWidth - 16);
+                            bubble.style.maxWidth = Math.max(200, maxAvail) + 'px';
+                            bubble.style.minWidth = Math.min(200, maxAvail) + 'px';
+                            container.style.maxWidth = (maxAvail + 16) + 'px';
                             overlay.style.justifyContent = '';
                             overlay.style.alignItems = '';
                             requestAnimationFrame(function() {
                                 var cr = container.getBoundingClientRect();
                                 if (cr.left < 8) { container.style.left = '8px'; container.style.transform = 'none'; }
-                                if (cr.right > window.innerWidth - 8) { container.style.left = (window.innerWidth - cr.width - 8) + 'px'; container.style.transform = 'none'; }
+                                if (cr.right > window.innerWidth - 8) {
+                                    container.style.left = '8px';
+                                    container.style.transform = 'none';
+                                    var newW = window.innerWidth - 16;
+                                    container.style.maxWidth = newW + 'px';
+                                    bubble.style.maxWidth = (newW - 16) + 'px';
+                                    bubble.style.minWidth = Math.min(200, newW - 16) + 'px';
+                                }
                                 if (cr.bottom > window.innerHeight - 8) { container.style.top = (window.innerHeight - cr.height - 8) + 'px'; }
                             });
                         }
