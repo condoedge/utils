@@ -1475,6 +1475,14 @@ export default function(gsap) {
                 var step = steps[index];
                 var isLast = index === steps.length - 1;
 
+                // Conditional step: skip if element not found in DOM
+                if (step.showIf && !document.querySelector(step.showIf)) {
+                    if (!isLast) {
+                        showStep(index + 1);
+                    }
+                    return;
+                }
+
                 // Notify path editor of step change
                 overlay.dispatchEvent(new CustomEvent('tutorial-step-change', { detail: { index: index } }));
 

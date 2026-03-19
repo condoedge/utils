@@ -479,6 +479,7 @@ export default (function() {
                 live.hover = pe.hover || undefined;
                 live.chatMode = pe.chatMode || undefined;
                 live.positionTarget = pe.positionTarget || undefined;
+                live.showIf = pe.showIf || undefined;
                 delete live.autoNext;
                 delete live.afterAnimation;
                 if (pe.advance === 'auto') live.autoNext = pe.autoNextDelay || 3;
@@ -968,6 +969,25 @@ export default (function() {
                 }),
                 s.positionTarget ? makeBtn('\u2715', 'sb-btn-ghost sb-btn-icon sb-btn-sm', function() {
                     delete s.positionTarget;
+                    save(true);
+                    renderBaseConfig();
+                }) : null,
+            ]));
+
+            // showIf
+            var siDisplay = el('span', { textContent: s.showIf || '\u2014', className: 'sb-selector', style: { flex: '1' } });
+            baseConfigDiv.appendChild(makeRow([
+                el('label', { textContent: 'showIf', className: 'sb-label', style: { minWidth: 'auto' } }),
+                siDisplay,
+                makeBtn('Pick', 'sb-btn-blue sb-btn-sm', function() {
+                    pickElement(function(sel) {
+                        s.showIf = sel;
+                        save(true);
+                        renderBaseConfig();
+                    });
+                }),
+                s.showIf ? makeBtn('\u2715', 'sb-btn-ghost sb-btn-icon sb-btn-sm', function() {
+                    delete s.showIf;
                     save(true);
                     renderBaseConfig();
                 }) : null,
@@ -1953,6 +1973,7 @@ export default (function() {
             if (s.align && s.align !== 'center') lines.push('    align: \'' + s.align + '\',');
             if (s.chatMode) lines.push('    chatMode: true,');
             if (s.positionTarget) lines.push('    positionTarget: \'' + escStr(s.positionTarget) + '\',');
+            if (s.showIf) lines.push('    showIf: \'' + escStr(s.showIf) + '\',');
 
             if (s.cursor && s.cursor.from) {
                 lines.push('    cursor: {');
