@@ -1156,30 +1156,45 @@ export default function(gsap) {
                             }
                             // Constrain bubble to available space
                             var maxAvail = Math.max(200, Math.min(availW, window.innerWidth - 16));
-                            bubble.style.maxWidth = maxAvail + 'px';
-                            bubble.style.minWidth = Math.min(200, maxAvail) + 'px';
                             bubble.style.overflowWrap = 'break-word';
                             bubble.style.wordBreak = 'break-word';
                             bubble.style.boxSizing = 'border-box';
-                            container.style.maxWidth = (window.innerWidth - 16) + 'px';
                             overlay.style.justifyContent = '';
                             overlay.style.alignItems = '';
-                            // Continuously clamp to viewport (typewriter changes size)
+                            // Continuously clamp bubble to viewport (typewriter changes size)
                             var clampInterval = setInterval(function() {
                                 if (!container.parentNode) { clearInterval(clampInterval); return; }
-                                var cr = container.getBoundingClientRect();
-                                if (cr.right > window.innerWidth - 8) {
-                                    var spaceRight = window.innerWidth - 8 - cr.left;
-                                    if (spaceRight < cr.width) {
+                                var br = bubble.getBoundingClientRect();
+                                var vw = window.innerWidth;
+                                var vh = window.innerHeight;
+                                // Clamp right edge
+                                if (br.right > vw - 8) {
+                                    var newMax = vw - br.left - 16;
+                                    if (newMax < 200) {
+                                        // Not enough space — shift container left
                                         container.style.left = '8px';
+                                        container.style.right = 'auto';
                                         container.style.transform = 'none';
-                                        bubble.style.maxWidth = (window.innerWidth - 32) + 'px';
-                                        bubble.style.minWidth = Math.min(200, window.innerWidth - 32) + 'px';
+                                        newMax = vw - 24;
                                     }
+                                    bubble.style.maxWidth = Math.max(180, newMax) + 'px';
+                                    bubble.style.minWidth = Math.min(180, newMax) + 'px';
                                 }
-                                if (cr.left < 8) { container.style.left = '8px'; container.style.transform = 'none'; }
-                                if (cr.bottom > window.innerHeight - 8) { container.style.top = (window.innerHeight - cr.height - 8) + 'px'; }
+                                // Clamp left edge
+                                if (br.left < 8) {
+                                    container.style.left = '8px';
+                                    container.style.right = 'auto';
+                                    container.style.transform = 'none';
+                                }
+                                // Clamp bottom
+                                if (br.bottom > vh - 8) {
+                                    container.style.top = Math.max(8, parseInt(container.style.top) - (br.bottom - vh + 8)) + 'px';
+                                }
                             }, 100);
+                            // Initial constraint
+                            bubble.style.maxWidth = maxAvail + 'px';
+                            bubble.style.minWidth = Math.min(200, maxAvail) + 'px';
+                            container.style.maxWidth = '';
                             // Stop clamping when step changes
                             overlay.addEventListener('tutorial-step-change', function() { clearInterval(clampInterval); }, { once: true });
                         }
@@ -1511,9 +1526,9 @@ export default function(gsap) {
                         chatAvatarEl = document.createElement('div');
                         chatAvatarEl.className = 'tutorial-chat-avatar';
                         Object.assign(chatAvatarEl.style, {
-                            width: '80px',
-                            height: '80px',
-                            minWidth: '80px',
+                            width: '100px',
+                            height: '100px',
+                            minWidth: '100px',
                             borderRadius: '50%',
                             overflow: 'hidden',
                             border: '3px solid #07499e',
@@ -1541,7 +1556,7 @@ export default function(gsap) {
                     bubble.style.top = 'auto';
                     // Use CSS grid: avatar on the left, content stacked on the right
                     bubble.style.display = 'grid';
-                    bubble.style.gridTemplateColumns = '80px 1fr';
+                    bubble.style.gridTemplateColumns = '100px 1fr';
                     bubble.style.gap = '1rem';
                     bubble.style.alignItems = 'start';
                     // Make all direct children except avatar span the right column
