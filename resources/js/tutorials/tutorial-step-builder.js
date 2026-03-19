@@ -425,13 +425,13 @@ export default (function() {
         // --- Diff helper: list changed properties between original and current step ---
         function normalizeHighlight(hl) {
             if (!hl || !hl.groups) return hl;
-            var normalized = JSON.parse(JSON.stringify(hl));
-            normalized.groups = normalized.groups.map(function(g) {
-                // Convert {elements: [...]} to plain array, or keep array as-is
+            // Extract only the comparable data: groups as sorted arrays of selectors + padding/borderRadius
+            var groups = hl.groups.map(function(g) {
                 var elems = g.elements || g;
-                return Array.isArray(elems) ? elems.slice().sort() : elems;
+                if (!Array.isArray(elems)) return [];
+                return elems.slice().sort();
             });
-            return normalized;
+            return { groups: groups, padding: hl.padding, borderRadius: hl.borderRadius };
         }
 
         function getStepChanges(index) {
@@ -496,6 +496,7 @@ export default (function() {
                 live.chatMode = pe.chatMode || undefined;
                 live.positionTarget = pe.positionTarget || undefined;
                 live.showIf = pe.showIf || undefined;
+                live.clearOverlay = pe.clearOverlay || undefined;
                 delete live.autoNext;
                 delete live.afterAnimation;
                 if (pe.advance === 'auto') live.autoNext = pe.autoNextDelay || 3;
@@ -890,6 +891,7 @@ export default (function() {
 
             // Row: overlay + position + align
             var overlayCheck = makeCheckbox('overlay', s.overlay !== false, function(v) { s.overlay = v; save(true); });
+            var clearOverlayCheck = makeCheckbox('block', !!s.clearOverlay, function(v) { s.clearOverlay = v || undefined; save(true); });
             var backVal = s.showBack === true ? 'prev' : (typeof s.showBack === 'number' ? 'goTo' : 'off');
             var backGoToInput = null;
             var backSelect = makeSelect(
@@ -913,7 +915,7 @@ export default (function() {
             var alignSelect = makeSelect([{ value: 'left' }, { value: 'center' }, { value: 'right' }], s.align || 'center', function(v) { s.align = v; save(true); });
             alignSelect.style.width = '75px';
 
-            var backRow = [overlayCheck, backSelect];
+            var backRow = [overlayCheck, clearOverlayCheck, backSelect];
             if (backGoToInput) backRow.push(backGoToInput);
             backRow.push(el('label', { textContent: 'pos', className: 'sb-label', style: { minWidth: 'auto', marginLeft: '8px' } }));
             backRow.push(posSelect);
@@ -1988,6 +1990,7 @@ export default (function() {
             if (s.position && s.position !== 'left') lines.push('    position: \'' + s.position + '\',');
             if (s.align && s.align !== 'center') lines.push('    align: \'' + s.align + '\',');
             if (s.chatMode) lines.push('    chatMode: true,');
+            if (s.clearOverlay) lines.push('    clearOverlay: true,');
             if (s.positionTarget) lines.push('    positionTarget: \'' + escStr(s.positionTarget) + '\',');
             if (s.showIf) lines.push('    showIf: \'' + escStr(s.showIf) + '\',');
 

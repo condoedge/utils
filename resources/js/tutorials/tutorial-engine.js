@@ -1523,7 +1523,7 @@ export default function(gsap) {
                 // Toggle overlay backdrop
                 var showOverlay = step.overlay !== false;
                 overlay.style.backgroundColor = showOverlay ? 'rgba(0, 0, 0, 0.5)' : 'transparent';
-                overlay.style.pointerEvents = showOverlay ? 'auto' : 'none';
+                overlay.style.pointerEvents = (showOverlay || step.clearOverlay) ? 'auto' : 'none';
                 container.style.pointerEvents = 'auto';
 
                 // Cleanup previous cursor and highlight
