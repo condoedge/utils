@@ -1154,26 +1154,34 @@ export default function(gsap) {
                                 container.style.top = Math.max(8, ptRect.top) + 'px';
                                 container.style.transform = 'none';
                             }
-                            // Constrain bubble width to available space so it grows taller, not wider
-                            var maxAvail = Math.min(availW, window.innerWidth - 16);
-                            bubble.style.maxWidth = Math.max(200, maxAvail) + 'px';
+                            // Constrain bubble to available space
+                            var maxAvail = Math.max(200, Math.min(availW, window.innerWidth - 16));
+                            bubble.style.maxWidth = maxAvail + 'px';
                             bubble.style.minWidth = Math.min(200, maxAvail) + 'px';
-                            container.style.maxWidth = (maxAvail + 16) + 'px';
+                            bubble.style.overflowWrap = 'break-word';
+                            bubble.style.wordBreak = 'break-word';
+                            bubble.style.boxSizing = 'border-box';
+                            container.style.maxWidth = (window.innerWidth - 16) + 'px';
                             overlay.style.justifyContent = '';
                             overlay.style.alignItems = '';
-                            requestAnimationFrame(function() {
+                            // Continuously clamp to viewport (typewriter changes size)
+                            var clampInterval = setInterval(function() {
+                                if (!container.parentNode) { clearInterval(clampInterval); return; }
                                 var cr = container.getBoundingClientRect();
-                                if (cr.left < 8) { container.style.left = '8px'; container.style.transform = 'none'; }
                                 if (cr.right > window.innerWidth - 8) {
-                                    container.style.left = '8px';
-                                    container.style.transform = 'none';
-                                    var newW = window.innerWidth - 16;
-                                    container.style.maxWidth = newW + 'px';
-                                    bubble.style.maxWidth = (newW - 16) + 'px';
-                                    bubble.style.minWidth = Math.min(200, newW - 16) + 'px';
+                                    var spaceRight = window.innerWidth - 8 - cr.left;
+                                    if (spaceRight < cr.width) {
+                                        container.style.left = '8px';
+                                        container.style.transform = 'none';
+                                        bubble.style.maxWidth = (window.innerWidth - 32) + 'px';
+                                        bubble.style.minWidth = Math.min(200, window.innerWidth - 32) + 'px';
+                                    }
                                 }
+                                if (cr.left < 8) { container.style.left = '8px'; container.style.transform = 'none'; }
                                 if (cr.bottom > window.innerHeight - 8) { container.style.top = (window.innerHeight - cr.height - 8) + 'px'; }
-                            });
+                            }, 100);
+                            // Stop clamping when step changes
+                            overlay.addEventListener('tutorial-step-change', function() { clearInterval(clampInterval); }, { once: true });
                         }
                     } else {
                         container.style.position = 'relative';
