@@ -1020,7 +1020,10 @@ export default function(gsap) {
 
             // Position bubble: arrow at mouth level, bubble grows upward
             // highlightBottom: true if highlighted element is in lower half of screen
+            var _activeClampInterval = null;
             function positionBubble(side, align, highlightBottom, positionTarget) {
+                // Clear any previous clamp interval
+                if (_activeClampInterval) { clearInterval(_activeClampInterval); _activeClampInterval = null; }
                 if (isMobile()) {
                     container.style.alignItems = 'center';
                     container.style.flexDirection = 'row';
@@ -1175,7 +1178,7 @@ export default function(gsap) {
                             overlay.style.alignItems = '';
                             // Continuously clamp bubble to viewport (typewriter changes size)
                             var hasChatMaxW = !!chatStep.chatMaxWidth;
-                            var clampInterval = setInterval(function() {
+                            _activeClampInterval = setInterval(function() {
                                 if (!container.parentNode) { clearInterval(clampInterval); return; }
                                 var br = bubble.getBoundingClientRect();
                                 var vw = window.innerWidth;
@@ -1205,12 +1208,12 @@ export default function(gsap) {
                                     container.style.top = Math.max(8, parseInt(container.style.top) - (br.bottom - vh + 8)) + 'px';
                                 }
                             }, 100);
-                            // Initial constraint
-                            bubble.style.maxWidth = maxAvail + 'px';
-                            bubble.style.minWidth = Math.min(200, maxAvail) + 'px';
+                            // Initial constraint (only if no chatMaxWidth)
+                            if (!hasChatMaxW) {
+                                bubble.style.maxWidth = maxAvail + 'px';
+                                bubble.style.minWidth = Math.min(200, maxAvail) + 'px';
+                            }
                             container.style.maxWidth = '';
-                            // Stop clamping when step changes
-                            overlay.addEventListener('tutorial-step-change', function() { clearInterval(clampInterval); }, { once: true });
                         }
                     } else {
                         container.style.position = 'relative';
