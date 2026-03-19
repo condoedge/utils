@@ -1159,31 +1159,40 @@ export default function(gsap) {
                                 container.style.top = Math.max(8, ptRect.top) + 'px';
                                 container.style.transform = 'none';
                             }
-                            // Constrain bubble to available space
+                            // Constrain bubble: use chatMaxWidth if set, otherwise available space
                             var maxAvail = Math.max(200, Math.min(availW, window.innerWidth - 16));
+                            if (chatStep.chatMaxWidth) {
+                                bubble.style.maxWidth = chatStep.chatMaxWidth;
+                                bubble.style.minWidth = 'auto';
+                            } else {
+                                bubble.style.maxWidth = maxAvail + 'px';
+                                bubble.style.minWidth = Math.min(200, maxAvail) + 'px';
+                            }
                             bubble.style.overflowWrap = 'break-word';
                             bubble.style.wordBreak = 'break-word';
                             bubble.style.boxSizing = 'border-box';
                             overlay.style.justifyContent = '';
                             overlay.style.alignItems = '';
                             // Continuously clamp bubble to viewport (typewriter changes size)
+                            var hasChatMaxW = !!chatStep.chatMaxWidth;
                             var clampInterval = setInterval(function() {
                                 if (!container.parentNode) { clearInterval(clampInterval); return; }
                                 var br = bubble.getBoundingClientRect();
                                 var vw = window.innerWidth;
                                 var vh = window.innerHeight;
-                                // Clamp right edge
+                                // Clamp right edge (only override maxWidth if no chatMaxWidth set)
                                 if (br.right > vw - 8) {
                                     var newMax = vw - br.left - 16;
                                     if (newMax < 200) {
-                                        // Not enough space — shift container left
                                         container.style.left = '8px';
                                         container.style.right = 'auto';
                                         container.style.transform = 'none';
                                         newMax = vw - 24;
                                     }
-                                    bubble.style.maxWidth = Math.max(180, newMax) + 'px';
-                                    bubble.style.minWidth = Math.min(180, newMax) + 'px';
+                                    if (!hasChatMaxW) {
+                                        bubble.style.maxWidth = Math.max(180, newMax) + 'px';
+                                        bubble.style.minWidth = Math.min(180, newMax) + 'px';
+                                    }
                                 }
                                 // Clamp left edge
                                 if (br.left < 8) {
