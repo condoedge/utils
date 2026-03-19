@@ -758,8 +758,10 @@ export default function(gsap) {
                     gsap.to(cursorEl, {
                         scale: 0.7, duration: 0.1, yoyo: true, repeat: 1,
                         onComplete: function() {
-                            var targetEl = document.querySelector(resolveRef(cfg.to, step));
-                            if (targetEl && typeof targetEl.click === 'function') targetEl.click();
+                            if (!window._tutorialDevMode) {
+                                var targetEl = document.querySelector(resolveRef(cfg.to, step));
+                                if (targetEl && typeof targetEl.click === 'function') targetEl.click();
+                            }
                             if (cfg.loop) {
                                 gsap.set(cursorEl, { x: fromPos.x, y: fromPos.y, scale: 1 });
                                 timeline.restart();
@@ -865,8 +867,10 @@ export default function(gsap) {
                 timeline.to(cursorEl, { scale: 0.7, duration: 0.1, yoyo: true, repeat: 1 });
                 (function(target) {
                     timeline.call(function() {
-                        var el = document.querySelector(target);
-                        if (el) el.click();
+                        if (!window._tutorialDevMode) {
+                            var el = document.querySelector(target);
+                            if (el) el.click();
+                        }
                     });
                 })(wp.target);
             } else if (action === 'hover') {
@@ -1498,8 +1502,10 @@ export default function(gsap) {
 
                 // Silent click: click element and advance immediately, no UI shown
                 if (step.silentClick) {
-                    var silentEl = document.querySelector(step.silentClick);
-                    if (silentEl && typeof silentEl.click === 'function') silentEl.click();
+                    if (!window._tutorialDevMode) {
+                        var silentEl = document.querySelector(step.silentClick);
+                        if (silentEl && typeof silentEl.click === 'function') silentEl.click();
+                    }
                     if (!isLast) {
                         showStep(currentStep + 1);
                     }
