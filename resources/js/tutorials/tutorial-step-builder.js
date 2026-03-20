@@ -1657,6 +1657,15 @@ export default (function() {
                 }),
             ]));
 
+            // blockOutside option
+            container.appendChild(makeRow([
+                makeCheckbox('blockOutside', !!h.blockOutside, function(v) {
+                    if (!s.highlight) s.highlight = {};
+                    s.highlight.blockOutside = v || undefined;
+                    save(true);
+                }),
+            ]));
+
             // Preview / Clear
             container.appendChild(makeRow([
                 makeBtn('\u25B6 Preview', 'sb-btn-blue sb-btn-sm', function() {
@@ -2042,6 +2051,7 @@ export default (function() {
                 lines.push('        ],');
                 lines.push('        padding: ' + (s.highlight.padding || 8) + ',');
                 lines.push('        borderRadius: ' + (s.highlight.borderRadius || 8) + ',');
+                if (s.highlight.blockOutside) lines.push('        blockOutside: true,');
                 lines.push('    },');
             }
 

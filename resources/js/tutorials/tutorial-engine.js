@@ -658,6 +658,7 @@ export default function(gsap) {
         var padding = config.padding || 8;
         var radius = config.borderRadius || 8;
 
+        var blockOutside = config.blockOutside || false;
         var hlOverlay = createSvgEl('svg', { width: '100%', height: '100%' });
         Object.assign(hlOverlay.style, {
             position: 'fixed', top: '0', left: '0', width: '100%', height: '100%', zIndex: String(Z.HIGHLIGHT), pointerEvents: 'none',
@@ -669,6 +670,7 @@ export default function(gsap) {
             d: result.pathData,
             fill: 'rgba(0,0,0,0.55)',
             'fill-rule': 'evenodd',
+            'pointer-events': blockOutside ? 'fill' : 'none',
         });
         hlOverlay.appendChild(path);
 
