@@ -25,7 +25,6 @@ export default function(gsap) {
             createSvgEl: function() { return null; },
             onScrollResize: function() { return function() {}; },
             DEFAULTS: {},
-            DEBOUNCE_MS: 50,
         };
     }
 
@@ -44,7 +43,7 @@ export default function(gsap) {
 
     // === TIMING CONSTANTS ===
     var STEP_TRANSITION_MS = 300;
-    var DEBOUNCE_MS = 50;
+
 
     // === CONFIGURATION DEFAULTS ===
     // Projects can override defaults via window.TutorialDefaults before loading
@@ -87,6 +86,9 @@ export default function(gsap) {
     }
 
     function forceHoverStyles(el) {
+        // Clean up any previously injected rules for this element
+        removeForceHoverStyles(el);
+
         var sheet = getHoverStyleSheet();
         var injectedRules = [];
 
@@ -922,7 +924,6 @@ export default function(gsap) {
         if (userOptions) { for (k in userOptions) opts[k] = userOptions[k]; }
         // Store computed values for desktop reset after mobile override
         opts._bubblePadding = 'clamp(1rem, 3vw, 2rem) clamp(1.2rem, 4vw, 2.5rem)';
-        opts._textMinHeight = 'clamp(100px, 30vh, 180px)';
 
         var currentStep = 0;
         var activeCursor = null;
@@ -1019,6 +1020,79 @@ export default function(gsap) {
                     positionBubble(steps[currentStep].position || 'left', steps[currentStep].align || 'center', false, steps[currentStep].positionTarget);
                 }, 100);
             });
+
+            function resetContainerPosition() {
+                container.style.position = 'relative';
+                container.style.left = '';
+                container.style.right = '';
+                container.style.top = '';
+                container.style.bottom = '';
+                container.style.transform = '';
+                container.style.maxHeight = '';
+                container.style.overflow = '';
+            }
+
+            // Returns { availW, rect } or null if element not found
+            function positionContainerAtTarget(targetSelector, side) {
+                var el = document.querySelector(targetSelector);
+                if (!el) return null;
+                var rect = el.getBoundingClientRect();
+                container.style.position = 'fixed';
+                container.style.bottom = 'auto';
+                container.style.right = 'auto';
+
+                if (side === 'top' || side === 'bottom') {
+                    var centerX = rect.left + rect.width / 2;
+                    container.style.left = Math.max(8, centerX) + 'px';
+                    container.style.transform = 'translateX(-50%)';
+                    container.style.top = side === 'top'
+                        ? Math.max(8, rect.top - 10) + 'px'
+                        : (rect.bottom + 10) + 'px';
+                    return { availW: Math.min(centerX, window.innerWidth - centerX) * 2 - 16, rect: rect };
+                } else if (side === 'right') {
+                    container.style.left = (rect.right + 10) + 'px';
+                    container.style.top = Math.max(8, rect.top) + 'px';
+                    container.style.transform = 'none';
+                    return { availW: window.innerWidth - rect.right - 20, rect: rect };
+                } else {
+                    // left (default)
+                    container.style.left = 'auto';
+                    container.style.right = (window.innerWidth - rect.left + 10) + 'px';
+                    container.style.top = Math.max(8, rect.top) + 'px';
+                    container.style.transform = 'none';
+                    return { availW: rect.left - 20, rect: rect };
+                }
+            }
+
+            function startViewportClamp(hasChatMaxW) {
+                _activeClampInterval = setInterval(function() {
+                    if (!container.parentNode) { clearInterval(_activeClampInterval); _activeClampInterval = null; return; }
+                    var br = bubble.getBoundingClientRect();
+                    var vw = window.innerWidth;
+                    var vh = window.innerHeight;
+                    if (br.right > vw - 8) {
+                        var newMax = vw - br.left - 16;
+                        if (newMax < 200) {
+                            container.style.left = '8px';
+                            container.style.right = 'auto';
+                            container.style.transform = 'none';
+                            newMax = vw - 24;
+                        }
+                        if (!hasChatMaxW) {
+                            bubble.style.maxWidth = Math.max(180, newMax) + 'px';
+                            bubble.style.minWidth = Math.min(180, newMax) + 'px';
+                        }
+                    }
+                    if (br.left < 8) {
+                        container.style.left = '8px';
+                        container.style.right = 'auto';
+                        container.style.transform = 'none';
+                    }
+                    if (br.bottom > vh - 8) {
+                        container.style.top = Math.max(8, parseInt(container.style.top) - (br.bottom - vh + 8)) + 'px';
+                    }
+                }, 100);
+            }
 
             // Position bubble: arrow at mouth level, bubble grows upward
             // highlightBottom: true if highlighted element is in lower half of screen
@@ -1133,37 +1207,11 @@ export default function(gsap) {
                     overlay.style.padding = '0';
 
                     if (positionTarget) {
-                        var ptEl = document.querySelector(positionTarget);
-                        if (ptEl) {
-                            var ptRect = ptEl.getBoundingClientRect();
-                            var availW;
-                            container.style.position = 'fixed';
-                            container.style.bottom = 'auto';
-                            container.style.right = 'auto';
+                        var ptResult = positionContainerAtTarget(positionTarget, side);
+                        if (ptResult) {
+                            var availW = ptResult.availW;
                             container.style.maxHeight = '';
                             container.style.overflow = '';
-                            if (side === 'top' || side === 'bottom') {
-                                // Centered above/below: use available width around target center
-                                var centerX = ptRect.left + ptRect.width / 2;
-                                availW = Math.min(centerX, window.innerWidth - centerX) * 2 - 16;
-                                container.style.left = Math.max(8, centerX) + 'px';
-                                container.style.transform = 'translateX(-50%)';
-                                container.style.top = side === 'top'
-                                    ? Math.max(8, ptRect.top - 10) + 'px'
-                                    : (ptRect.bottom + 10) + 'px';
-                            } else if (side === 'right') {
-                                availW = window.innerWidth - ptRect.right - 20;
-                                container.style.left = (ptRect.right + 10) + 'px';
-                                container.style.top = Math.max(8, ptRect.top) + 'px';
-                                container.style.transform = 'none';
-                            } else {
-                                // left
-                                availW = ptRect.left - 20;
-                                container.style.left = 'auto';
-                                container.style.right = (window.innerWidth - ptRect.left + 10) + 'px';
-                                container.style.top = Math.max(8, ptRect.top) + 'px';
-                                container.style.transform = 'none';
-                            }
                             // Constrain bubble: use chatMaxWidth if set, otherwise available space
                             var maxAvail = Math.max(200, Math.min(availW, window.innerWidth - 16));
                             if (chatStep.chatMaxWidth) {
@@ -1179,37 +1227,7 @@ export default function(gsap) {
                             overlay.style.justifyContent = '';
                             overlay.style.alignItems = '';
                             // Continuously clamp bubble to viewport (typewriter changes size)
-                            var hasChatMaxW = !!chatStep.chatMaxWidth;
-                            _activeClampInterval = setInterval(function() {
-                                if (!container.parentNode) { clearInterval(clampInterval); return; }
-                                var br = bubble.getBoundingClientRect();
-                                var vw = window.innerWidth;
-                                var vh = window.innerHeight;
-                                // Clamp right edge (only override maxWidth if no chatMaxWidth set)
-                                if (br.right > vw - 8) {
-                                    var newMax = vw - br.left - 16;
-                                    if (newMax < 200) {
-                                        container.style.left = '8px';
-                                        container.style.right = 'auto';
-                                        container.style.transform = 'none';
-                                        newMax = vw - 24;
-                                    }
-                                    if (!hasChatMaxW) {
-                                        bubble.style.maxWidth = Math.max(180, newMax) + 'px';
-                                        bubble.style.minWidth = Math.min(180, newMax) + 'px';
-                                    }
-                                }
-                                // Clamp left edge
-                                if (br.left < 8) {
-                                    container.style.left = '8px';
-                                    container.style.right = 'auto';
-                                    container.style.transform = 'none';
-                                }
-                                // Clamp bottom
-                                if (br.bottom > vh - 8) {
-                                    container.style.top = Math.max(8, parseInt(container.style.top) - (br.bottom - vh + 8)) + 'px';
-                                }
-                            }, 100);
+                            startViewportClamp(!!chatStep.chatMaxWidth);
                             // Initial constraint (only if no chatMaxWidth)
                             if (!hasChatMaxW) {
                                 bubble.style.maxWidth = maxAvail + 'px';
@@ -1218,13 +1236,7 @@ export default function(gsap) {
                             container.style.maxWidth = '';
                         }
                     } else {
-                        container.style.position = 'relative';
-                        container.style.left = '';
-                        container.style.right = '';
-                        container.style.top = '';
-                        container.style.bottom = '';
-                        container.style.transform = '';
-                        container.style.maxHeight = '';
+                        resetContainerPosition();
                         // Chat mode without target: use position as vertical, align as horizontal
                         // position: top/left/right = top, bottom = bottom, else = center (vertical)
                         var vMap = { top: 'flex-start', bottom: 'flex-end' };
@@ -1268,34 +1280,10 @@ export default function(gsap) {
 
                 // Position target: anchor container near a DOM element
                 if (positionTarget) {
-                    var targetEl = document.querySelector(positionTarget);
-                    if (targetEl) {
-                        var targetRect = targetEl.getBoundingClientRect();
-                        container.style.position = 'fixed';
-                        container.style.bottom = 'auto';
-                        container.style.right = 'auto';
+                    var ptResult = positionContainerAtTarget(positionTarget, side);
+                    if (ptResult) {
                         container.style.maxHeight = (window.innerHeight - 16) + 'px';
                         container.style.overflow = 'auto';
-                        // All sides use top-anchored positioning so bubble grows downward
-                        if (side === 'top') {
-                            container.style.left = Math.max(8, targetRect.left + targetRect.width / 2) + 'px';
-                            container.style.transform = 'translateX(-50%)';
-                            container.style.top = Math.max(8, targetRect.top - 10) + 'px';
-                        } else if (side === 'bottom') {
-                            container.style.left = Math.max(8, targetRect.left + targetRect.width / 2) + 'px';
-                            container.style.transform = 'translateX(-50%)';
-                            container.style.top = (targetRect.bottom + 10) + 'px';
-                        } else if (side === 'right') {
-                            container.style.left = (targetRect.right + 10) + 'px';
-                            container.style.top = Math.max(8, targetRect.top) + 'px';
-                            container.style.transform = 'none';
-                        } else {
-                            // left (default)
-                            container.style.left = 'auto';
-                            container.style.right = (window.innerWidth - targetRect.left + 10) + 'px';
-                            container.style.top = Math.max(8, targetRect.top) + 'px';
-                            container.style.transform = 'none';
-                        }
                         overlay.style.justifyContent = '';
                         overlay.style.alignItems = '';
                         // Clamp horizontally within viewport
@@ -1306,14 +1294,7 @@ export default function(gsap) {
                         });
                     }
                 } else {
-                    container.style.position = 'relative';
-                    container.style.left = '';
-                    container.style.right = '';
-                    container.style.top = '';
-                    container.style.bottom = '';
-                    container.style.transform = '';
-                    container.style.maxHeight = '';
-                    container.style.overflow = '';
+                    resetContainerPosition();
                 }
 
                 if (side === 'top') {
@@ -1817,10 +1798,6 @@ export default function(gsap) {
 
                 // If step has a redirect, navigate to that page
                 if (step.redirect) {
-                    localStorage.setItem('tutorial-continuation', JSON.stringify({
-                        from: window.location.pathname,
-                        timestamp: Date.now()
-                    }));
                     window.location.href = step.redirect;
                     return;
                 }
@@ -2098,6 +2075,11 @@ export default function(gsap) {
          * Render option buttons for a step into the options row.
          */
         function renderStepOptions(options, optionsRow, actionBtn, bubble, showStep, closeTutorial) {
+            function setOptBtnColors(btn, bg, color) {
+                btn.style.backgroundColor = bg;
+                btn.style.color = color;
+            }
+
             optionsRow.style.display = 'flex';
             optionsRow.style.pointerEvents = 'none';
             var totalOpts = options.length;
@@ -2105,11 +2087,14 @@ export default function(gsap) {
             options.forEach(function(opt, oi) {
                 var optBtn = document.createElement('button');
                 optBtn.textContent = opt.label;
+                var hoverBg = opt.hoverColor || '#07499e';
+                var normalBg = opt.color || '#f0f4ff';
+                var normalColor = opt.textColor || '#07499e';
                 Object.assign(optBtn.style, {
                     padding: '0.75rem 1rem',
                     minHeight: '44px',
-                    backgroundColor: opt.color || '#f0f4ff',
-                    color: opt.textColor || '#07499e',
+                    backgroundColor: normalBg,
+                    color: normalColor,
                     border: '2px solid ' + (opt.borderColor || '#07499e'),
                     borderRadius: '10px',
                     cursor: 'pointer',
@@ -2121,22 +2106,10 @@ export default function(gsap) {
                     transform: 'translateY(8px)',
                     pointerEvents: 'none',
                 });
-                optBtn.addEventListener('mouseenter', function() {
-                    optBtn.style.backgroundColor = opt.hoverColor || '#07499e';
-                    optBtn.style.color = '#ffffff';
-                });
-                optBtn.addEventListener('mouseleave', function() {
-                    optBtn.style.backgroundColor = opt.color || '#f0f4ff';
-                    optBtn.style.color = opt.textColor || '#07499e';
-                });
-                optBtn.addEventListener('touchstart', function() {
-                    optBtn.style.backgroundColor = opt.hoverColor || '#07499e';
-                    optBtn.style.color = '#ffffff';
-                }, { passive: true });
-                optBtn.addEventListener('touchend', function() {
-                    optBtn.style.backgroundColor = opt.color || '#f0f4ff';
-                    optBtn.style.color = opt.textColor || '#07499e';
-                }, { passive: true });
+                optBtn.addEventListener('mouseenter', function() { setOptBtnColors(optBtn, hoverBg, '#ffffff'); });
+                optBtn.addEventListener('mouseleave', function() { setOptBtnColors(optBtn, normalBg, normalColor); });
+                optBtn.addEventListener('touchstart', function() { setOptBtnColors(optBtn, hoverBg, '#ffffff'); }, { passive: true });
+                optBtn.addEventListener('touchend', function() { setOptBtnColors(optBtn, normalBg, normalColor); }, { passive: true });
                 optBtn.addEventListener('click', function() {
                     if (opt.done) {
                         closeTutorial();
@@ -2294,7 +2267,7 @@ export default function(gsap) {
     return {
         start: start,
         DEFAULTS: DEFAULTS,
-        DEBOUNCE_MS: DEBOUNCE_MS,
+
         resolveRef: resolveRef,
         resolveElementCenter: resolveElementCenter,
         denormalizeSvgPath: denormalizeSvgPath,
