@@ -973,6 +973,7 @@ export default function(gsap) {
                 var step = steps[currentStep];
                 var target = (typeof step.showBack === 'number') ? step.showBack : currentStep - 1;
                 if (target >= 0) {
+                    _lastDirection = -1;
                     clearAutoNext();
                     cleanupAnimations();
                     bubble.style.opacity = '0';
@@ -1229,7 +1230,7 @@ export default function(gsap) {
                             // Continuously clamp bubble to viewport (typewriter changes size)
                             startViewportClamp(!!chatStep.chatMaxWidth);
                             // Initial constraint (only if no chatMaxWidth)
-                            if (!hasChatMaxW) {
+                            if (!chatStep.chatMaxWidth) {
                                 bubble.style.maxWidth = maxAvail + 'px';
                                 bubble.style.minWidth = Math.min(200, maxAvail) + 'px';
                             }
@@ -1286,11 +1287,32 @@ export default function(gsap) {
                         container.style.overflow = 'auto';
                         overlay.style.justifyContent = '';
                         overlay.style.alignItems = '';
-                        // Clamp horizontally within viewport
+                        // Clamp bubble within viewport (bubble is absolute, may overflow container)
                         requestAnimationFrame(function() {
-                            var cr = container.getBoundingClientRect();
-                            if (cr.left < 8) { container.style.left = '8px'; container.style.transform = 'none'; }
-                            if (cr.right > window.innerWidth - 8) { container.style.left = (window.innerWidth - cr.width - 8) + 'px'; container.style.transform = 'none'; }
+                            var br = bubble.getBoundingClientRect();
+                            var vw = window.innerWidth;
+                            // If bubble overflows left, shift container right
+                            if (br.left < 8) {
+                                var shift = 8 - br.left;
+                                var currentLeft = container.getBoundingClientRect().left;
+                                container.style.left = (currentLeft + shift) + 'px';
+                                container.style.right = 'auto';
+                                container.style.transform = 'none';
+                            }
+                            // If bubble overflows right, shift container left
+                            br = bubble.getBoundingClientRect();
+                            if (br.right > vw - 8) {
+                                var shift = br.right - (vw - 8);
+                                var currentLeft = container.getBoundingClientRect().left;
+                                container.style.left = (currentLeft - shift) + 'px';
+                                container.style.right = 'auto';
+                                container.style.transform = 'none';
+                            }
+                            // Clamp bottom
+                            br = bubble.getBoundingClientRect();
+                            if (br.bottom > window.innerHeight - 8) {
+                                container.style.top = Math.max(8, parseInt(container.style.top) - (br.bottom - window.innerHeight + 8)) + 'px';
+                            }
                         });
                     }
                 } else {
@@ -1466,6 +1488,9 @@ export default function(gsap) {
                 }, 200);
             }
 
+            var _isAutoAdvancing = false;
+            var _lastDirection = 1; // 1 = forward, -1 = backward
+
             function showStep(index) {
                 currentStep = index;
                 var step = steps[index];
@@ -1473,8 +1498,9 @@ export default function(gsap) {
 
                 // Conditional step: skip if element not found in DOM
                 if (step.showIf && !document.querySelector(step.showIf)) {
-                    if (!isLast) {
-                        showStep(index + 1);
+                    var nextIdx = index + _lastDirection;
+                    if (nextIdx >= 0 && nextIdx < steps.length) {
+                        showStep(nextIdx);
                     }
                     return;
                 }
@@ -1505,7 +1531,8 @@ export default function(gsap) {
                 }
 
                 // Silent click: click element and advance immediately, no UI shown
-                if (step.silentClick) {
+                // Skip silentClick when reached via auto-advance to prevent cascade chains
+                if (step.silentClick && !_isAutoAdvancing) {
                     if (!window._tutorialDevMode) {
                         var silentEl = document.querySelector(step.silentClick);
                         if (silentEl && typeof silentEl.click === 'function') silentEl.click();
@@ -1515,6 +1542,8 @@ export default function(gsap) {
                     }
                     return;
                 }
+                // Reset auto-advancing flag after it has been checked
+                _isAutoAdvancing = false;
 
                 // Toggle overlay backdrop
                 var showOverlay = step.overlay !== false;
@@ -1770,6 +1799,7 @@ export default function(gsap) {
                                 pauseAutoNext();
                             } else {
                                 autoNextTimer = setTimeout(function() {
+                                    _isAutoAdvancing = true;
                                     actionBtn.click();
                                 }, delayMs);
                             }
@@ -1778,6 +1808,7 @@ export default function(gsap) {
                         if (step.afterAnimation && !isLast) {
                             actionBtn.style.display = 'none';
                             var advanceFn = function() {
+                                _isAutoAdvancing = true;
                                 setTimeout(function() { actionBtn.click(); }, STEP_TRANSITION_MS);
                             };
                             if (step.cursor) {
@@ -1792,6 +1823,7 @@ export default function(gsap) {
 
             // Button click: next step, redirect, or close
             actionBtn.addEventListener('click', function() {
+                _lastDirection = 1;
                 clearAutoNext();
                 cleanupAnimations();
                 var step = steps[currentStep];
