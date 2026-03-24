@@ -25,7 +25,6 @@ export default function(gsap) {
             createSvgEl: function() { return null; },
             onScrollResize: function() { return function() {}; },
             DEFAULTS: {},
-            DEBOUNCE_MS: 50,
         };
     }
 
@@ -44,10 +43,12 @@ export default function(gsap) {
 
     // === TIMING CONSTANTS ===
     var STEP_TRANSITION_MS = 300;
-    var DEBOUNCE_MS = 50;
+
 
     // === CONFIGURATION DEFAULTS ===
-    var DEFAULTS = {
+    // Projects can override defaults via window.TutorialDefaults before loading
+    var projectDefaults = (typeof window !== 'undefined' && window.TutorialDefaults) || {};
+    var _hardDefaults = {
         avatar: '/images/Benoit helper.png',
         cursorImage: '/images/Cursor tutoriel.png',
         cursorSize: 'clamp(32px, 8vw, 48px)',
@@ -62,6 +63,208 @@ export default function(gsap) {
         bubbleMaxWidth: 'clamp(260px, 85vw, 550px)',
         bubbleMinWidth: 'clamp(200px, 70vw, 350px)',
     };
+    var DEFAULTS = {};
+    var k; for (k in _hardDefaults) DEFAULTS[k] = _hardDefaults[k];
+    for (k in projectDefaults) DEFAULTS[k] = projectDefaults[k];
+
+    // === FORCE HOVER STYLES ===
+
+    /**
+     * Force :hover CSS styles onto an element by scanning stylesheets for matching :hover rules
+     * and applying them inline. Stores original values for cleanup.
+     */
+    // Shared stylesheet for injecting .tutorial-force-hover rules
+    var _hoverStyleSheet = null;
+    function getHoverStyleSheet() {
+        if (!_hoverStyleSheet) {
+            var styleEl = document.createElement('style');
+            styleEl.setAttribute('data-tutorial-hover', '');
+            document.head.appendChild(styleEl);
+            _hoverStyleSheet = styleEl.sheet;
+        }
+        return _hoverStyleSheet;
+    }
+
+    function forceHoverStyles(el) {
+        // Clean up any previously injected rules for this element
+        removeForceHoverStyles(el);
+
+        var sheet = getHoverStyleSheet();
+        var injectedRules = [];
+
+        try {
+            var sheets = document.styleSheets;
+            for (var i = 0; i < sheets.length; i++) {
+                var rules;
+                try { rules = sheets[i].cssRules || sheets[i].rules; } catch(e) { continue; }
+                if (!rules) continue;
+                for (var j = 0; j < rules.length; j++) {
+                    var rule = rules[j];
+                    if (!rule.selectorText || rule.selectorText.indexOf(':hover') === -1) continue;
+                    // Check if element is the hovered target in any part of the selector
+                    var selectorParts = rule.selectorText.split(',');
+                    var matches = false;
+                    for (var p = 0; p < selectorParts.length; p++) {
+                        var part = selectorParts[p].trim();
+                        if (part.indexOf(':hover') === -1) continue;
+                        // Extract segment before :hover to check if el is the hovered element
+                        var hoverSegment = part.split(':hover')[0].trim();
+                        var lastSegment = hoverSegment.split(/[\s>+~]/).pop().trim();
+                        try { if (lastSegment && el.matches(lastSegment)) { matches = true; break; } } catch(e) {}
+                        // Also try direct match on full base selector
+                        var baseSelector = part.replace(/:hover/g, '');
+                        try { if (el.matches(baseSelector)) { matches = true; break; } } catch(e) {}
+                    }
+                    if (!matches) continue;
+                    // Duplicate the rule replacing :hover with .tutorial-force-hover
+                    var newSelector = rule.selectorText.replace(/:hover/g, '.tutorial-force-hover');
+                    try {
+                        var idx = sheet.insertRule(newSelector + ' { ' + rule.style.cssText + ' }', sheet.cssRules.length);
+                        injectedRules.push(idx);
+                    } catch(e) { /* skip invalid rules */ }
+                }
+            }
+        } catch(e) {
+            console.warn('TutorialEngine: forceHoverStyles failed', e);
+        }
+        // Store injected rule indices for cleanup
+        el._tutorialHoverRules = injectedRules;
+    }
+
+    /**
+     * Check if an element has visible hover effects by comparing computed styles
+     * in normal state vs simulated :hover state.
+     */
+    function elementHasHoverEffect(el) {
+        // Capture normal computed style snapshot
+        var normalStyle = window.getComputedStyle(el);
+        var propsToCheck = [
+            'color', 'background-color', 'background', 'border-color',
+            'box-shadow', 'text-decoration', 'opacity', 'transform',
+            'outline', 'visibility', 'display'
+        ];
+        var normalValues = {};
+        propsToCheck.forEach(function(p) { normalValues[p] = normalStyle.getPropertyValue(p); });
+
+        // Temporarily inject a rule that forces :hover via a unique class
+        var testClass = '_tut_hover_test_' + Date.now();
+        var styleEl = document.createElement('style');
+        document.head.appendChild(styleEl);
+        // Copy all :hover rules that match this element
+        var hasChange = false;
+        try {
+            var sheets = document.styleSheets;
+            for (var i = 0; i < sheets.length; i++) {
+                var rules;
+                try { rules = sheets[i].cssRules || sheets[i].rules; } catch(e) { continue; }
+                if (!rules) continue;
+                for (var j = 0; j < rules.length; j++) {
+                    var rule = rules[j];
+                    if (!rule.selectorText || rule.selectorText.indexOf(':hover') === -1) continue;
+                    var baseSelector = rule.selectorText.replace(/:hover/g, '');
+                    try { if (!el.matches(baseSelector)) continue; } catch(e) { continue; }
+                    var newSel = rule.selectorText.replace(/:hover/g, '.' + testClass);
+                    try { styleEl.sheet.insertRule(newSel + '{' + rule.style.cssText + '}', styleEl.sheet.cssRules.length); } catch(e) {}
+                }
+            }
+
+            el.classList.add(testClass);
+            var hoverStyle = window.getComputedStyle(el);
+            propsToCheck.forEach(function(p) {
+                if (hoverStyle.getPropertyValue(p) !== normalValues[p]) hasChange = true;
+            });
+            el.classList.remove(testClass);
+        } catch(e) {}
+        document.head.removeChild(styleEl);
+
+        // Fallback: check for Tailwind hover: classes or common hover class names
+        if (!hasChange && el.className && typeof el.className === 'string') {
+            if (el.className.match(/hover[:\\]|vlOpenOnHover|hover-/)) hasChange = true;
+        }
+        if (!hasChange && el.classList) {
+            for (var ci = 0; ci < el.classList.length; ci++) {
+                if (el.classList[ci].match(/hover[:\\]|vlOpenOnHover|hover-/)) { hasChange = true; break; }
+            }
+        }
+
+        return hasChange;
+    }
+
+    /**
+     * Walk up the DOM from a given element to find the closest ancestor (or self)
+     * that has hover effects. Stops at <body>.
+     */
+    function findHoverableParent(el) {
+        var current = el;
+        while (current && current !== document.body) {
+            if (elementHasHoverEffect(current)) return current;
+            current = current.parentElement;
+        }
+        return null;
+    }
+
+    /**
+     * Remove forced hover styles and restore original values.
+     */
+    function removeForceHoverStyles(el) {
+        if (!el._tutorialHoverRules) return;
+        var sheet = getHoverStyleSheet();
+        // Remove in reverse order to keep indices valid
+        var indices = el._tutorialHoverRules.slice().sort(function(a, b) { return b - a; });
+        indices.forEach(function(idx) {
+            try { sheet.deleteRule(idx); } catch(e) { /* already removed */ }
+        });
+        delete el._tutorialHoverRules;
+    }
+
+    // === STABILITY CHECKER ===
+
+    /**
+     * Wait for all highlight target elements to be stable (position/size not changing)
+     * before calling the callback. Polls every 50ms, max 1.5s.
+     */
+    function waitForStableHighlight(highlightConfig, callback) {
+        var allSelectors = [];
+        (highlightConfig.groups || []).forEach(function(g) {
+            var elems = g.elements || g;
+            if (Array.isArray(elems)) elems.forEach(function(s) { allSelectors.push(s); });
+        });
+
+        var lastRects = null;
+        var stableCount = 0;
+        var maxAttempts = 30; // 30 * 50ms = 1.5s max
+        var attempts = 0;
+
+        function snapshot() {
+            return allSelectors.map(function(sel) {
+                var el = document.querySelector(sel);
+                if (!el) return '0,0,0,0';
+                var r = el.getBoundingClientRect();
+                return Math.round(r.left) + ',' + Math.round(r.top) + ',' + Math.round(r.width) + ',' + Math.round(r.height);
+            }).join('|');
+        }
+
+        function check() {
+            attempts++;
+            var current = snapshot();
+            if (current === lastRects) {
+                stableCount++;
+            } else {
+                stableCount = 0;
+            }
+            lastRects = current;
+
+            // Stable for 3 consecutive checks (150ms) or max attempts reached
+            if (stableCount >= 3 || attempts >= maxAttempts) {
+                callback();
+            } else {
+                setTimeout(check, 50);
+            }
+        }
+
+        // Start after a minimum initial delay for CSS transitions to begin
+        setTimeout(check, 50);
+    }
 
     // === UTILITY FUNCTIONS ===
 
@@ -72,7 +275,47 @@ export default function(gsap) {
      * @param {Object} [anchor] - Optional {x, y} anchor ratios (0-1)
      * @returns {{x: number, y: number}|null}
      */
-    function resolveElementCenter(selector, anchor) {
+    /**
+     * Resolve a reference selector like "highlight:0", "hover:1" into a real CSS selector
+     * using the step's highlight/hover config.
+     * @param {string} selector - A CSS selector, "screen:x,y", "highlight:N", or "hover:N"
+     * @param {Object} [step] - Current step object for resolving references
+     * @returns {string} Resolved CSS selector
+     */
+    function resolveRef(selector, step) {
+        if (!step || typeof selector !== 'string') return selector;
+
+        // highlight:N — resolve to the Nth element in highlight groups
+        var hlMatch = selector.match(/^highlight:(\d+)$/);
+        if (hlMatch && step.highlight && step.highlight.groups) {
+            var hlIdx = parseInt(hlMatch[1], 10);
+            var allHlSelectors = [];
+            step.highlight.groups.forEach(function(g) {
+                var elems = g.elements || g;
+                if (Array.isArray(elems)) elems.forEach(function(s) { allHlSelectors.push(s); });
+            });
+            if (allHlSelectors[hlIdx]) return allHlSelectors[hlIdx];
+            console.warn('TutorialEngine: highlight:' + hlIdx + ' not found, ' + allHlSelectors.length + ' elements available');
+            return selector;
+        }
+
+        // hover:N — resolve to the Nth hover selector
+        var hvMatch = selector.match(/^hover:(\d+)$/);
+        if (hvMatch && step.hover) {
+            var hvIdx = parseInt(hvMatch[1], 10);
+            var hoverList = Array.isArray(step.hover) ? step.hover : [step.hover];
+            if (hoverList[hvIdx]) return hoverList[hvIdx];
+            console.warn('TutorialEngine: hover:' + hvIdx + ' not found, ' + hoverList.length + ' elements available');
+            return selector;
+        }
+
+        return selector;
+    }
+
+    function resolveElementCenter(selector, anchor, step) {
+        // Resolve references first
+        selector = resolveRef(selector, step);
+
         if (typeof selector === 'string' && selector.indexOf('screen:') === 0) {
             var parts = selector.replace('screen:', '').split(',');
             return { x: parseFloat(parts[0]), y: parseFloat(parts[1]) };
@@ -335,17 +578,21 @@ export default function(gsap) {
      * @returns {Function} cleanup - Removes listeners and clears timer
      */
     function onScrollResize(callback) {
-        var timer = null;
+        var rafId = null;
         function handler() {
-            if (timer) clearTimeout(timer);
-            timer = setTimeout(callback, DEBOUNCE_MS);
+            if (!rafId) {
+                rafId = requestAnimationFrame(function() {
+                    rafId = null;
+                    callback();
+                });
+            }
         }
         window.addEventListener('scroll', handler, true);
         window.addEventListener('resize', handler);
         return function cleanup() {
             window.removeEventListener('scroll', handler, true);
             window.removeEventListener('resize', handler);
-            if (timer) clearTimeout(timer);
+            if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
         };
     }
 
@@ -413,6 +660,7 @@ export default function(gsap) {
         var padding = config.padding || 8;
         var radius = config.borderRadius || 8;
 
+        var blockOutside = config.blockOutside || false;
         var hlOverlay = createSvgEl('svg', { width: '100%', height: '100%' });
         Object.assign(hlOverlay.style, {
             position: 'fixed', top: '0', left: '0', width: '100%', height: '100%', zIndex: String(Z.HIGHLIGHT), pointerEvents: 'none',
@@ -424,6 +672,7 @@ export default function(gsap) {
             d: result.pathData,
             fill: 'rgba(0,0,0,0.55)',
             'fill-rule': 'evenodd',
+            'pointer-events': blockOutside ? 'fill' : 'none',
         });
         hlOverlay.appendChild(path);
 
@@ -490,8 +739,8 @@ export default function(gsap) {
             return null;
         }
 
-        var fromPos = resolveElementCenter(cfg.from, cfg.fromAnchor);
-        var toPos = resolveElementCenter(cfg.to, cfg.toAnchor);
+        var fromPos = resolveElementCenter(cfg.from, cfg.fromAnchor, step);
+        var toPos = resolveElementCenter(cfg.to, cfg.toAnchor, step);
         if (!fromPos || !toPos) {
             console.warn('TutorialEngine.animateCursor: could not resolve from/to selectors', cfg.from, cfg.to);
             if (onComplete) onComplete();
@@ -513,8 +762,10 @@ export default function(gsap) {
                     gsap.to(cursorEl, {
                         scale: 0.7, duration: 0.1, yoyo: true, repeat: 1,
                         onComplete: function() {
-                            var targetEl = document.querySelector(cfg.to);
-                            if (targetEl) targetEl.click();
+                            if (!window._tutorialDevMode) {
+                                var targetEl = document.querySelector(resolveRef(cfg.to, step));
+                                if (targetEl && typeof targetEl.click === 'function') targetEl.click();
+                            }
                             if (cfg.loop) {
                                 gsap.set(cursorEl, { x: fromPos.x, y: fromPos.y, scale: 1 });
                                 timeline.restart();
@@ -575,7 +826,7 @@ export default function(gsap) {
 
         var cursorEl = createCursorElement(cfg);
 
-        var fromPos = resolveElementCenter(cfg.from);
+        var fromPos = resolveElementCenter(cfg.from, null, step);
         if (!fromPos) {
             cursorEl.remove();
             if (onComplete) onComplete();
@@ -599,7 +850,7 @@ export default function(gsap) {
 
         var currentFrom = fromPos;
         cfg.waypoints.forEach(function(wp) {
-            var wpPos = resolveElementCenter(wp.target);
+            var wpPos = resolveElementCenter(wp.target, null, step);
             if (!wpPos) return;
             var wpPath = wp.svgPath || 'M 0,0 C 0.3,0.1 0.7,0.9 1,1';
             var realPath = denormalizeSvgPath(wpPath, currentFrom, wpPos);
@@ -620,8 +871,10 @@ export default function(gsap) {
                 timeline.to(cursorEl, { scale: 0.7, duration: 0.1, yoyo: true, repeat: 1 });
                 (function(target) {
                     timeline.call(function() {
-                        var el = document.querySelector(target);
-                        if (el) el.click();
+                        if (!window._tutorialDevMode) {
+                            var el = document.querySelector(target);
+                            if (el) el.click();
+                        }
                     });
                 })(wp.target);
             } else if (action === 'hover') {
@@ -629,6 +882,8 @@ export default function(gsap) {
                     timeline.call(function() {
                         var el = document.querySelector(target);
                         if (el) {
+                            forceHoverStyles(el);
+                            el.classList.add('tutorial-force-hover');
                             el.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
                             el.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
                         }
@@ -669,7 +924,6 @@ export default function(gsap) {
         if (userOptions) { for (k in userOptions) opts[k] = userOptions[k]; }
         // Store computed values for desktop reset after mobile override
         opts._bubblePadding = 'clamp(1rem, 3vw, 2rem) clamp(1.2rem, 4vw, 2.5rem)';
-        opts._textMinHeight = 'clamp(100px, 30vh, 180px)';
 
         var currentStep = 0;
         var activeCursor = null;
@@ -691,6 +945,13 @@ export default function(gsap) {
             function cleanupAnimations() {
                 if (activeCursor) { activeCursor.destroy(); activeCursor = null; }
                 if (activeHighlight) { activeHighlight.destroy(); activeHighlight = null; }
+                // Remove forced hover states
+                document.querySelectorAll('.tutorial-force-hover').forEach(function(el) {
+                    removeForceHoverStyles(el);
+                    el.classList.remove('tutorial-force-hover');
+                    el.dispatchEvent(new MouseEvent('mouseleave', { bubbles: true }));
+                    el.dispatchEvent(new MouseEvent('mouseout', { bubbles: true }));
+                });
             }
 
             // --- DOM Creation ---
@@ -703,6 +964,23 @@ export default function(gsap) {
             var optionsRow = domRefs.optionsRow;
             var btnRow = domRefs.btnRow;
             var actionBtn = domRefs.actionBtn;
+            var pauseBtn = domRefs.pauseBtn;
+            pauseBtn.addEventListener('click', function() {
+                if (autoNextPaused) { resumeAutoNext(); } else { pauseAutoNext(); }
+            });
+            var backBtn = domRefs.backBtn;
+            backBtn.addEventListener('click', function() {
+                var step = steps[currentStep];
+                var target = (typeof step.showBack === 'number') ? step.showBack : currentStep - 1;
+                if (target >= 0) {
+                    _lastDirection = -1;
+                    clearAutoNext();
+                    cleanupAnimations();
+                    bubble.style.opacity = '0';
+                    bubble.style.transform = 'scale(0.8)';
+                    setTimeout(function() { showStep(target); }, STEP_TRANSITION_MS);
+                }
+            });
             var img = domRefs.img;
             var videoEl = domRefs.videoEl;
 
@@ -735,18 +1013,94 @@ export default function(gsap) {
             overlay.style.overscrollBehavior = 'contain';
 
             window.addEventListener('orientationchange', function() {
-                setTimeout(function() { positionBubble(steps[currentStep].position || 'left', steps[currentStep].align || 'center'); }, 300);
+                setTimeout(function() { positionBubble(steps[currentStep].position || 'left', steps[currentStep].align || 'center', false, steps[currentStep].positionTarget); }, 300);
             });
 
             window.addEventListener('resize', function() {
                 setTimeout(function() {
-                    positionBubble(steps[currentStep].position || 'left', steps[currentStep].align || 'center');
+                    positionBubble(steps[currentStep].position || 'left', steps[currentStep].align || 'center', false, steps[currentStep].positionTarget);
                 }, 100);
             });
 
+            function resetContainerPosition() {
+                container.style.position = 'relative';
+                container.style.left = '';
+                container.style.right = '';
+                container.style.top = '';
+                container.style.bottom = '';
+                container.style.transform = '';
+                container.style.maxHeight = '';
+                container.style.overflow = '';
+            }
+
+            // Returns { availW, rect } or null if element not found
+            function positionContainerAtTarget(targetSelector, side) {
+                var el = document.querySelector(targetSelector);
+                if (!el) return null;
+                var rect = el.getBoundingClientRect();
+                container.style.position = 'fixed';
+                container.style.bottom = 'auto';
+                container.style.right = 'auto';
+
+                if (side === 'top' || side === 'bottom') {
+                    var centerX = rect.left + rect.width / 2;
+                    container.style.left = Math.max(8, centerX) + 'px';
+                    container.style.transform = 'translateX(-50%)';
+                    container.style.top = side === 'top'
+                        ? Math.max(8, rect.top - 10) + 'px'
+                        : (rect.bottom + 10) + 'px';
+                    return { availW: Math.min(centerX, window.innerWidth - centerX) * 2 - 16, rect: rect };
+                } else if (side === 'right') {
+                    container.style.left = (rect.right + 10) + 'px';
+                    container.style.top = Math.max(8, rect.top) + 'px';
+                    container.style.transform = 'none';
+                    return { availW: window.innerWidth - rect.right - 20, rect: rect };
+                } else {
+                    // left (default)
+                    container.style.left = 'auto';
+                    container.style.right = (window.innerWidth - rect.left + 10) + 'px';
+                    container.style.top = Math.max(8, rect.top) + 'px';
+                    container.style.transform = 'none';
+                    return { availW: rect.left - 20, rect: rect };
+                }
+            }
+
+            function startViewportClamp(hasChatMaxW) {
+                _activeClampInterval = setInterval(function() {
+                    if (!container.parentNode) { clearInterval(_activeClampInterval); _activeClampInterval = null; return; }
+                    var br = bubble.getBoundingClientRect();
+                    var vw = window.innerWidth;
+                    var vh = window.innerHeight;
+                    if (br.right > vw - 8) {
+                        var newMax = vw - br.left - 16;
+                        if (newMax < 200) {
+                            container.style.left = '8px';
+                            container.style.right = 'auto';
+                            container.style.transform = 'none';
+                            newMax = vw - 24;
+                        }
+                        if (!hasChatMaxW) {
+                            bubble.style.maxWidth = Math.max(180, newMax) + 'px';
+                            bubble.style.minWidth = Math.min(180, newMax) + 'px';
+                        }
+                    }
+                    if (br.left < 8) {
+                        container.style.left = '8px';
+                        container.style.right = 'auto';
+                        container.style.transform = 'none';
+                    }
+                    if (br.bottom > vh - 8) {
+                        container.style.top = Math.max(8, parseInt(container.style.top) - (br.bottom - vh + 8)) + 'px';
+                    }
+                }, 100);
+            }
+
             // Position bubble: arrow at mouth level, bubble grows upward
             // highlightBottom: true if highlighted element is in lower half of screen
-            function positionBubble(side, align, highlightBottom) {
+            var _activeClampInterval = null;
+            function positionBubble(side, align, highlightBottom, positionTarget) {
+                // Clear any previous clamp interval
+                if (_activeClampInterval) { clearInterval(_activeClampInterval); _activeClampInterval = null; }
                 if (isMobile()) {
                     container.style.alignItems = 'center';
                     container.style.flexDirection = 'row';
@@ -819,6 +1173,7 @@ export default function(gsap) {
                 img.style.alignSelf = '';
                 bubble.style.order = '';
                 bubble.style.width = '';
+                bubble.style.alignSelf = '';
                 if (videoEl) { videoEl.style.transform = 'none'; videoEl.style.order = ''; }
 
                 // Reset mobile overrides for desktop
@@ -829,6 +1184,71 @@ export default function(gsap) {
                     videoEl.style.maxHeight = opts.avatarMaxHeight;
                 }
 
+                var isChatMode = steps[currentStep] && steps[currentStep].chatMode;
+
+                // Chat mode: bubble is relative, skip all avatar-based positioning
+                if (isChatMode) {
+                    bubble.style.position = 'relative';
+                    bubble.style.top = 'auto';
+                    bubble.style.bottom = 'auto';
+                    bubble.style.left = 'auto';
+                    bubble.style.right = 'auto';
+                    bubble.style.transform = 'none';
+                    bubble.style.marginLeft = '0';
+                    bubble.style.marginRight = '0';
+                    bubble.style.padding = opts._bubblePadding;
+                    bubble.style.fontSize = opts.bubbleFontSize;
+                    var chatStep = steps[currentStep];
+                    bubble.style.maxWidth = chatStep.chatMaxWidth || opts.bubbleMaxWidth;
+                    bubble.style.minWidth = opts.bubbleMinWidth;
+                    textEl.style.minHeight = '0';
+                    arrow.style.display = 'none';
+                    container.style.alignItems = 'stretch';
+                    container.style.overflow = '';
+                    overlay.style.padding = '0';
+
+                    if (positionTarget) {
+                        var ptResult = positionContainerAtTarget(positionTarget, side);
+                        if (ptResult) {
+                            var availW = ptResult.availW;
+                            container.style.maxHeight = '';
+                            container.style.overflow = '';
+                            // Constrain bubble: use chatMaxWidth if set, otherwise available space
+                            var maxAvail = Math.max(200, Math.min(availW, window.innerWidth - 16));
+                            if (chatStep.chatMaxWidth) {
+                                bubble.style.maxWidth = chatStep.chatMaxWidth;
+                                bubble.style.minWidth = 'auto';
+                            } else {
+                                bubble.style.maxWidth = maxAvail + 'px';
+                                bubble.style.minWidth = Math.min(200, maxAvail) + 'px';
+                            }
+                            bubble.style.overflowWrap = 'break-word';
+                            bubble.style.wordBreak = 'break-word';
+                            bubble.style.boxSizing = 'border-box';
+                            overlay.style.justifyContent = '';
+                            overlay.style.alignItems = '';
+                            // Continuously clamp bubble to viewport (typewriter changes size)
+                            startViewportClamp(!!chatStep.chatMaxWidth);
+                            // Initial constraint (only if no chatMaxWidth)
+                            if (!chatStep.chatMaxWidth) {
+                                bubble.style.maxWidth = maxAvail + 'px';
+                                bubble.style.minWidth = Math.min(200, maxAvail) + 'px';
+                            }
+                            container.style.maxWidth = '';
+                        }
+                    } else {
+                        resetContainerPosition();
+                        // Chat mode without target: use position as vertical, align as horizontal
+                        // position: top/left/right = top, bottom = bottom, else = center (vertical)
+                        var vMap = { top: 'flex-start', bottom: 'flex-end' };
+                        var hMap = { left: 'flex-start', center: 'center', right: 'flex-end' };
+                        overlay.style.alignItems = vMap[side] || 'center';
+                        overlay.style.justifyContent = hMap[align] || 'center';
+                        overlay.style.padding = '16px';
+                    }
+                    return;
+                }
+
                 var imgHeight = img.offsetHeight;
                 if (videoEl && videoEl.style.display !== 'none') {
                     imgHeight = videoEl.offsetHeight || imgHeight;
@@ -836,6 +1256,7 @@ export default function(gsap) {
                 var mouthY = imgHeight * opts.mouthPosition;
                 bubble.style.top = 'auto';
                 bubble.style.bottom = (imgHeight - mouthY - 18) + 'px';
+                bubble.style.transform = 'none';
 
                 // Reset mobile overrides for desktop
                 container.style.alignItems = 'flex-start';
@@ -845,15 +1266,80 @@ export default function(gsap) {
                 bubble.style.fontSize = opts.bubbleFontSize;
                 bubble.style.maxWidth = opts.bubbleMaxWidth;
                 bubble.style.minWidth = opts.bubbleMinWidth;
-                textEl.style.minHeight = opts._textMinHeight;
+                textEl.style.minHeight = '0';
                 arrow.style.display = '';
+                // Reset arrow to default horizontal state (overridden by 'top' branch)
+                arrow.style.bottom = '18px';
+                arrow.style.transform = 'none';
+                arrow.style.borderTop = '14px solid transparent';
+                arrow.style.borderBottom = '14px solid transparent';
                 overlay.style.padding = '0';
 
                 // Horizontal alignment of the whole avatar+bubble group
                 var alignMap = { left: 'flex-start', center: 'center', right: 'flex-end' };
                 overlay.style.justifyContent = alignMap[align] || 'center';
 
-                if (side === 'right') {
+                // Position target: anchor container near a DOM element
+                if (positionTarget) {
+                    var ptResult = positionContainerAtTarget(positionTarget, side);
+                    if (ptResult) {
+                        container.style.maxHeight = (window.innerHeight - 16) + 'px';
+                        container.style.overflow = 'auto';
+                        overlay.style.justifyContent = '';
+                        overlay.style.alignItems = '';
+                        // Clamp bubble within viewport (bubble is absolute, may overflow container)
+                        requestAnimationFrame(function() {
+                            var br = bubble.getBoundingClientRect();
+                            var vw = window.innerWidth;
+                            // If bubble overflows left, shift container right
+                            if (br.left < 8) {
+                                var shift = 8 - br.left;
+                                var currentLeft = container.getBoundingClientRect().left;
+                                container.style.left = (currentLeft + shift) + 'px';
+                                container.style.right = 'auto';
+                                container.style.transform = 'none';
+                            }
+                            // If bubble overflows right, shift container left
+                            br = bubble.getBoundingClientRect();
+                            if (br.right > vw - 8) {
+                                var shift = br.right - (vw - 8);
+                                var currentLeft = container.getBoundingClientRect().left;
+                                container.style.left = (currentLeft - shift) + 'px';
+                                container.style.right = 'auto';
+                                container.style.transform = 'none';
+                            }
+                            // Clamp bottom
+                            br = bubble.getBoundingClientRect();
+                            if (br.bottom > window.innerHeight - 8) {
+                                container.style.top = Math.max(8, parseInt(container.style.top) - (br.bottom - window.innerHeight + 8)) + 'px';
+                            }
+                        });
+                    }
+                } else {
+                    resetContainerPosition();
+                }
+
+                if (side === 'top') {
+                    // Bubble directly above avatar, centered horizontally on imgWrapper
+                    container.style.flexDirection = 'row';
+                    bubble.style.left = '0';
+                    bubble.style.right = '0';
+                    bubble.style.marginLeft = 'auto';
+                    bubble.style.marginRight = 'auto';
+                    bubble.style.bottom = (imgHeight + 10) + 'px';
+                    bubble.style.top = 'auto';
+                    bubble.style.transform = 'none';
+                    bubble.style.transformOrigin = 'bottom center';
+                    // Arrow points down toward avatar
+                    arrow.style.left = '50%';
+                    arrow.style.right = 'auto';
+                    arrow.style.bottom = '-18px';
+                    arrow.style.transform = 'translateX(-50%)';
+                    arrow.style.borderLeft = '14px solid transparent';
+                    arrow.style.borderRight = '14px solid transparent';
+                    arrow.style.borderTop = '20px solid #ffffff';
+                    arrow.style.borderBottom = 'none';
+                } else if (side === 'right') {
                     // Bubble on right, avatar on left
                     container.style.flexDirection = 'row-reverse';
                     bubble.style.right = 'auto';
@@ -883,11 +1369,40 @@ export default function(gsap) {
             var autoNextTimer = null;
             var autoNextBar = null;
             var autoNextTween = null;
+            var autoNextPaused = false;
+            var autoNextRemainingMs = 0;
+            var autoNextStartedAt = 0;
 
             function clearAutoNext() {
                 if (autoNextTimer) { clearTimeout(autoNextTimer); autoNextTimer = null; }
                 if (autoNextTween) { autoNextTween.kill(); autoNextTween = null; }
                 if (autoNextBar) { autoNextBar.remove(); autoNextBar = null; }
+                autoNextPaused = false;
+                autoNextRemainingMs = 0;
+                if (pauseBtn) pauseBtn.style.display = 'none';
+            }
+
+            function pauseAutoNext() {
+                if (!autoNextTimer || autoNextPaused) return;
+                autoNextPaused = true;
+                autoNextRemainingMs = Math.max(0, autoNextRemainingMs - (Date.now() - autoNextStartedAt));
+                clearTimeout(autoNextTimer);
+                autoNextTimer = -1; // marker: paused
+                if (autoNextTween) autoNextTween.pause();
+                pauseBtn.textContent = '\u25B6'; // ▶
+                pauseBtn.setAttribute('aria-label', 'Resume');
+            }
+
+            function resumeAutoNext() {
+                if (!autoNextPaused) return;
+                autoNextPaused = false;
+                autoNextStartedAt = Date.now();
+                if (autoNextTween) autoNextTween.resume();
+                autoNextTimer = setTimeout(function() {
+                    actionBtn.click();
+                }, autoNextRemainingMs);
+                pauseBtn.textContent = '\u275A\u275A'; // ❚❚
+                pauseBtn.setAttribute('aria-label', 'Pause');
             }
 
             /**
@@ -950,29 +1465,45 @@ export default function(gsap) {
              */
             function selectMobileTab(mobileTab) {
                 if (!mobileTab || !mobileTab.isMobileTab) return;
-                // Use Vue's selectTab method directly — much more reliable than simulating clicks
-                var vue = mobileTab.tabsContainer.__vue__;
-                if (vue && typeof vue.selectTab === 'function' && mobileTab.tabIndex >= 0) {
-                    vue.selectTab(mobileTab.tabIndex);
-                    return;
-                }
-                // Fallback: click the dropdown option
+                // Step 1: Click the select dropdown to open it
                 mobileTab.taggable.click();
+                // Step 2: Wait for options to render, then click the matching option
                 setTimeout(function() {
                     var options = mobileTab.dropdown.querySelectorAll('.vlOption');
+                    var clicked = false;
                     for (var i = 0; i < options.length; i++) {
                         if (options[i].textContent.trim() === mobileTab.optionText) {
                             options[i].click();
+                            clicked = true;
                             break;
                         }
                     }
-                }, 150);
+                    // Fallback: use Vue selectTab if click didn't work
+                    if (!clicked) {
+                        var vue = mobileTab.tabsContainer.__vue__;
+                        if (vue && typeof vue.selectTab === 'function' && mobileTab.tabIndex >= 0) {
+                            vue.selectTab(mobileTab.tabIndex);
+                        }
+                    }
+                }, 200);
             }
+
+            var _isAutoAdvancing = false;
+            var _lastDirection = 1; // 1 = forward, -1 = backward
 
             function showStep(index) {
                 currentStep = index;
                 var step = steps[index];
                 var isLast = index === steps.length - 1;
+
+                // Conditional step: skip if element not found in DOM
+                if (step.showIf && !document.querySelector(step.showIf)) {
+                    var nextIdx = index + _lastDirection;
+                    if (nextIdx >= 0 && nextIdx < steps.length) {
+                        showStep(nextIdx);
+                    }
+                    return;
+                }
 
                 // Notify path editor of step change
                 overlay.dispatchEvent(new CustomEvent('tutorial-step-change', { detail: { index: index } }));
@@ -999,23 +1530,106 @@ export default function(gsap) {
                     }
                 }
 
+                // Silent click: click element and advance immediately, no UI shown
+                // Skip silentClick when reached via auto-advance to prevent cascade chains
+                if (step.silentClick && !_isAutoAdvancing) {
+                    if (!window._tutorialDevMode) {
+                        var silentEl = document.querySelector(step.silentClick);
+                        if (silentEl && typeof silentEl.click === 'function') silentEl.click();
+                    }
+                    if (!isLast) {
+                        showStep(currentStep + 1);
+                    }
+                    return;
+                }
+                // Reset auto-advancing flag after it has been checked
+                _isAutoAdvancing = false;
+
                 // Toggle overlay backdrop
                 var showOverlay = step.overlay !== false;
                 overlay.style.backgroundColor = showOverlay ? 'rgba(0, 0, 0, 0.5)' : 'transparent';
-                overlay.style.pointerEvents = showOverlay ? 'auto' : 'none';
+                overlay.style.pointerEvents = (showOverlay || step.clearOverlay) ? 'auto' : 'none';
                 container.style.pointerEvents = 'auto';
 
                 // Cleanup previous cursor and highlight
                 cleanupAnimations();
+
+                // Chat mode: show avatar inside bubble instead of beside it
+                var chatAvatarEl = bubble.querySelector('.tutorial-chat-avatar');
+                if (step.chatMode) {
+                    img.style.display = 'none';
+                    if (videoEl) videoEl.style.display = 'none';
+                    arrow.style.display = 'none';
+                    textEl.style.minHeight = '0';
+                    if (!chatAvatarEl) {
+                        chatAvatarEl = document.createElement('div');
+                        chatAvatarEl.className = 'tutorial-chat-avatar';
+                        Object.assign(chatAvatarEl.style, {
+                            width: '100px',
+                            height: '100px',
+                            minWidth: '100px',
+                            borderRadius: '50%',
+                            overflow: 'hidden',
+                            border: '3px solid #07499e',
+                            flexShrink: '0',
+                            alignSelf: 'center',
+                        });
+                        var chatImg = document.createElement('img');
+                        chatImg.src = img.src;
+                        Object.assign(chatImg.style, {
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                            objectPosition: 'top center',
+                        });
+                        chatAvatarEl.appendChild(chatImg);
+                        // Insert before the arrow (first child)
+                        bubble.insertBefore(chatAvatarEl, arrow);
+                    }
+                    chatAvatarEl.style.display = 'block';
+                    // In chat mode, bubble must be relative (no avatar to anchor absolute positioning)
+                    bubble.style.position = 'relative';
+                    bubble.style.bottom = 'auto';
+                    bubble.style.left = 'auto';
+                    bubble.style.right = 'auto';
+                    bubble.style.top = 'auto';
+                    // Use CSS grid: avatar on the left, content stacked on the right
+                    bubble.style.display = 'grid';
+                    bubble.style.gridTemplateColumns = '100px 1fr';
+                    bubble.style.gap = '1rem';
+                    bubble.style.alignItems = 'start';
+                    // Make all direct children except avatar span the right column
+                    chatAvatarEl.style.gridRow = '1 / -1';
+                    chatAvatarEl.style.gridColumn = '1';
+                    // text, options, btnRow go to column 2
+                    textEl.style.gridColumn = '2';
+                    optionsRow.style.gridColumn = '2';
+                    btnRow.style.gridColumn = '2';
+                    arrow.style.gridColumn = '1 / -1';
+                } else {
+                    img.style.display = 'block';
+                    if (chatAvatarEl) chatAvatarEl.style.display = 'none';
+                    bubble.style.display = 'flex';
+                    bubble.style.flexDirection = 'column';
+                    bubble.style.alignItems = '';
+                    bubble.style.gap = '';
+                    textEl.style.gridColumn = '';
+                    optionsRow.style.gridColumn = '';
+                    btnRow.style.gridColumn = '';
+                    arrow.style.gridColumn = '';
+                }
 
                 // Clear text and options
                 textEl.innerHTML = '';
                 optionsRow.innerHTML = '';
                 optionsRow.style.display = 'none';
                 btnRow.style.opacity = '0';
+                btnRow.style.pointerEvents = 'none';
                 actionBtn.textContent = isLast ? opts.doneLabel : opts.nextLabel;
                 // Hide next/done button if step has options (options replace it)
                 actionBtn.style.display = step.options ? 'none' : '';
+                // Show/hide back button
+                backBtn.style.display = (step.showBack === true || typeof step.showBack === 'number') ? '' : 'none';
 
                 // Mobile tab→dropdown auto-conversion
                 // If highlight or cursor targets a hidden tab, swap to the dropdown
@@ -1051,9 +1665,8 @@ export default function(gsap) {
                             step = typeof step._mobileCloned === 'undefined' ? JSON.parse(JSON.stringify(step)) : step;
                             step._mobileCloned = true;
                             step.cursor.to = cTab.selector;
-                            // After cursor click, select the tab
-                            var origClick = step.cursor.click;
-                            step.cursor.click = true;
+                            step.cursor.click = false; // Don't do a raw click — we handle it ourselves
+                            step._mobileTabToSelect = cTab; // Store for after cursor animation
                         }
                     }
                 }
@@ -1092,7 +1705,7 @@ export default function(gsap) {
                 }
 
                 // Position & show bubble
-                positionBubble(step.position || 'left', step.align || 'center', highlightBottom);
+                positionBubble(step.position || 'left', step.align || 'center', highlightBottom, step.positionTarget);
                 bubble.style.opacity = '1';
                 bubble.style.transform = 'scale(1)';
 
@@ -1102,28 +1715,68 @@ export default function(gsap) {
                 peekBtn.style.display = isMobile() ? 'flex' : 'none';
                 peekBtn.style.opacity = '1';
 
+                // Force hover on elements for this step (before highlight so DOM updates first)
+                if (step.hover) {
+                    var hoverSelectors = Array.isArray(step.hover) ? step.hover : [step.hover];
+                    hoverSelectors.forEach(function(sel) {
+                        var el = document.querySelector(sel);
+                        if (el) {
+                            forceHoverStyles(el);
+                            el.classList.add('tutorial-force-hover');
+                            el.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
+                            el.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+                        }
+                    });
+                }
+
+                // Launch highlight after hover elements are stable
+                if (step.highlight) {
+                    if (step.hover) {
+                        waitForStableHighlight(step.highlight, function() {
+                            activeHighlight = createHighlight(step.highlight);
+                        });
+                    } else {
+                        activeHighlight = createHighlight(step.highlight);
+                    }
+                }
+
                 // Typewrite from top to bottom
                 setTimeout(function() {
-                    typewriteHtml(textEl, step.html, opts.typewriteSpeed, function() {
+                    var twSpeed = window._tutorialDevMode ? 0 : opts.typewriteSpeed;
+                    typewriteHtml(textEl, step.html, twSpeed, function() {
                         btnRow.style.opacity = '1';
+                        btnRow.style.pointerEvents = 'auto';
                         // Render option buttons
                         if (step.options && step.options.length) {
-                            renderStepOptions(step.options, optionsRow, actionBtn, bubble, showStep);
+                            renderStepOptions(step.options, optionsRow, actionBtn, bubble, showStep, function() {
+                                clearAutoNext();
+                                cleanupAnimations();
+                                overlay.remove();
+                                peekBtn.remove();
+                                document.body.style.overflow = '';
+                            });
                         }
                         // Launch cursor animation after text is done (skip if afterAnimation handles it)
                         if (step.cursor && !step.afterAnimation) {
                             var cursorDelay = (step.cursor.delay || 0) * 1000;
                             setTimeout(function() {
-                                activeCursor = launchCursor(step, overlay);
+                                // If mobile tab conversion stored a tab to select, do it after cursor finishes
+                                var mobileTabCb = step._mobileTabToSelect ? function() {
+                                    selectMobileTab(step._mobileTabToSelect);
+                                } : null;
+                                activeCursor = launchCursor(step, overlay, mobileTabCb);
                             }, cursorDelay);
-                        }
-                        // Launch highlight
-                        if (step.highlight) {
-                            activeHighlight = createHighlight(step.highlight);
                         }
                         // Auto-next: advance to next step after delay
                         if (step.autoNext && !isLast) {
                             var delay = (typeof step.autoNext === 'number') ? step.autoNext : 3;
+                            var delayMs = delay * 1000;
+                            // Show pause button
+                            pauseBtn.style.display = '';
+                            pauseBtn.textContent = '\u275A\u275A';
+                            autoNextPaused = false;
+                            autoNextRemainingMs = delayMs;
+                            autoNextStartedAt = Date.now();
                             // Progress bar
                             autoNextBar = document.createElement('div');
                             Object.assign(autoNextBar.style, {
@@ -1142,14 +1795,20 @@ export default function(gsap) {
                                 duration: delay,
                                 ease: 'none',
                             });
-                            autoNextTimer = setTimeout(function() {
-                                actionBtn.click();
-                            }, delay * 1000);
+                            if (window._tutorialDevMode) {
+                                pauseAutoNext();
+                            } else {
+                                autoNextTimer = setTimeout(function() {
+                                    _isAutoAdvancing = true;
+                                    actionBtn.click();
+                                }, delayMs);
+                            }
                         }
                         // afterAnimation: auto-advance after cursor animation completes
                         if (step.afterAnimation && !isLast) {
                             actionBtn.style.display = 'none';
                             var advanceFn = function() {
+                                _isAutoAdvancing = true;
                                 setTimeout(function() { actionBtn.click(); }, STEP_TRANSITION_MS);
                             };
                             if (step.cursor) {
@@ -1164,16 +1823,13 @@ export default function(gsap) {
 
             // Button click: next step, redirect, or close
             actionBtn.addEventListener('click', function() {
+                _lastDirection = 1;
                 clearAutoNext();
                 cleanupAnimations();
                 var step = steps[currentStep];
 
                 // If step has a redirect, navigate to that page
                 if (step.redirect) {
-                    localStorage.setItem('tutorial-continuation', JSON.stringify({
-                        from: window.location.pathname,
-                        timestamp: Date.now()
-                    }));
                     window.location.href = step.redirect;
                     return;
                 }
@@ -1191,9 +1847,18 @@ export default function(gsap) {
                 }
             });
 
-            // Start first step
+            // Start from specified step, autostart redirect, or first step
+            var startFrom = opts.fromStep || 0;
+            var autostart = localStorage.getItem('tutorial-autostart');
+            if (autostart) {
+                localStorage.removeItem('tutorial-autostart');
+                try {
+                    var parsed = JSON.parse(autostart);
+                    if (parsed.fromStep !== undefined) startFrom = parsed.fromStep;
+                } catch(e) {}
+            }
             requestAnimationFrame(function() {
-                showStep(0);
+                showStep(startFrom);
             });
 
             // Fire _onReady callbacks for dev tools (always save context for late subscribers)
@@ -1211,6 +1876,7 @@ export default function(gsap) {
                 textEl: textEl,
                 optionsRow: optionsRow,
                 currentStep: function() { return currentStep; },
+                opts: opts,
             };
             _readyContext = context;
             _onReadyCallbacks.forEach(function(cb) { cb(context); });
@@ -1338,10 +2004,8 @@ export default function(gsap) {
             textEl.id = 'tutorial-text';
             Object.assign(textEl.style, {
                 margin: '0',
-                minHeight: 'clamp(100px, 30vh, 180px)',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'flex-start',
+                maxHeight: 'clamp(150px, 40vh, 300px)',
+                overflowY: 'auto',
             });
             bubble.appendChild(textEl);
 
@@ -1380,6 +2044,39 @@ export default function(gsap) {
                 fontSize: '14px',
                 fontWeight: '600',
             });
+            var pauseBtn = document.createElement('button');
+            pauseBtn.textContent = '\u275A\u275A'; // ❚❚
+            pauseBtn.setAttribute('aria-label', 'Pause');
+            Object.assign(pauseBtn.style, {
+                padding: '0.75rem 1rem',
+                minHeight: '44px',
+                backgroundColor: 'transparent',
+                color: '#07499e',
+                border: '2px solid #07499e',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '600',
+                display: 'none',
+            });
+            // Click handler wired in start() where pause/resume functions are defined
+            var backBtn = document.createElement('button');
+            backBtn.textContent = '\u2190'; // ←
+            backBtn.setAttribute('aria-label', 'Previous step');
+            Object.assign(backBtn.style, {
+                padding: '0.75rem 1rem',
+                minHeight: '44px',
+                backgroundColor: 'transparent',
+                color: '#07499e',
+                border: '2px solid #07499e',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '600',
+                display: 'none',
+            });
+            btnRow.appendChild(backBtn);
+            btnRow.appendChild(pauseBtn);
             btnRow.appendChild(actionBtn);
             bubble.appendChild(btnRow);
 
@@ -1399,6 +2096,8 @@ export default function(gsap) {
                 optionsRow: optionsRow,
                 btnRow: btnRow,
                 actionBtn: actionBtn,
+                pauseBtn: pauseBtn,
+                backBtn: backBtn,
                 img: img,
                 videoEl: videoEl,
             };
@@ -1407,7 +2106,12 @@ export default function(gsap) {
         /**
          * Render option buttons for a step into the options row.
          */
-        function renderStepOptions(options, optionsRow, actionBtn, bubble, showStep) {
+        function renderStepOptions(options, optionsRow, actionBtn, bubble, showStep, closeTutorial) {
+            function setOptBtnColors(btn, bg, color) {
+                btn.style.backgroundColor = bg;
+                btn.style.color = color;
+            }
+
             optionsRow.style.display = 'flex';
             optionsRow.style.pointerEvents = 'none';
             var totalOpts = options.length;
@@ -1415,11 +2119,14 @@ export default function(gsap) {
             options.forEach(function(opt, oi) {
                 var optBtn = document.createElement('button');
                 optBtn.textContent = opt.label;
+                var hoverBg = opt.hoverColor || '#07499e';
+                var normalBg = opt.color || '#f0f4ff';
+                var normalColor = opt.textColor || '#07499e';
                 Object.assign(optBtn.style, {
                     padding: '0.75rem 1rem',
                     minHeight: '44px',
-                    backgroundColor: opt.color || '#f0f4ff',
-                    color: opt.textColor || '#07499e',
+                    backgroundColor: normalBg,
+                    color: normalColor,
                     border: '2px solid ' + (opt.borderColor || '#07499e'),
                     borderRadius: '10px',
                     cursor: 'pointer',
@@ -1431,24 +2138,19 @@ export default function(gsap) {
                     transform: 'translateY(8px)',
                     pointerEvents: 'none',
                 });
-                optBtn.addEventListener('mouseenter', function() {
-                    optBtn.style.backgroundColor = opt.hoverColor || '#07499e';
-                    optBtn.style.color = '#ffffff';
-                });
-                optBtn.addEventListener('mouseleave', function() {
-                    optBtn.style.backgroundColor = opt.color || '#f0f4ff';
-                    optBtn.style.color = opt.textColor || '#07499e';
-                });
-                optBtn.addEventListener('touchstart', function() {
-                    optBtn.style.backgroundColor = opt.hoverColor || '#07499e';
-                    optBtn.style.color = '#ffffff';
-                }, { passive: true });
-                optBtn.addEventListener('touchend', function() {
-                    optBtn.style.backgroundColor = opt.color || '#f0f4ff';
-                    optBtn.style.color = opt.textColor || '#07499e';
-                }, { passive: true });
+                optBtn.addEventListener('mouseenter', function() { setOptBtnColors(optBtn, hoverBg, '#ffffff'); });
+                optBtn.addEventListener('mouseleave', function() { setOptBtnColors(optBtn, normalBg, normalColor); });
+                optBtn.addEventListener('touchstart', function() { setOptBtnColors(optBtn, hoverBg, '#ffffff'); }, { passive: true });
+                optBtn.addEventListener('touchend', function() { setOptBtnColors(optBtn, normalBg, normalColor); }, { passive: true });
                 optBtn.addEventListener('click', function() {
-                    if (opt.redirect) {
+                    if (opt.done) {
+                        closeTutorial();
+                    } else if (opt.redirect) {
+                        if (opt.startTutorial !== undefined && opt.startTutorial !== false) {
+                            localStorage.setItem('tutorial-autostart', JSON.stringify({
+                                fromStep: typeof opt.startTutorial === 'number' ? opt.startTutorial : 0
+                            }));
+                        }
                         window.location.href = opt.redirect;
                     } else if (opt.goToStep !== undefined) {
                         bubble.style.opacity = '0';
@@ -1577,17 +2279,37 @@ export default function(gsap) {
         return path.join(' > ');
     }
 
+    // === AUTO-START FROM REDIRECT ===
+    // If tutorial was already viewed (PHP won't inject it), click help button to reset + reload
+    $(function() {
+        var autostart = localStorage.getItem('tutorial-autostart');
+        if (autostart) {
+            // Wait a moment — if start() runs, it will consume the flag
+            setTimeout(function() {
+                var flag = localStorage.getItem('tutorial-autostart');
+                if (!flag) return; // start() already consumed it
+                // Keep the flag for after reload, then click help to reset user setting
+                var helpLink = document.querySelector('#intro-dashboard-help1 a');
+                if (helpLink) helpLink.click();
+            }, 2000);
+        }
+    });
+
     // === PUBLIC API ===
     return {
         start: start,
         DEFAULTS: DEFAULTS,
-        DEBOUNCE_MS: DEBOUNCE_MS,
+
+        resolveRef: resolveRef,
         resolveElementCenter: resolveElementCenter,
         denormalizeSvgPath: denormalizeSvgPath,
         typewriteHtml: typewriteHtml,
         animateCursor: animateCursor,
         animateCursorWaypoints: animateCursorWaypoints,
         createHighlight: createHighlight,
+        forceHoverStyles: forceHoverStyles,
+        removeForceHoverStyles: removeForceHoverStyles,
+        findHoverableParent: findHoverableParent,
         createSvgEl: createSvgEl,
         onScrollResize: onScrollResize,
         bestSelector: bestSelector,
