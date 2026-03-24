@@ -16,12 +16,6 @@ class ModelBase extends Model
     public const DISPLAY_ATTRIBUTE = null; //OVERRIDE IN CLASS
     public const SEARCHABLE_NAME_ATTRIBUTE = null; //OVERRIDE IN CLASS
 
-    protected static function boot()
-    {
-        parent::boot();
-        static::bootHasPlugins();
-    }
-
     /* CALCULATED FIELDS */
     public static function getNameDisplayKey()
     {

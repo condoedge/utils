@@ -9,7 +9,7 @@ trait HasModelPlugins
     protected static $globalPlugins = [];
     // protected $mergePluginsWithParents = true;
 
-    public static function bootHasPlugins()
+    public static function bootHasModelPlugins()
     {
         static::getPlugins()->each(function ($plugin) {
             $pluginInstance = new $plugin(static::class);

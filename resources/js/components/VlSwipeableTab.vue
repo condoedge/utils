@@ -5,7 +5,7 @@
         v-show="swipeable || activeTab"
         v-bind="$_layoutWrapperAttributes"
         class="vlTab"
-        :class="{ 'vlTab--swipeable': swipeable }"
+        :class="{ 'vlTab--swipeable': swipeable, 'vlTab--active': activeTab }"
         role="tabpanel">
 
         <component

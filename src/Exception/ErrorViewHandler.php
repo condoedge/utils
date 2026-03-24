@@ -35,7 +35,6 @@ class ErrorViewHandler
             try{
                 return $this->renderKompoExceptionView($komponent);
             } catch (\Exception $ex) {
-                dd($ex);
                 return null;
             }
             

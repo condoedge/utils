@@ -24,11 +24,7 @@
                  :style="swipeContainerStyle"
                  @touchstart="onTouchStart"
                  @touchmove="onTouchMove"
-                 @touchend="onTouchEnd"
-                 @mousedown="onMouseDown"
-                 @mousemove="onMouseMove"
-                 @mouseup="onMouseUp"
-                 @mouseleave="onMouseLeave">
+                 @touchend="onTouchEnd">
                 <component
                     v-for="(tab, index) in elements"
                     :key="index"
@@ -63,7 +59,6 @@ export default {
             startX: 0,
             startY: 0,
             directionLocked: false,
-            pointerDown: false,
         }
     },
     computed: {
@@ -232,33 +227,6 @@ export default {
         },
 
         onTouchEnd() {
-            this.completeSwipe()
-        },
-
-        onMouseDown(e) {
-            if (this.isAnimating) return
-
-            this.pointerDown = true
-            this.beginSwipe(e.clientX, e.clientY)
-        },
-
-        onMouseMove(e) {
-            if (!this.pointerDown) return
-
-            this.updateSwipe(e.clientX, e.clientY, () => e.preventDefault())
-        },
-
-        onMouseUp() {
-            if (!this.pointerDown) return
-
-            this.pointerDown = false
-            this.completeSwipe()
-        },
-
-        onMouseLeave() {
-            if (!this.pointerDown) return
-
-            this.pointerDown = false
             this.completeSwipe()
         },
 
