@@ -2280,4 +2280,4 @@ export default (function() {
     } // end _initStepBuilder
     _waitForEngine();
 
-})();
+});

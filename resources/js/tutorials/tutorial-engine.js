@@ -6,7 +6,7 @@
  *   var steps = [ { html: "...", cursor: {...}, highlight: {...} } ];
  *   TutorialEngine.start(steps, { avatar: '/images/Benoit helper.png' });
  */
-export default function(gsap) {
+export default function(gsap, $) {
     'use strict';
 
     // === DEPENDENCY GUARD ===

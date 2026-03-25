@@ -75,6 +75,9 @@ function removeLoadingScreen()
 import introJs from 'intro.js';
 window.introJs = introJs;
 
+import jquery from 'jquery';
+window.$ = window.jQuery = jquery;
+
 import { gsap } from 'gsap';
 import { MotionPathPlugin } from 'gsap/MotionPathPlugin';
 import { MotionPathHelper } from 'gsap/MotionPathHelper';
@@ -85,7 +88,7 @@ window.MotionPathPlugin = MotionPathPlugin;
 window.MotionPathHelper = MotionPathHelper;
 
 import makeTutorialEngine from './tutorials/tutorial-engine';
-const TutorialEngine = makeTutorialEngine(gsap, introJs); // Required in the next line
+const TutorialEngine = makeTutorialEngine(gsap, $); // Required in the next line
 import initStepBuilder from './tutorials/tutorial-step-builder';
 
 const utils = {
