@@ -83,6 +83,8 @@ var DEFAULTS = {
     bubbleMaxWidth: 'clamp(260px, 85vw, 550px)',
     bubbleMinWidth: 'clamp(200px, 70vw, 350px)',
     bubbleFontSize: 'clamp(14px, 3.5vw, 16px)',
+    highlightColor: '#ffd700',
+    highlightBorderRadius: '8',
 };
 
 function makeOptInput(label, desc, value, defaultVal, onChange) {
@@ -152,6 +154,74 @@ registerCard({
         }));
 
         container.appendChild(settingsGroup);
+
+        // Highlight settings group
+        var hlGroup = el('div', { style: {
+            padding: '8px 10px', background: 'rgba(255,255,255,0.02)',
+            borderRadius: '8px', border: '1px solid rgba(255,255,255,0.04)',
+            marginBottom: '10px',
+        }});
+        var hlTitle = el('div', { style: {
+            display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px',
+        }});
+        hlTitle.appendChild(iconEl('highlight', 12));
+        hlTitle.appendChild(el('span', { textContent: 'Highlight', style: { fontSize: '10px', color: '#7a7f8e', textTransform: 'uppercase', letterSpacing: '0.3px', fontWeight: '600' } }));
+        hlGroup.appendChild(hlTitle);
+
+        // Color input with preview
+        var colorRow = el('div', { style: { display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' } });
+        colorRow.appendChild(el('span', { textContent: 'Color', style: { fontSize: '11px', color: '#7a7f8e', minWidth: '62px' } }));
+        var colorPreview = el('div', { style: {
+            width: '24px', height: '24px', borderRadius: '6px', border: '2px solid rgba(255,255,255,0.15)',
+            background: ctx.opts.highlightColor || DEFAULTS.highlightColor, cursor: 'pointer', flexShrink: '0',
+        }});
+        var colorInp = el('input', { type: 'color', value: ctx.opts.highlightColor || DEFAULTS.highlightColor });
+        colorInp.style.position = 'absolute'; colorInp.style.opacity = '0'; colorInp.style.width = '0'; colorInp.style.height = '0';
+        colorPreview.appendChild(colorInp);
+        colorPreview.addEventListener('click', function() { colorInp.click(); });
+        colorInp.addEventListener('input', function() {
+            ctx.opts.highlightColor = colorInp.value;
+            colorPreview.style.background = colorInp.value;
+            hexInp.value = colorInp.value;
+            state.forceRefresh();
+        });
+        colorRow.appendChild(colorPreview);
+        var hexInp = makeInput(ctx.opts.highlightColor || DEFAULTS.highlightColor, function(v) {
+            if (/^#[0-9a-fA-F]{3,8}$/.test(v)) {
+                ctx.opts.highlightColor = v;
+                colorPreview.style.background = v;
+                colorInp.value = v;
+                state.forceRefresh();
+            }
+        }, {});
+        hexInp.style.flex = '1'; hexInp.style.padding = '5px 8px'; hexInp.style.fontSize = '12px';
+        hexInp.style.fontFamily = '"Fira Code", monospace';
+        colorRow.appendChild(hexInp);
+
+        // Reset button
+        if (ctx.opts.highlightColor && ctx.opts.highlightColor !== DEFAULTS.highlightColor) {
+            var resetColor = el('span', { textContent: 'reset', style: {
+                fontSize: '9px', color: '#6c8aff', cursor: 'pointer', padding: '1px 4px',
+                borderRadius: '3px', background: 'rgba(108,138,255,0.1)',
+            }});
+            resetColor.addEventListener('click', function() {
+                ctx.opts.highlightColor = DEFAULTS.highlightColor;
+                colorPreview.style.background = DEFAULTS.highlightColor;
+                colorInp.value = DEFAULTS.highlightColor;
+                hexInp.value = DEFAULTS.highlightColor;
+                state.forceRefresh();
+            });
+            colorRow.appendChild(resetColor);
+        }
+        hlGroup.appendChild(colorRow);
+
+        // Border radius
+        hlGroup.appendChild(makeOptInput('Border Radius', 'Arrondi des coins du highlight (px)', String(ctx.opts.highlightBorderRadius || 8), DEFAULTS.highlightBorderRadius, function(v) {
+            ctx.opts.highlightBorderRadius = parseInt(v, 10) || 8;
+            state.forceRefresh();
+        }));
+
+        container.appendChild(hlGroup);
 
         // Code output group
         var codeGroup = el('div', { style: {

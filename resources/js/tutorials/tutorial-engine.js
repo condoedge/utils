@@ -62,6 +62,8 @@ export default function(gsap) {
         bubbleLineHeight: '1.6',
         bubbleMaxWidth: 'clamp(260px, 85vw, 550px)',
         bubbleMinWidth: 'clamp(200px, 70vw, 350px)',
+        highlightColor: '#ffd700',
+        highlightBorderRadius: 8,
     };
     var DEFAULTS = {};
     var k; for (k in _hardDefaults) DEFAULTS[k] = _hardDefaults[k];
@@ -571,7 +573,7 @@ export default function(gsap) {
             height: cr.h,
             rx: cr.r,
             fill: 'none',
-            stroke: '#ffd700',
+            stroke: opts.highlightColor || '#ffd700',
             'stroke-width': '2',
         });
     }
@@ -662,7 +664,7 @@ export default function(gsap) {
         }
         if (!config.groups || !config.groups.length) return null;
         var padding = config.padding || 8;
-        var radius = config.borderRadius || 8;
+        var radius = config.borderRadius !== undefined ? config.borderRadius : (opts.highlightBorderRadius !== undefined ? opts.highlightBorderRadius : 8);
 
         var blockOutside = config.blockOutside || false;
         var hlOverlay = createSvgEl('svg', { width: '100%', height: '100%' });
