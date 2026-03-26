@@ -89,7 +89,7 @@ window.MotionPathHelper = MotionPathHelper;
 
 import makeTutorialEngine from './tutorials/tutorial-engine';
 const TutorialEngine = makeTutorialEngine(gsap, $); // Required in the next line
-import initStepBuilder from './tutorials/tutorial-step-builder';
+import initStepBuilder from './tutorials/step-builder/index';
 
 const utils = {
 	getYesNoValue: getYesNoValue,

@@ -6,7 +6,7 @@
  *   var steps = [ { html: "...", cursor: {...}, highlight: {...} } ];
  *   TutorialEngine.start(steps, { avatar: '/images/Benoit helper.png' });
  */
-export default function(gsap, $) {
+export default function(gsap) {
     'use strict';
 
     // === DEPENDENCY GUARD ===
@@ -255,7 +255,8 @@ export default function(gsap, $) {
             lastRects = current;
 
             // Stable for 3 consecutive checks (150ms) or max attempts reached
-            if (stableCount >= 3 || attempts >= maxAttempts) {
+            var allVisible = current.indexOf('0,0,0,0') === -1;
+            if ((stableCount >= 3 && allVisible) || attempts >= maxAttempts) {
                 callback();
             } else {
                 setTimeout(check, 50);
@@ -365,7 +366,9 @@ export default function(gsap, $) {
      * @param {number} duration - Animation duration in seconds
      * @param {number} delay - Animation delay in seconds
      */
-    function createRing(x, y, bgOpacity, scale, duration, delay) {
+    function createRing(x, y, bgOpacity, scale, duration, delay, color) {
+        var c = color || '#ff4444';
+        var rgb = c === '#4a6cf7' ? '74, 108, 247' : '255, 68, 68';
         var ring = document.createElement('div');
         Object.assign(ring.style, {
             position: 'fixed',
@@ -374,8 +377,8 @@ export default function(gsap, $) {
             width: '48px',
             height: '48px',
             borderRadius: '50%',
-            border: '3px solid #ff4444',
-            backgroundColor: 'rgba(255, 68, 68, ' + bgOpacity + ')',
+            border: '3px solid ' + c,
+            backgroundColor: 'rgba(' + rgb + ', ' + bgOpacity + ')',
             pointerEvents: 'none',
             zIndex: String(Z.PULSE),
             transform: 'translate(-50%, -50%)',
@@ -393,8 +396,9 @@ export default function(gsap, $) {
     }
 
     function createClickPulse(x, y) {
-        createRing(x, y, 0.25, 3, 0.7, 0);
-        createRing(x, y, 0.15, 2, 0.5, 0.15);
+        var color = window._tutorialDevMode ? '#4a6cf7' : '#ff4444';
+        createRing(x, y, 0.25, 3, 0.7, 0, color);
+        createRing(x, y, 0.15, 2, 0.5, 0.15, color);
     }
 
     // === CURSOR ELEMENT FACTORY ===
@@ -942,9 +946,78 @@ export default function(gsap, $) {
         };
 
         function buildAndStart(imgSrc) {
+            var _linkNextCleanup = null;
+
+            function cleanupLinkNext() {
+                if (_linkNextCleanup) { _linkNextCleanup(); _linkNextCleanup = null; }
+            }
+
+            function setupLinkNext(step, actionBtn) {
+                cleanupLinkNext();
+                if (!step.linkNext) return;
+
+                function attach(el) {
+                    function onLinkedClick() {
+                        // Fingerprint: capture wizard container state before click
+                        var container = el.closest('.kompoModal, .vlModal, .vlPanel, form') || el.parentElement;
+                        var fingerprint = '';
+                        if (container) {
+                            var headings = container.querySelectorAll('h1,h2,h3,h4,.text-xl,.text-2xl,.font-semibold,.miniTitle');
+                            headings.forEach(function(h) { fingerprint += h.textContent.trim(); });
+                            container.querySelectorAll('label').forEach(function(l) { fingerprint += l.textContent.trim(); });
+                            var submitBtn = container.querySelector('button[type="submit"], .vlBtn');
+                            if (submitBtn) fingerprint += submitBtn.textContent.trim();
+                        }
+
+                        // Poll for fingerprint change (wizard advanced) or timeout
+                        var pollAttempts = 0;
+                        var maxPoll = 20; // 20 * 200ms = 4s
+                        function pollChange() {
+                            pollAttempts++;
+                            var newFingerprint = '';
+                            var newContainer = document.querySelector(step.linkNext);
+                            if (newContainer) newContainer = newContainer.closest('.kompoModal, .vlModal, .vlPanel, form') || newContainer.parentElement;
+                            if (newContainer) {
+                                var hs = newContainer.querySelectorAll('h1,h2,h3,h4,.text-xl,.text-2xl,.font-semibold,.miniTitle');
+                                hs.forEach(function(h) { newFingerprint += h.textContent.trim(); });
+                                newContainer.querySelectorAll('label').forEach(function(l) { newFingerprint += l.textContent.trim(); });
+                                var sb = newContainer.querySelector('button[type="submit"], .vlBtn');
+                                if (sb) newFingerprint += sb.textContent.trim();
+                            }
+
+                            if (newFingerprint !== fingerprint) {
+                                // Wizard advanced, trigger next
+                                actionBtn.click();
+                            } else if (pollAttempts < maxPoll) {
+                                setTimeout(pollChange, 200);
+                            }
+                            // If maxPoll reached with same fingerprint: validation error, do nothing
+                        }
+                        setTimeout(pollChange, 200);
+                    }
+
+                    el.addEventListener('click', onLinkedClick);
+                    _linkNextCleanup = function() { el.removeEventListener('click', onLinkedClick); };
+                }
+
+                var targetEl = document.querySelector(step.linkNext);
+                if (targetEl) {
+                    attach(targetEl);
+                } else {
+                    // Wait for element to appear
+                    var obs = new MutationObserver(function() {
+                        var el = document.querySelector(step.linkNext);
+                        if (el) { obs.disconnect(); attach(el); }
+                    });
+                    obs.observe(document.body, { childList: true, subtree: true });
+                    _linkNextCleanup = function() { obs.disconnect(); };
+                }
+            }
+
             function cleanupAnimations() {
                 if (activeCursor) { activeCursor.destroy(); activeCursor = null; }
                 if (activeHighlight) { activeHighlight.destroy(); activeHighlight = null; }
+                cleanupLinkNext();
                 // Remove forced hover states
                 document.querySelectorAll('.tutorial-force-hover').forEach(function(el) {
                     removeForceHoverStyles(el);
@@ -1505,6 +1578,15 @@ export default function(gsap, $) {
                     return;
                 }
 
+                // Conditional step: skip if element IS found in DOM
+                if (step.hideIf && document.querySelector(step.hideIf)) {
+                    var nextIdx = index + _lastDirection;
+                    if (nextIdx >= 0 && nextIdx < steps.length) {
+                        showStep(nextIdx);
+                    }
+                    return;
+                }
+
                 // Notify path editor of step change
                 overlay.dispatchEvent(new CustomEvent('tutorial-step-change', { detail: { index: index } }));
 
@@ -1532,11 +1614,10 @@ export default function(gsap, $) {
 
                 // Silent click: click element and advance immediately, no UI shown
                 // Skip silentClick when reached via auto-advance to prevent cascade chains
-                if (step.silentClick && !_isAutoAdvancing) {
-                    if (!window._tutorialDevMode) {
-                        var silentEl = document.querySelector(step.silentClick);
-                        if (silentEl && typeof silentEl.click === 'function') silentEl.click();
-                    }
+                // In dev mode: show the step normally with a badge instead of skipping
+                if (step.silentClick && !_isAutoAdvancing && !window._tutorialDevMode) {
+                    var silentEl = document.querySelector(step.silentClick);
+                    if (silentEl && typeof silentEl.click === 'function') silentEl.click();
                     if (!isLast) {
                         showStep(currentStep + 1);
                     }
@@ -1627,7 +1708,7 @@ export default function(gsap, $) {
                 btnRow.style.pointerEvents = 'none';
                 actionBtn.textContent = isLast ? opts.doneLabel : opts.nextLabel;
                 // Hide next/done button if step has options (options replace it)
-                actionBtn.style.display = step.options ? 'none' : '';
+                actionBtn.style.display = (step.options || step.linkNext) ? 'none' : '';
                 // Show/hide back button
                 backBtn.style.display = (step.showBack === true || typeof step.showBack === 'number') ? '' : 'none';
 
@@ -1731,13 +1812,14 @@ export default function(gsap, $) {
 
                 // Launch highlight after hover elements are stable
                 if (step.highlight) {
-                    if (step.hover) {
-                        waitForStableHighlight(step.highlight, function() {
-                            activeHighlight = createHighlight(step.highlight);
-                        });
-                    } else {
+                    waitForStableHighlight(step.highlight, function() {
                         activeHighlight = createHighlight(step.highlight);
-                    }
+                    });
+                }
+
+                // Link page button to tutorial next (skip in dev mode)
+                if (!window._tutorialDevMode) {
+                    setupLinkNext(step, actionBtn);
                 }
 
                 // Typewrite from top to bottom
@@ -1805,16 +1887,24 @@ export default function(gsap, $) {
                             }
                         }
                         // afterAnimation: auto-advance after cursor animation completes
+                        // In dev mode: show Next button instead of auto-advancing
                         if (step.afterAnimation && !isLast) {
-                            actionBtn.style.display = 'none';
-                            var advanceFn = function() {
-                                _isAutoAdvancing = true;
-                                setTimeout(function() { actionBtn.click(); }, STEP_TRANSITION_MS);
-                            };
-                            if (step.cursor) {
-                                activeCursor = launchCursor(step, overlay, advanceFn);
+                            if (window._tutorialDevMode) {
+                                // Dev mode: play animation but don't auto-advance
+                                if (step.cursor) {
+                                    activeCursor = launchCursor(step, overlay, function() {});
+                                }
                             } else {
-                                advanceFn();
+                                actionBtn.style.display = 'none';
+                                var advanceFn = function() {
+                                    _isAutoAdvancing = true;
+                                    setTimeout(function() { actionBtn.click(); }, STEP_TRANSITION_MS);
+                                };
+                                if (step.cursor) {
+                                    activeCursor = launchCursor(step, overlay, advanceFn);
+                                } else {
+                                    advanceFn();
+                                }
                             }
                         }
                     });
