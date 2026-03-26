@@ -188,7 +188,7 @@ function _LazyTabs(...$tabs)
 }
 
 if (!function_exists('_LazyTab')) {
-    function _LazyTab($closure, $placeholderPreset = 'default')
+    function _LazyTab($closure, $placeholderPreset = 'spinner')
     {
         return _SwipeableTab(
             _LazyComponent($closure, $placeholderPreset),
