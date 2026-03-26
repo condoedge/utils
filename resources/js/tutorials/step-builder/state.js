@@ -45,19 +45,27 @@ export function getInitialOpts() { return state._initialOpts; }
 
 // --- Undo/Redo ---
 
-function pushUndo() {
-    state.undoStack.push(JSON.parse(JSON.stringify(state.ctx.steps)));
+function pushUndo(label) {
+    state.undoStack.push({ snapshot: JSON.parse(JSON.stringify(state.ctx.steps)), label: label || 'Change', time: Date.now() });
     if (state.undoStack.length > state.maxUndoSize) state.undoStack.shift();
     state.redoStack = [];
     events.emit('undo-changed', { undoSize: state.undoStack.length, redoSize: 0 });
 }
 
+export function getUndoLabels() {
+    return state.undoStack.map(function(e) { return { label: e.label, time: e.time }; });
+}
+
+export function getRedoLabels() {
+    return state.redoStack.map(function(e) { return { label: e.label, time: e.time }; });
+}
+
 export function undo() {
     if (!state.undoStack.length) return;
-    state.redoStack.push(JSON.parse(JSON.stringify(state.ctx.steps)));
-    var snapshot = state.undoStack.pop();
+    state.redoStack.push({ snapshot: JSON.parse(JSON.stringify(state.ctx.steps)), label: state.undoStack[state.undoStack.length - 1].label, time: Date.now() });
+    var entry = state.undoStack.pop();
     state.ctx.steps.length = 0;
-    snapshot.forEach(function(s) { state.ctx.steps.push(s); });
+    entry.snapshot.forEach(function(s) { state.ctx.steps.push(s); });
     state.selectedIndex = Math.min(state.selectedIndex, state.ctx.steps.length - 1);
     events.emit('state-restored');
     events.emit('undo-changed', { undoSize: state.undoStack.length, redoSize: state.redoStack.length });
@@ -66,10 +74,10 @@ export function undo() {
 
 export function redo() {
     if (!state.redoStack.length) return;
-    state.undoStack.push(JSON.parse(JSON.stringify(state.ctx.steps)));
-    var snapshot = state.redoStack.pop();
+    state.undoStack.push({ snapshot: JSON.parse(JSON.stringify(state.ctx.steps)), label: state.redoStack[state.redoStack.length - 1].label, time: Date.now() });
+    var entry = state.redoStack.pop();
     state.ctx.steps.length = 0;
-    snapshot.forEach(function(s) { state.ctx.steps.push(s); });
+    entry.snapshot.forEach(function(s) { state.ctx.steps.push(s); });
     state.selectedIndex = Math.min(state.selectedIndex, state.ctx.steps.length - 1);
     events.emit('state-restored');
     events.emit('undo-changed', { undoSize: state.undoStack.length, redoSize: state.redoStack.length });
@@ -82,7 +90,7 @@ export function getRedoSize() { return state.redoStack.length; }
 // --- Mutations ---
 
 export function addStep(afterIndex) {
-    pushUndo();
+    pushUndo('Add step after #' + afterIndex);
     var newStep = { html: '', overlay: true, position: 'left', align: 'center' };
     if (arguments.length > 1 && arguments[1]) newStep._branch = arguments[1];
     state.ctx.steps.splice(afterIndex + 1, 0, newStep);
@@ -93,7 +101,7 @@ export function addStep(afterIndex) {
 
 export function removeStep(index) {
     if (state.ctx.steps.length <= 1) return;
-    pushUndo();
+    pushUndo('Delete step #' + index);
     // Shift screenshots above the removed index
     var newScreenshots = {};
     Object.keys(state.screenshots).forEach(function(k) {
@@ -110,7 +118,7 @@ export function removeStep(index) {
 }
 
 export function duplicateStep(index) {
-    pushUndo();
+    pushUndo('Duplicate step #' + index);
     var clone = JSON.parse(JSON.stringify(state.ctx.steps[index]));
     state.ctx.steps.splice(index + 1, 0, clone);
     state.selectedIndex = index + 1;
@@ -119,7 +127,7 @@ export function duplicateStep(index) {
 }
 
 export function updateStep(index, key, value) {
-    pushUndo();
+    pushUndo('Edit step #' + index + ' → ' + key);
     state.ctx.steps[index][key] = value;
     events.emit('step-updated', { index: index, key: key });
     scheduleRefresh();
@@ -131,7 +139,7 @@ export function updateStepDirect(index, key, value) {
 }
 
 export function updateStepBatch(index, updates) {
-    pushUndo();
+    pushUndo('Edit step #' + index + ' → ' + Object.keys(updates).join(', '));
     var step = state.ctx.steps[index];
     Object.keys(updates).forEach(function(k) { step[k] = updates[k]; });
     events.emit('step-updated', { index: index, key: Object.keys(updates).join(',') });
@@ -140,7 +148,7 @@ export function updateStepBatch(index, updates) {
 
 export function moveStep(fromIndex, toIndex) {
     if (fromIndex === toIndex) return;
-    pushUndo();
+    pushUndo('Move step #' + fromIndex + ' → #' + toIndex);
     var step = state.ctx.steps.splice(fromIndex, 1)[0];
     state.ctx.steps.splice(toIndex, 0, step);
     // Remap screenshots
