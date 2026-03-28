@@ -16,6 +16,30 @@ Route::middleware(['auth'])->group(function () {
     Route::post('edit-place-fields', \Condoedge\Utils\Kompo\ContactInfo\Maps\AddressPlaceEditingForm::class)->name('edit-place-fields');
 });
 
+Route::get('tutorial-step-builder/{tutorialName?}', \Condoedge\Utils\Tutorials\TutorialStepBuilder::class)
+    ->name('tutorial.step-builder');
+
+Route::get('api/tutorials/{name}', function (string $name) {
+    $path = resource_path("tutorials/{$name}.json");
+
+    if (!file_exists($path)) {
+        return response()->json(['error' => 'Tutorial not found'], 404);
+    }
+
+    $data = json_decode(file_get_contents($path), true);
+
+    // Translate step html keys
+    if (!empty($data['steps'])) {
+        foreach ($data['steps'] as &$step) {
+            if (!empty($step['html']) && trans()->has($step['html'])) {
+                $step['html'] = __($step['html']);
+            }
+        }
+    }
+
+    return response()->json($data);
+})->name('api.tutorials');
+
 Route::post('_execute-lazy', [\Condoedge\Utils\Http\Controllers\LazyComponentController::class, 'execute'])
     ->name('utils.execute-lazy');
 

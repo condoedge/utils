@@ -26,7 +26,7 @@ use Condoedge\Utils\Command\FixIncompleteAddressesCommand;
 use Condoedge\Utils\Command\RunComplianceValidationCommand;
 use Condoedge\Utils\Events\MultipleComplianceIssuesDetected;
 use Condoedge\Utils\Kompo\Plugins\DebugReload;
-use Condoedge\Utils\Kompo\Plugins\HasIntroAnimation;
+use Condoedge\Utils\Kompo\Plugins\HasTutorial;
 use Condoedge\Utils\Listeners\HandleBatchComplianceNotifications;
 use Condoedge\Utils\Services\ComplianceValidation\NotificationStrategyRegistry;
 use Condoedge\Utils\Services\Maps\GeocodioService;
@@ -88,7 +88,7 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
 
         Query::setPlugins([
             ExportPlugin::class,
-            HasIntroAnimation::class,
+            HasTutorial::class,
             EnableWhiteTableStyle::class,
             LazyComponentPlugin::class,
         ]);
@@ -98,20 +98,20 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
             EnableWhiteTableStyle::class,
             EnableResponsiveTable::class,
             TableIntoFormSetValuesPlugin::class,
-            HasIntroAnimation::class,
+            HasTutorial::class,
             LazyComponentPlugin::class,
         ]);
 
         Form::setPlugins([
             DebugReload::class,
-            HasIntroAnimation::class,
+            HasTutorial::class,
             LazyComponentPlugin::class,
         ]);
 
         Modal::setPlugins([
             HasScroll::class,
             DebugReload::class,
-            HasIntroAnimation::class,
+            HasTutorial::class,
             LazyComponentPlugin::class,
         ]);
 

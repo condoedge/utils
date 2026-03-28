@@ -116,6 +116,17 @@ if (!function_exists('getTutorialAnimationButton')) {
 	}
 }
 
+if (!function_exists('_StepBuilderContainer')) {
+	function _StepBuilderContainer()
+	{
+		if (!config('app.debug')) {
+			return null;
+		}
+
+		return _Panel()->id('tutorial-step-builder')->class('tutorial-step-builder-panel');
+	}
+}
+
 if (!function_exists('secureCall')) {
 	function secureCall($functionName, ...$params)
 	{
