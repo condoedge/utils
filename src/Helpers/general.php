@@ -103,16 +103,50 @@ if (!function_exists('componentIntroViewed')) {
 if (!function_exists('getTutorialAnimationButton')) {
 	function getTutorialAnimationButton($iconSize = 30)
 	{
-		if (!componentIntroViewed(getCurrentComponentPage())) {
+		return _Link()->icon(_Sax('message-question', $iconSize))->class('text-gray-800 text-2xl')
+			->initTutorial('default');
+	}
+}
+
+if (!function_exists('_Tutorial')) {
+	/**
+	 * Trigger a tutorial on page load. Used for cross-page redirect chaining
+	 * or explicit tutorial placement in component render().
+	 */
+	function _Tutorial(string $tutorialName)
+	{
+		// Cross-page chaining: URL param forces start regardless of viewed status
+		$fromUrl = request('tutorial');
+		$fromStep = (int) request('fromStep', 0);
+
+		if ($fromUrl === $tutorialName) {
+			return _Hidden()->onLoad(fn($e) => $e->run(
+				"() => window.TutorialEngine.start('{$tutorialName}', {$fromStep})"
+			));
+		}
+
+		$key = \Illuminate\Support\Str::slug($tutorialName) . '_tutorial_viewed';
+
+		if (auth()->user()?->getSettingValue($key)) {
 			return null;
 		}
 
-		return _Link()->icon(_Sax('info-circle', $iconSize))->class('text-gray-800 text-2xl')
-			->onClick(fn($e) => $e->run('() => {window.utils.setLoadingScreen()}')
-				&& $e->post(route('forget-intro-component', [
-					'intro_key' => componentIntroViewedKey(getCurrentComponentPage()),
-				]))->redirect(url()->full())
-			);
+		auth()->user()?->saveSetting($key, true);
+
+		return _Hidden()->onLoad(fn($e) => $e->run(
+			"() => window.TutorialEngine.start('{$tutorialName}')"
+		));
+	}
+}
+
+if (!function_exists('_StepBuilderContainer')) {
+	function _StepBuilderContainer()
+	{
+		if (!config('app.debug')) {
+			return null;
+		}
+
+		return _Panel()->id('tutorial-step-builder')->class('tutorial-step-builder-panel');
 	}
 }
 

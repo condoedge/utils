@@ -210,12 +210,19 @@ body::has(.loading-screen) {
   }
 }
 
+
 .vlTabContent--swipeable {
     overflow: hidden;
+    transition: height 0.3s ease;
+
+    @media (min-width: 1024px) {
+        transition: none;
+    }
 }
 
 .vlTabSwipeContainer {
     display: flex;
+    align-items: flex-start;
     will-change: transform;
 }
 
@@ -223,4 +230,11 @@ body::has(.loading-screen) {
     flex-shrink: 0;
     min-width: 100%;
     width: 100%;
+    padding-right: 0.25rem;
+    padding-left: 0.25rem;
+}
+
+.vlTab--collapsed {
+    max-height: 0;
+    overflow: hidden;
 }

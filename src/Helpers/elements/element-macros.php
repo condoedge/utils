@@ -221,6 +221,26 @@ Layout::macro('fixChildrenSpinners', function () {
     }');
 });
 
+\Kompo\Elements\Trigger::macro('initTutorial', function (string $tutorialName = 'default', int $stepNumber = 0) {
+    $nameJs = $tutorialName === 'default'
+        ? 'window._currentTutorial'
+        : "'{$tutorialName}'";
+
+    $startJs = "() => { const n = {$nameJs}; if(n) window.TutorialEngine.start(n, {$stepNumber}); }";
+
+    if (config('app.debug')) {
+        $routeName = $tutorialName === 'default' ? 'default' : $tutorialName;
+
+        return $this->onClick(
+            fn($e) => $e->run($startJs)
+                && $e->get(route('tutorial.step-builder', ['tutorialName' => $routeName]))
+                    ->inPanel('tutorial-step-builder')
+        );
+    }
+
+    return $this->onClick(fn($e) => $e->run($startJs));
+});
+
 Kompo\Elements\BaseElement::macro('conditionToShow', function ($condition, $returnsNullInstead = false) {
     if ($condition) {
         return $this;
