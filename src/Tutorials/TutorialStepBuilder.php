@@ -14,9 +14,12 @@ class TutorialStepBuilder extends Form
     {
         $this->tutorialName = $this->prop('tutorial_name') ?? request('tutorialName') ?? 'default';
 
-        $this->onLoad(fn($e) => $e->run('async ({ $k, field, panel, state, watch, watchAll, on, el, form }) => {
-            const { StepBuilderBridge } = await import("./tutorials/step-builder/step-builder-bridge.js");
-            window._stepBuilder = new StepBuilderBridge({ $k, field, panel, state, watch, watchAll, on, el, form }, window.TutorialEngine);
+        // StepBuilderBridge is pre-registered on window by KompoJsBuilder.
+        // onLoad provides the real $k context with field(), watchAll(), panel(), etc.
+        $this->onLoad(fn($e) => $e->run('(ctx) => {
+            if (window.StepBuilderBridge && window.TutorialEngine) {
+                window._stepBuilder = new window.StepBuilderBridge(ctx, window.TutorialEngine);
+            }
         }'));
     }
 
@@ -124,15 +127,13 @@ class TutorialStepBuilder extends Form
             ]),
 
             // ─── Output (JSON) ───
-            _Collapse(
-                _Html('<span class="text-xs font-semibold text-blue-400 uppercase tracking-wide">Output (JSON)</span>')
-            )->expandByDefault(false)->submenu(
+            _Collapsible(
                 _Html('<pre id="sb-output" class="bg-black/30 text-green-400 p-3 rounded-lg text-xs overflow-auto max-h-64 font-mono"></pre>'),
                 _Flex(
                     _Link('Copy Step')->class('sb-btn sb-btn-sm sb-btn-ghost')->run('() => window._stepBuilder?.copyStep()'),
                     _Link('Copy All')->class('sb-btn sb-btn-sm sb-btn-ghost')->run('() => window._stepBuilder?.copyAll()'),
                 )->class('gap-2 mt-2 justify-end'),
-            ),
+            )->expandedByDefault(false)->titleEl('Output (JSON)'),
         )->attr(['data-sb' => ''])->class('p-4 space-y-1');
     }
 
@@ -141,9 +142,9 @@ class TutorialStepBuilder extends Form
      */
     protected function card(string $id, string $title, bool $expanded, array $fields)
     {
-        return _Collapse(
-            _Html('<span class="text-xs font-semibold text-blue-400 uppercase tracking-wide">' . $title . '</span>')
-        )->expandByDefault($expanded)->submenu(...$fields)->class('sb-card');
+        return _Collapsible(
+            ...$fields
+        )->expandedByDefault($expanded)->titleEl(_Html('<span class="text-xs font-semibold text-blue-400 uppercase tracking-wide">' . $title . '</span>'))->class('sb-card');
     }
 
     /**

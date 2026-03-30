@@ -23,15 +23,20 @@ class HasTutorial extends ComponentPlugin
         $slug = $this->getComponentSlug();
 
         if (!file_exists(resource_path("tutorials/{$slug}.json"))) {
-            return '';
+            return '
+                document.getElementById("tutorial-replay-btn")?.remove();
+            ';
         }
 
-        // Tell the page which tutorial is available (navbar button reads this)
         $js = "window._currentTutorial = '{$slug}';";
 
         if ($this->shouldAutoStart($slug)) {
             $this->markAsViewed($slug);
             $js .= "window.TutorialEngine.start('{$slug}');";
+            // Don't show replay button — tutorial is auto-starting
+        } else {
+            // User already saw it — show the replay button
+            $js .= "document.getElementById('tutorial-replay-btn')?.style.removeProperty('display');";
         }
 
         return $js;

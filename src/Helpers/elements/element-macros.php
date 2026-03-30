@@ -222,23 +222,31 @@ Layout::macro('fixChildrenSpinners', function () {
 });
 
 \Kompo\Elements\Trigger::macro('initTutorial', function (string $tutorialName = 'default', int $stepNumber = 0) {
+    // For named tutorials: hide if JSON file doesn't exist
+    if ($tutorialName !== 'default') {
+        if (!file_exists(resource_path("tutorials/{$tutorialName}.json"))) {
+            return $this->class('hidden');
+        }
+    }
+
     $nameJs = $tutorialName === 'default'
         ? 'window._currentTutorial'
         : "'{$tutorialName}'";
 
-    $startJs = "() => { const n = {$nameJs}; if(n) window.TutorialEngine.start(n, {$stepNumber}); }";
+    $startJs = "() => { 
+        window.utils.setLoadingScreen();
+        const n = {$nameJs}; if(n) window.TutorialEngine.start(n, {$stepNumber});
+        window.Tutorial.onReady(() => window.utils.removeLoadingScreen());
+    }";
 
-    if (config('app.debug')) {
-        $routeName = $tutorialName === 'default' ? 'default' : $tutorialName;
+    $el = $this->onClick(fn($e) => $e->run($startJs));
 
-        return $this->onClick(
-            fn($e) => $e->run($startJs)
-                && $e->get('tutorial-step-builder/' . $routeName)
-                    ->inPanel('tutorial-step-builder')
-        );
+    // For default: hide initially, HasTutorial plugin shows it when appropriate
+    if ($tutorialName === 'default') {
+        $el->id('tutorial-replay-btn')->style('display:none');
     }
 
-    return $this->onClick(fn($e) => $e->run($startJs));
+    return $el;
 });
 
 Kompo\Elements\BaseElement::macro('conditionToShow', function ($condition, $returnsNullInstead = false) {
