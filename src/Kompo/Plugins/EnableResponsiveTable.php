@@ -2,6 +2,8 @@
 
 namespace Condoedge\Utils\Kompo\Plugins;
 
+use Kompo\Core\KompoId;
+use Kompo\Elements\BaseElement;
 use Kompo\Elements\Layout;
 use Kompo\Th;
 
@@ -59,11 +61,13 @@ class EnableResponsiveTable extends \Condoedge\Utils\Kompo\Plugins\Base\Componen
         $elements = array_values($elements);
 
         $decoratedElements = collect($elements)->map(function ($element, $i) {
+            $mobileElement = $this->cloneElementWithNewIds($element);
+
             return _Rows(
                 _FlexBetween(
-                    !is_string($this->getHeader($i)) ? $this->getHeader($i) 
+                    !is_string($this->getHeader($i)) ? $this->getHeader($i)
                         : _Html('<span>'.$this->getHeader($i).'</span>')->class('uppercase font-bold'),
-                    $element,
+                    $mobileElement,
                 )->class('flex md:hidden'),
                 _Rows($element)->class('hidden md:block')
             );
@@ -77,6 +81,23 @@ class EnableResponsiveTable extends \Condoedge\Utils\Kompo\Plugins\Base\Componen
         }
 
         return $decoratedElements;
+    }
+
+    protected function cloneElementWithNewIds($element)
+    {
+        $cloned = clone $element;
+
+        KompoId::setForElement($cloned);
+
+        if ($cloned instanceof Layout && !empty($cloned->elements)) {
+            $cloned->elements = array_map(function ($child) {
+                return ($child instanceof BaseElement)
+                    ? $this->cloneElementWithNewIds($child)
+                    : $child;
+            }, $cloned->elements);
+        }
+
+        return $cloned;
     }
 
     protected function getHeader($index)
