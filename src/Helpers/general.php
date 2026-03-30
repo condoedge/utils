@@ -101,10 +101,10 @@ if (!function_exists('componentIntroViewed')) {
 }
 
 if (!function_exists('getTutorialAnimationButton')) {
-	function getTutorialAnimationButton($iconSize = 30)
+	function getTutorialAnimationButton($tutorialName = 'default', $iconSize = 30)
 	{
 		return _Link()->icon(_Sax('message-question', $iconSize))->class('text-gray-800 text-2xl')
-			->initTutorial('default');
+			->initTutorial($tutorialName);
 	}
 }
 

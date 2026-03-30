@@ -93,7 +93,7 @@ class TutorialConditionEvaluator
         if (str_contains($atom, ':')) {
             [$type, $value] = explode(':', $atom, 2);
             return match ($type) {
-                'permission' => auth()->user()?->hasPermission($value) ?? false,
+                'permission' => $this->checkPermission($value),
                 'setting'    => (bool) (auth()->user()?->getSettingValue($value)),
                 'role'       => auth()->user()?->hasRole($value) ?? false,
                 'selector'   => true,  // Client-side — always pass server-side
@@ -108,5 +108,32 @@ class TutorialConditionEvaluator
 
         // Unknown = false (fail-closed)
         return false;
+    }
+
+    protected function checkPermission(string $value): bool
+    {
+        $user = auth()->user();
+        if (!$user) return false;
+
+        if (!str_contains($value, ',')) {
+            return $user->hasPermission($value);
+        }
+
+        [$key, $typeStr] = explode(',', $value, 2);
+        $typeStr = strtoupper(trim($typeStr));
+
+        // Map string to PermissionTypeEnum
+        $typeMap = [
+            'READ' => 1,
+            'WRITE' => 3,
+            'ALL' => 7,
+        ];
+
+        if (isset($typeMap[$typeStr]) && enum_exists(\Kompo\Auth\Models\Teams\PermissionTypeEnum::class)) {
+            $enum = \Kompo\Auth\Models\Teams\PermissionTypeEnum::from($typeMap[$typeStr]);
+            return $user->hasPermission(trim($key), $enum);
+        }
+
+        return $user->hasPermission(trim($key));
     }
 }
