@@ -236,7 +236,7 @@ Layout::macro('fixChildrenSpinners', function () {
     $startJs = "() => { 
         window.utils.setLoadingScreen();
         const n = {$nameJs}; if(n) window.TutorialEngine.start(n, {$stepNumber});
-        window.Tutorial.onReady(() => window.utils.removeLoadingScreen());
+        window.TutorialEngine.onReady(() => window.utils.removeLoadingScreen());
     }";
 
     $el = $this->onClick(fn($e) => $e->run($startJs));
