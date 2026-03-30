@@ -20,13 +20,11 @@ use Condoedge\Utils\Kompo\Plugins\EnableResponsiveTable;
 use Condoedge\Utils\Kompo\Plugins\EnableWhiteTableStyle;
 use Condoedge\Utils\Kompo\Plugins\TableIntoFormSetValuesPlugin;
 use Condoedge\Utils\Services\GlobalConfig\GlobalConfigServiceContract;
-
 use App\Models\User;
 use Condoedge\Utils\Command\FixIncompleteAddressesCommand;
 use Condoedge\Utils\Command\RunComplianceValidationCommand;
 use Condoedge\Utils\Events\MultipleComplianceIssuesDetected;
 use Condoedge\Utils\Kompo\Plugins\DebugReload;
-use Condoedge\Utils\Kompo\Plugins\HasTutorial;
 use Condoedge\Utils\Listeners\HandleBatchComplianceNotifications;
 use Condoedge\Utils\Services\ComplianceValidation\NotificationStrategyRegistry;
 use Condoedge\Utils\Services\Maps\GeocodioService;
@@ -36,6 +34,7 @@ use Illuminate\Support\Facades\Event;
 use Condoedge\Utils\Command\ClearLazyComponentsCommand;
 use Condoedge\Utils\Command\MissingTranslationAnalyzerCommand;
 use Condoedge\Utils\Kompo\Common\Grid;
+use Condoedge\Utils\Kompo\Plugins\HasTutorial;
 use Condoedge\Utils\Kompo\Plugins\LazyComponentPlugin;
 
 class CondoedgeUtilsServiceProvider extends ServiceProvider
