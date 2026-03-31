@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls:*)",
+      "Bash(xargs -I {} basename {})",
+      "Bash(grep -iE \"^.*/\\(Element|Component|Dropdown\\)\\\\.php$\")",
+      "Bash(xargs grep:*)",
+      "Bash(find C:/Users/jkend/Documents/Projects/kompo/utils/vendor/kompo/kompo/resources/views/components -name *.blade.php)"
+    ]
+  }
+}

@@ -1,5 +1,7 @@
 <?php
 
+use Illuminate\Support\Collection;
+
 if (!function_exists("_CheckAllItems")) {
     function _CheckAllItems()
     {
