@@ -195,10 +195,3 @@ if (!function_exists('_LazyTab')) {
         )->style('--lazy-bg: #fff; --lazy-opacity: 0.65; --lazy-h: 300px');
     }
 }
-
-if (!function_exists('_Tab')) {
-    function _Tab()
-    {
-        return _SwipeableTab(...func_get_args());
-    }
-}

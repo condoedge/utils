@@ -2,7 +2,7 @@
 
 namespace Condoedge\Utils\Kompo\Elements;
 
-class SwipeableTab extends \Kompo\Tabs
+class SwipeableTab extends \Kompo\Tab
 {
     public $vueComponent = 'SwipeableTab';
 }
