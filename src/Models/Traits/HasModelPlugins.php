@@ -6,6 +6,8 @@ use Condoedge\Utils\Kompo\Plugins\Base\PluginsManager;
 
 trait HasModelPlugins
 {
+    use InterceptsRelations;
+
     protected static $globalPlugins = [];
     // protected $mergePluginsWithParents = true;
 
@@ -119,7 +121,6 @@ trait HasModelPlugins
         return property_exists(static::class, 'mergePluginsWithParents') ?
             static::$mergePluginsWithParents : true;
     }
-
 
     protected function getManagableMethods()
     {

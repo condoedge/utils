@@ -172,13 +172,18 @@ function _LazyTabs(...$tabs)
     return _ResponsiveTabs(
         ...collect($tabs)->map(function ($tab, $index) use ($currentTab) {
             if ($index == $currentTab) {
-                $lazyElement = getPrivateProperty($tab, 'elements')[0] ?? null;
-                $closure = getPrivateProperty($lazyElement, 'closure') ?? null;
+                try {
+                    $lazyElement = getPrivateProperty($tab, 'elements')[0] ?? null;
+                    $closure = getPrivateProperty($lazyElement, 'closure') ?? null;
 
-                if ($closure) {
-                    return _SwipeableTab(
-                        $closure()
-                    )->label(getPrivateProperty($tab, 'label'));
+                    if ($closure) {
+                        return _SwipeableTab(
+                            $closure()
+                        )->label(getPrivateProperty($tab, 'label'));
+                    }
+                } catch (\Exception $e) {
+                    // If any error occurs during reflection, fallback to original tab (that uses by default lazy loading)
+                    return $tab;
                 }
             }
 

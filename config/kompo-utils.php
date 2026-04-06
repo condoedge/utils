@@ -15,4 +15,9 @@ return [
     ],
 
     'compliance-validation-rules' => [],
+
+    // Enable plugin-based interception of Eloquent relationship methods.
+    // When false, relationship overrides are completely disabled (zero overhead).
+    // When true, plugins implementing interceptRelation() can modify relationship queries.
+    'intercept-relations' => false,
 ];
