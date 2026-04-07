@@ -43,6 +43,11 @@ trait MorphManyPhones
         return $this->getFirstValidPhone()?->getFullLabelWithExtension();
     }
 
+    public function getFirstValidPhoneRawNumber()
+    {
+        return $this->getFirstValidPhone()?->getRawFormattedPhoneNumber();
+     }
+
     /* ATTRIBUTES */
     public function getPrimaryPhoneNumberAttribute(): string
     {

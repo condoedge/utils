@@ -94,6 +94,11 @@ class Phone extends Model
         }
     }
 
+    public function getRawFormattedPhoneNumber()
+    {
+        return preg_replace('/\D+/', '', $this->getFullLabelWithExtension());
+    }
+
     public function getPhoneNumber()
     {
         return $this->number_ph;
@@ -101,7 +106,7 @@ class Phone extends Model
 
     public function isSameNumber($number)
     {
-        return $this->getPhoneNumber() == $number; //TODO change after phone sanitizing
+        return $this->getRawFormattedPhoneNumber() == preg_replace('/\D+/', '', $number);
     }
 
     /* ACTIONS */
