@@ -134,7 +134,7 @@ class ExportPlugin extends ComponentPlugin
                     $(patchId).get(0).dispatchEvent(new Event("input"))
                 }'),
 
-            _ButtonOutlined('utils.export-via-email')
+            _ButtonOutlined('utils.export-via-email')->class('w-full')
                 ->selfPost('pluginMethod', array_merge(request()->all(), [
                     'method' => 'exportToExcelViaEmail',
                     'from_route' => request('from_route')

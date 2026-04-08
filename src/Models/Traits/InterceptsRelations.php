@@ -25,8 +25,7 @@ trait InterceptsRelations
         if (!isset(static::$hasRelationInterceptor[$class])) {
             static::$hasRelationInterceptor[$class] = false;
 
-            foreach (static::getPlugins() as $plugin) {
-                $pluginInstance = is_object($plugin) ? $plugin : new $plugin($this);
+            foreach ($this->getPluginInstances() as $pluginInstance) {
                 if (method_exists($pluginInstance, 'interceptRelation')) {
                     static::$hasRelationInterceptor[$class] = true;
                     break;
@@ -39,11 +38,12 @@ trait InterceptsRelations
 
     /**
      * Delegate to plugins to intercept a relationship query.
+     * Uses cached plugin instances from getPluginInstances() to avoid creating
+     * new plugin objects on every relationship creation.
      */
     protected function pluginInterceptRelation($relation, string $relationName)
     {
-        foreach (static::getPlugins() as $plugin) {
-            $pluginInstance = is_object($plugin) ? $plugin : new $plugin($this);
+        foreach ($this->getPluginInstances() as $pluginInstance) {
             if (method_exists($pluginInstance, 'interceptRelation')) {
                 $result = $pluginInstance->interceptRelation($this, $relation, $relationName);
                 if ($result !== false) {

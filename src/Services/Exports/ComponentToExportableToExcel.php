@@ -144,22 +144,21 @@ class ComponentToExportableToExcel implements FromArray, WithHeadings, ShouldAut
         }
 
         $result = [];
-          // Process elements in batches to save memory
         $items = $this->getItems();
+
         foreach ($items as $index => $item) {
             $formattedItem = $this->formatItemToExport($item);
             if ($formattedItem) {
                 $result[] = $formattedItem;
             }
-            
-            // Free memory periodically
+
             if ($index > 0 && $index % 500 === 0) {
                 gc_collect_cycles();
             }
         }
 
-        unset($items); // Free memory
-        
+        unset($items);
+
         return $result;
     }
 
@@ -251,26 +250,34 @@ class ComponentToExportableToExcel implements FromArray, WithHeadings, ShouldAut
         $items = $fromInstance->query();
 
         if ($items instanceof Builder) {
-            // Batch processing for large datasets
             $result = [];
             $page = 1;
             $chunkSize = $this->chunkSize();
-            
+
             do {
                 $chunk = $items->forPage($page, $chunkSize)->get();
+
                 if ($chunk->isEmpty()) {
                     break;
                 }
-                
+
+                $modelClass = get_class($chunk->first());
+
                 foreach ($chunk as $item) {
                     $result[] = $item;
                 }
-                unset($chunk); // Free memory
+
+                if (method_exists($modelClass, 'notifyChunkBoundary')) {
+                    $modelClass::notifyChunkBoundary();
+                }
+
+                unset($chunk);
+
                 $page++;
             } while (true);
 
             $items = collect($result);
-            unset($result); // Free memory
+            unset($result);
         }
 
         $fromInstance->hasPagination = $prevHasPagination;
