@@ -46,7 +46,15 @@ trait MorphManyPhones
     public function getFirstValidPhoneRawNumber()
     {
         return $this->getFirstValidPhone()?->getRawFormattedPhoneNumber();
-     }
+    }
+
+    public function getFirstValidPhoneToInputs()
+    {
+        $number = $this->getFirstValidPhoneRawNumber();
+        $number = trim($number) ? trim('+' . $number) : '';
+
+        return $number;
+    }
 
     /* ATTRIBUTES */
     public function getPrimaryPhoneNumberAttribute(): string
