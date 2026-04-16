@@ -75,8 +75,9 @@ if (!function_exists('_PasswordInput')) {
 }
 
 if (!function_exists('_ApexChart')) {
-    function _ApexChart()
+    function _ApexChart($chartOptions = [])
     {
-        return \Condoedge\Utils\Kompo\Elements\ApexChart::form(...func_get_args());
+        return \Condoedge\Utils\Kompo\Elements\ApexChart::form()
+            ->config(['chartOptions' => $chartOptions]);
     }
 }

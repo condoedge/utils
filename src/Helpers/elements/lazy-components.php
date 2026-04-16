@@ -3,11 +3,13 @@
 use Condoedge\Utils\Services\LazyComponent\LazyComponentRegistry;
 
 if (!function_exists('lazySpinnerPlaceholder')) {
-    function lazySpinnerPlaceholder($minHeight = '200px')
+    function lazySpinnerPlaceholder()
     {
-        return _Rows(_Rows(
-            _Rows()->class('bg-gray-200 opacity-50 w-full rounded-xl')->style('min-height: ' . $minHeight . ';'),
-        )->class('vlPanelLoading w-full rounded-xl overflow-hidden'))->class('p-8');
+        return _Rows(
+            _Rows(
+                _Rows()->class('bg-gray-200 opacity-50 w-full rounded-xl h-full'),
+            )->class('vlPanelLoading w-full rounded-xl overflow-hidden')->style('min-height: var(--lazy-h, auto); width: var(--lazy-w, auto)')
+        )->class('p-8 h-full');
     }
 }
 
@@ -118,7 +120,8 @@ if (!function_exists('_lazyPlaceholder')) {
                     ->style("$bgDim; min-height: var(--lazy-h, 200px); width: var(--lazy-w, 100%)"),
             )->class('animate-pulse'),
 
-            'spinner' => lazySpinnerPlaceholder(),
+            'spinner' => lazySpinnerPlaceholder()
+                ->style('min-height: var(--lazy-h, auto); width: var(--lazy-w, 100%)'),
 
             'metric' => _Rows(
                 _Rows()->class("$bar h-3 w-24 mb-2")->style($bg),
@@ -197,6 +200,6 @@ if (!function_exists('_LazyTab')) {
     {
         return _SwipeableTab(
             _LazyComponent($closure, $placeholderPreset),
-        )->style('--lazy-bg: #fff; --lazy-opacity: 0.65; --lazy-h: 300px');
+        )->style('--lazy-bg: #aaa; --lazy-opacity: 0.65; --lazy-h: 300px');
     }
 }

@@ -33,7 +33,7 @@ class LazyComponent extends Rows
             ->post('_execute-lazy', null, ['_lazyId' => $lazyId])
             ->inPanel($panelId);
 
-        parent::__construct($trigger, _Panel($placeholderEl)->id($panelId));
+        parent::__construct($trigger, _Panel($placeholderEl)->id($panelId)->style('min-height: var(--lazy-h, 300px);'));
 
         $this->id($containerId)
              ->config([
