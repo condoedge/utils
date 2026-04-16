@@ -75,8 +75,18 @@ if (!function_exists('_PasswordInput')) {
 }
 
 if (!function_exists('_ApexChart')) {
-    function _ApexChart()
+    /**
+     * Render an ApexCharts chart inside a Kompo element.
+     *
+     * Requires the VlApexChart Vue component from condoedge/js-kompo-utils to be
+     * registered in the host app (auto-registered via getAllDefaultComponents()).
+     *
+     * @param  array $chartOptions  Raw ApexCharts options (chart, series, xaxis, etc.)
+     * @return \Condoedge\Utils\Kompo\Elements\ApexChart
+     */
+    function _ApexChart($chartOptions = [])
     {
-        return \Condoedge\Utils\Kompo\Elements\ApexChart::form(...func_get_args());
+        return \Condoedge\Utils\Kompo\Elements\ApexChart::form()
+            ->config(['chartOptions' => $chartOptions]);
     }
 }
