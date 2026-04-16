@@ -73,3 +73,10 @@ if (!function_exists('_PasswordInput')) {
         return PasswordInput::form(...func_get_args());
     }
 }
+
+if (!function_exists('_ApexChart')) {
+    function _ApexChart()
+    {
+        return \Condoedge\Utils\Kompo\Elements\ApexChart::form(...func_get_args());
+    }
+}
