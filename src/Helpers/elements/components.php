@@ -45,6 +45,21 @@ function _SignaturePad()
     return \Condoedge\Utils\Kompo\Elements\SignaturePad::form(...func_get_args());
 }
 
+/**
+ * Render an ApexCharts chart inside a Kompo element.
+ *
+ * Requires the VlApexChart Vue component from condoedge/js-kompo-utils to be
+ * registered in the host app (auto-registered via getAllDefaultComponents()).
+ *
+ * @param  array $chartOptions  Raw ApexCharts options (chart, series, xaxis, etc.)
+ * @return \Condoedge\Utils\Kompo\Elements\ApexChart
+ */
+function _ApexChart($chartOptions = [])
+{
+    return \Condoedge\Utils\Kompo\Elements\ApexChart::form()
+        ->config(['chartOptions' => $chartOptions]);
+}
+
 function _Text()
 {
     return \Condoedge\Utils\Kompo\Elements\Text::form(...func_get_args());
