@@ -117,6 +117,21 @@ Element::macro('when', function ($condition, $callback) {
     return $this;
 });
 
+/**
+ * Set the element to be hidden if the condition is true, or return null if the condition is false and $returnsNullInstead is true.
+ */
+Kompo\Elements\BaseElement::macro('conditionToShow', function ($condition, $returnsNullInstead = false) {
+    if ($condition) {
+        return $this;
+    }
+
+    if ($returnsNullInstead) {
+        return null;
+    }
+
+    return (new ($this::class))->class('hidden');
+});
+
 Field::macro('holdInSession', function() {
     $routeName = Route::currentRouteName();
 

@@ -86,3 +86,49 @@ if (!function_exists('camelToSnake')) {
 		return strtolower($snakeCase); 
 	} 
 }
+
+// CREATED BY CLAUDE. (Comments by me and was reviewed)
+if (!function_exists('buildDisambiguatedOptions')) {
+	function buildDisambiguatedOptions($items, callable $getItemKey, callable $getBaseLabel, callable ...$callbackAppends)
+	{
+		$groupedItems = [];
+		$usedLabels = [];
+		$result = collect();
+
+		foreach ($items as $item) {
+			$baseLabel = (string) $getBaseLabel($item);
+			$groupedItems[$baseLabel][] = $item;
+		}
+
+		foreach ($groupedItems as $baseLabel => $groupItems) {
+			$hasDuplicates = count($groupItems) > 1;
+
+			foreach ($groupItems as $item) {
+				$itemKey = (string) $getItemKey($item);
+				$label = $baseLabel;
+
+				if ($hasDuplicates) {
+					// We execute callbacks in order, and stop as soon as we find a label that hasn't been used yet
+					foreach ($callbackAppends as $appendIndex => $callbackAppend) {
+						$label .= (string) $callbackAppend($item, $baseLabel, $appendIndex + 1);
+
+						if (!isset($usedLabels[$label])) {
+							break;
+						}
+					}
+				}
+
+				// If after appending all callbacks the label is still not unique, 
+				// we append the item key as a last resort
+				if (isset($usedLabels[$label])) {
+					$label .= ' #' . $itemKey;
+				}
+
+				$usedLabels[$label] = true;
+				$result->put($itemKey, _Html($label));
+			}
+		}
+
+		return $result;
+	}
+}
