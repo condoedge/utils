@@ -2,6 +2,7 @@
 
 namespace Condoedge\Utils\Kompo\Elements;
 
+use Condoedge\Utils\Services\LazyHierarchy\LazyHierarchyRegistry;
 use Kompo\Elements\Block;
 use Kompo\Routing\RouteFinder;
 
@@ -26,7 +27,22 @@ class LazyHierarchy extends Block
             'emptyLabel' => __('No items found'),
             'errorLabel' => __('Unable to load items'),
             'showMoreLabel' => __('Show more'),
+            'displayMode' => 'inline',
+            'classes' => [],
+            'labels' => [],
         ]);
+    }
+
+    public function source(string $sourceClass, array $store = [])
+    {
+        $sourceId = app(LazyHierarchyRegistry::class)->storeSource($sourceClass, $store);
+
+        return $this
+            ->hierarchySource('utils.lazy-hierarchy.bootstrap', 'utils.lazy-hierarchy.nodes')
+            ->hierarchyParam('_lazyHierarchyId', $sourceId)
+            ->config([
+                'sourceClass' => $sourceClass,
+            ]);
     }
 
     public function hierarchySource(string $bootstrapRoute, ?string $nodesRoute = null, $bootstrapParameters = null, $nodesParameters = null)
@@ -110,7 +126,16 @@ class LazyHierarchy extends Block
 
     public function hierarchyLabels(array $labels)
     {
-        return $this->config($labels);
+        return $this->config([
+            'labels' => array_replace($this->config('labels') ?: [], $labels),
+        ]);
+    }
+
+    public function hierarchyClasses(array $classes)
+    {
+        return $this->config([
+            'classes' => array_replace($this->config('classes') ?: [], $classes),
+        ]);
     }
 
     public function lazyLoad(bool $defer = true)
@@ -135,6 +160,66 @@ class LazyHierarchy extends Block
     {
         return $this->config([
             'autoLoad' => false,
+        ]);
+    }
+
+    public function dropdown(?string $triggerLabel = null)
+    {
+        return $this->config(array_filter([
+            'displayMode' => 'dropdown',
+            'triggerLabel' => $triggerLabel,
+            'deferLoad' => true,
+        ], fn($value) => $value !== null));
+    }
+
+    public function inline()
+    {
+        return $this->config([
+            'displayMode' => 'inline',
+        ]);
+    }
+
+    public function searchable(?string $placeholder = null, string $param = 'search', int $debounce = 350)
+    {
+        return $this->config([
+            'search' => [
+                'enabled' => true,
+                'placeholder' => $placeholder ?: __('Search'),
+                'param' => $param,
+                'debounce' => $debounce,
+            ],
+        ]);
+    }
+
+    public function modes(array $modes, string $param = 'mode', ?string $default = null)
+    {
+        return $this->config([
+            'modes' => [
+                'options' => $modes,
+                'param' => $param,
+                'default' => $default ?: array_key_first($modes),
+            ],
+        ]);
+    }
+
+    public function hierarchyAction(string $key, string $url, string $method = 'POST', array $config = [])
+    {
+        $actions = $this->config('actions') ?: [];
+
+        $actions[$key] = array_replace([
+            'url' => $url,
+            'method' => $method,
+        ], $config);
+
+        return $this->config([
+            'actions' => $actions,
+        ]);
+    }
+
+    public function triggerLabel(?string $label)
+    {
+        return $this->config([
+            'triggerLabel' => $label,
         ]);
     }
 }
