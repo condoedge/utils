@@ -20,4 +20,8 @@ return [
     // When false, relationship overrides are completely disabled (zero overhead).
     // When true, plugins implementing interceptRelation() can modify relationship queries.
     'intercept-relations' => false,
+
+    'lazy_hierarchy' => [
+        'enabled' => false,
+    ],
 ];
