@@ -110,6 +110,7 @@ class ResponsiveTabs extends Rows
 
         return _SwipeableTabs(...$this->elements)
             ->commonClass("hidden {$this->breakpoint}:block mr-8")
+            ->activeTab($this->resolveActiveTabIndex())
             ->when($this->tabsClass, fn ($el) => $el->class($this->tabsClass))
             ->when($this->tabsCommonClass, fn ($el) => $el->commonClass($this->tabsCommonClass . " hidden {$this->breakpoint}:block"))
             ->when($this->tabsSelectedClass, fn ($el) => $el->selectedClass($this->tabsSelectedClass, $this->tabsUnselectedClass))
@@ -129,11 +130,36 @@ class ResponsiveTabs extends Rows
                 'readonly' => 'readonly',
             ])
             ->options($this->tabLabels)
-            ->value(request('tab_number') ?: 0)
+            ->value($this->resolveActiveTabIndex())
             ->onChange(
                 fn ($e) => $e
                     ->run($this->jsSelect())
             );
+    }
+
+    /**
+     * Resolve the initially active tab index from the request.
+     *
+     * Priority: tab_id (semantic, matched against each tab's ->id()) →
+     * tab_number (numeric index, legacy) → 0.
+     */
+    /**
+     * Resolve the initially active tab index from the request.
+     *
+     * Priority: tab_id (semantic, matched against each tab's ->id()) →
+     * tab_number (numeric index, legacy) → 0.
+     */
+    protected function resolveActiveTabIndex(): int
+    {
+        if ($tabId = request('tab_id')) {
+            foreach ($this->elements as $index => $tab) {
+                if ($tab && !empty($tab->id) && $tab->id === $tabId) {
+                    return $index;
+                }
+            }
+        }
+
+        return (int) (request('tab_number') ?: 0);
     }
 
     protected function jsSelect()
