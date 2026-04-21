@@ -33,6 +33,12 @@ Route::post('_execute-lazy', [\Condoedge\Utils\Http\Controllers\LazyComponentCon
 Route::post('_execute-lazy-batch', [\Condoedge\Utils\Http\Controllers\LazyComponentController::class, 'executeBatch'])
     ->name('utils.execute-lazy-batch');
 
+Route::get('_lazy-hierarchy/bootstrap', [\Condoedge\Utils\Http\Controllers\LazyHierarchyController::class, 'bootstrap'])
+    ->name('utils.lazy-hierarchy.bootstrap');
+
+Route::get('_lazy-hierarchy/nodes', [\Condoedge\Utils\Http\Controllers\LazyHierarchyController::class, 'children'])
+    ->name('utils.lazy-hierarchy.nodes');
+
 Route::get('api/tutorials/{name}', function (string $name) {
     $processor = new \Condoedge\Utils\Tutorials\TutorialProcessor();
     return response()->json($processor->process($name));

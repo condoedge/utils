@@ -3,11 +3,18 @@
 use Condoedge\Utils\Kompo\Elements\Collapsible;
 use Condoedge\Utils\Kompo\Elements\ResponsiveTabs;
 use Condoedge\Utils\Kompo\Elements\InternationalPhoneInput;
+use Condoedge\Utils\Kompo\Elements\LazyHierarchy;
 use Condoedge\Utils\Kompo\Elements\PasswordInput;
 
 if (!function_exists('_Collapsible')) {
     function _Collapsible() {
         return Collapsible::form(...func_get_args());
+    }
+}
+
+if (!function_exists('_LazyHierarchy')) {
+    function _LazyHierarchy() {
+        return LazyHierarchy::form(...func_get_args());
     }
 }
 
