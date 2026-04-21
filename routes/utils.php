@@ -27,13 +27,13 @@ Route::get('api/tutorials/{name}', function (string $name) {
     return response()->json($data);
 })->name('api.tutorials');
 
+Route::post('_execute-lazy', [\Condoedge\Utils\Http\Controllers\LazyComponentController::class, 'execute'])
+    ->name('utils.execute-lazy');
+
+Route::post('_execute-lazy-batch', [\Condoedge\Utils\Http\Controllers\LazyComponentController::class, 'executeBatch'])
+    ->name('utils.execute-lazy-batch');
+
 if (config('kompo-utils.lazy_hierarchy.enabled')) {
-    Route::post('_execute-lazy', [\Condoedge\Utils\Http\Controllers\LazyComponentController::class, 'execute'])
-        ->name('utils.execute-lazy');
-
-    Route::post('_execute-lazy-batch', [\Condoedge\Utils\Http\Controllers\LazyComponentController::class, 'executeBatch'])
-        ->name('utils.execute-lazy-batch');
-
     Route::get('_lazy-hierarchy/bootstrap', [\Condoedge\Utils\Http\Controllers\LazyHierarchyController::class, 'bootstrap'])
         ->name('utils.lazy-hierarchy.bootstrap');
 
