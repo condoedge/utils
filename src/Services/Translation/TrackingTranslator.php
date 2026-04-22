@@ -30,7 +30,11 @@ class TrackingTranslator extends Translator
             && preg_match('/^[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+)+$/', $key)
             && $this->getKeyFilter()->isValidKey($key)) {
             try {
-                MissingTranslation::upsertMissingTranslation($key, $this->getPackage());
+                MissingTranslation::upsertMissingTranslation(
+                    $key,
+                    $this->getPackage(),
+                    $locale ?: $this->locale
+                );
             } catch (\Exception $e) {}
  
             return $translation;

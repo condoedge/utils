@@ -26,7 +26,10 @@ class MissingTranslationsTable extends WhiteTable
     {
         return [
             _Th('utils.translation-key'),
+            _Th('utils.locale')->class('w-12'),
+            _Th('utils.hits')->class('w-12 text-right'),
             _Th('utils.package'),
+            _Th('utils.file'),
             _Th('utils.ignore')->class('text-right w-6'),
             _Th('utils.fixed')->class('text-right w-6'),
         ];
@@ -37,7 +40,13 @@ class MissingTranslationsTable extends WhiteTable
         return _TableRow(
             _Html($missingTranslation->translation_key),
 
-            _Html(substr($missingTranslation->package, -75) ?? '-'),
+            _Html($missingTranslation->locale ?: '-'),
+
+            _Html((string) ($missingTranslation->hit_count ?? 0))->class('text-right'),
+
+            _Html(substr($missingTranslation->package ?? '', -75) ?: '-'),
+
+            $this->fileLink($missingTranslation->file_path),
 
             _Checkbox()->name('ignored_at')->value($missingTranslation->ignored_at ? 1 : 0)
                 ->class('!mb-0 mx-auto')
@@ -47,6 +56,20 @@ class MissingTranslationsTable extends WhiteTable
                 ->class('!mb-0 mx-auto')
                 ->selfPost('markAsFixed', ['id' => $missingTranslation->id])->browse(),
         );
+    }
+
+    protected function fileLink(?string $filePath)
+    {
+        if (!$filePath) {
+            return _Html('-');
+        }
+
+        $scheme = config('kompo-utils.editor-scheme', 'vscode');
+        $absolute = base_path($filePath);
+        $href = $scheme . '://file/' . str_replace('\\', '/', $absolute);
+        $short = strlen($filePath) > 60 ? '…' . substr($filePath, -60) : $filePath;
+
+        return _Link($short)->href($href)->inNewTab()->class('text-info underline');
     }
 
     public function markAsIgnored($id)
