@@ -154,6 +154,21 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
             return new PluginsManager();
         });
 
+        // Translation analyzer services — singletons so each run of the analyzer
+        // command reuses the same scanner / detector instances across helper calls.
+        $this->app->singleton(\Condoedge\Utils\Services\Translation\PhpArrayLangReader::class);
+        $this->app->singleton(\Condoedge\Utils\Services\Translation\TranslationKeyFilter::class);
+        $this->app->singleton(\Condoedge\Utils\Services\Translation\ExcludedKeysRepository::class);
+        $this->app->singleton(\Condoedge\Utils\Services\Translation\LocaleFilesRepository::class);
+        $this->app->singleton(\Condoedge\Utils\Services\Translation\KeyCodeScanner::class);
+        $this->app->singleton(\Condoedge\Utils\Services\Translation\ObsoleteKeyDetector::class);
+        $this->app->singleton(\Condoedge\Utils\Services\Translation\VendorTranslationMerger::class);
+        $this->app->singleton(\Condoedge\Utils\Services\Translation\MissingTranslationsStore::class);
+        $this->app->singleton(
+            \Condoedge\Utils\Services\Translation\MissingTranslationCheckerInterface::class,
+            \Condoedge\Utils\Services\Translation\MissingTranslationChecker::class,
+        );
+
         // Register services for integrity checking
         $this->app->bind('finance.graph', function ($app) {
             return new Graph();

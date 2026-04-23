@@ -2,9 +2,9 @@
 
 namespace Condoedge\Utils\Command;
 
-use Condoedge\Utils\Models\MissingTranslation;
+use Condoedge\Utils\Services\Translation\MissingTranslationRecord;
+use Condoedge\Utils\Services\Translation\MissingTranslationsStore;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Cache;
 
 class MarkMissingTranslationCommand extends Command
 {
@@ -15,10 +15,15 @@ class MarkMissingTranslationCommand extends Command
 
     protected $description = 'Mark missing_translations rows as fixed or ignored (or reset) — used by the translator GUI.';
 
+    public function __construct(private readonly MissingTranslationsStore $store)
+    {
+        parent::__construct();
+    }
+
     public function handle(): int
     {
-        $keys = (array) $this->argument('keys');
-        $status = $this->option('status');
+        $keys    = (array) $this->argument('keys');
+        $status  = $this->option('status');
         $locales = (array) $this->option('locale');
 
         if (!in_array($status, ['fixed', 'ignored', 'reset'], true)) {
@@ -26,37 +31,26 @@ class MarkMissingTranslationCommand extends Command
             return Command::INVALID;
         }
 
-        $query = MissingTranslation::query()->whereIn('translation_key', $keys);
-        if (!empty($locales)) {
-            $query->whereIn('locale', $locales);
-        }
+        $matches = $this->store->query()
+            ->whereIn('translation_key', $keys)
+            ->when(!empty($locales), fn($q) => $q->whereIn('locale', $locales))
+            ->get();
 
-        $rows = $query->get();
-        if ($rows->isEmpty()) {
+        if ($matches->isEmpty()) {
             $this->warn('No matching rows.');
             return Command::SUCCESS;
         }
 
-        foreach ($rows as $row) {
+        foreach ($matches as $row) {
+            /** @var MissingTranslationRecord $row */
             match ($status) {
-                'fixed'   => $row->fixed_at = now(),
-                'ignored' => $row->ignored_at = now(),
-                'reset'   => [$row->fixed_at = null, $row->ignored_at = null],
+                'fixed'   => $this->store->markFixed($row->id),
+                'ignored' => $this->store->markIgnored($row->id),
+                'reset'   => $this->store->reset($row->id),
             };
-            $row->save(); // triggers the observer that clears the TrackingTranslator cache
         }
 
-        // Also clear any cache entries (belt & braces — the model observer does this
-        // but some wildcard entries may persist from the legacy single-key layout).
-        foreach ($keys as $key) {
-            Cache::forget('translation_missing_' . $key);
-            Cache::forget('translation_missing_' . $key . ':*');
-            foreach ($locales ?: [''] as $locale) {
-                Cache::forget('translation_missing_' . $key . ':' . ($locale ?: '*'));
-            }
-        }
-
-        $this->info("Marked {$rows->count()} row(s) as {$status}.");
+        $this->info("Marked {$matches->count()} row(s) as {$status}.");
         return Command::SUCCESS;
     }
 }

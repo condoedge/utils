@@ -155,32 +155,6 @@ class TranslationKeyFilter
 
     private function isExcludedKey(string $key): bool
     {
-        $excludedKeys = $this->getExcludedKeys();
-        return in_array($key, $excludedKeys, true);
-    }
-
-    private function getExcludedKeys(): array
-    {
-        $excludeFile = storage_path('app/translation_exclude_keys.json');
-
-        if (file_exists($excludeFile)) {
-            $content = file_get_contents($excludeFile);
-            $parsed = json_decode($content, true);
-            if (is_array($parsed)) return $parsed;
-        }
-
-        $defaultExcluded = [
-            '_CollapsibleSideSection', '_CollapsibleInnerSection', '_CollapsibleSideTitle', '_CollapsibleSideItem',
-            '_Button', '_Link', '_Flex', '_Html', '_Sax', '_Collapsible',
-            'class', 'id', 'href', 'src', 'alt', 'title', 'name', 'value', 'type',
-            'php', 'js', 'css', 'html', 'json', 'xml', 'api', 'admin',
-            'hidden', 'active', 'disabled', 'loading', 'home', 'login', 'logout'
-        ];
-
-        if (!file_exists($excludeFile)) {
-            @file_put_contents($excludeFile, json_encode($defaultExcluded, JSON_PRETTY_PRINT));
-        }
-
-        return $defaultExcluded;
+        return app(ExcludedKeysRepository::class)->contains($key);
     }
 }

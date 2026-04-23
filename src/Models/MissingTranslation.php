@@ -2,81 +2,97 @@
 
 namespace Condoedge\Utils\Models;
 
-use Condoedge\Utils\Models\Model;
-use Illuminate\Support\Facades\Cache;
+use Condoedge\Utils\Services\Translation\MissingTranslationRecord;
+use Condoedge\Utils\Services\Translation\MissingTranslationsQuery;
+use Condoedge\Utils\Services\Translation\MissingTranslationsStore;
 
-class MissingTranslation extends Model
+/**
+ * Façade over the JSON-backed {@see MissingTranslationsStore}. Kept in the
+ * Models namespace (and with the same class name the rest of the codebase
+ * was using) so existing callers — TrackingTranslator, the CLI commands,
+ * the Kompo table — keep working after the DB was removed.
+ *
+ * This class no longer extends Eloquent's `Model` — there is no database row
+ * behind it. Instances are thin wrappers around a read-only
+ * {@see MissingTranslationRecord} DTO.
+ */
+class MissingTranslation
 {
-    protected static function booted()
-    {
-        parent::booted();
+    public function __construct(public readonly MissingTranslationRecord $record) {}
 
-        static::saved(function (self $model) {
-            if ($model->wasChanged('fixed_at') || $model->wasChanged('ignored_at')) {
-                $model->clearDetectionCache();
-            }
-        });
+    // -------------------------------------------------------------- BC API
 
-        static::deleted(function (self $model) {
-            $model->clearDetectionCache();
-        });
+    /**
+     * Same signature the rest of the codebase was calling before the DB
+     * was replaced. Returns the upserted row (as a façade) so callers that
+     * do `->increment('hit_count')` or read properties keep working.
+     */
+    public static function upsertMissingTranslation(
+        string $translationKey,
+        $package = null,
+        ?string $locale = null,
+        ?string $filePath = null,
+    ): self {
+        $record = static::store()->upsert($translationKey, $locale, $package, $filePath);
+        return new self($record);
     }
 
-    public function clearDetectionCache(): void
+    public static function query(): MissingTranslationsQuery
     {
-        $key = $this->translation_key;
-        if (!$key) {
-            return;
+        return static::store()->query();
+    }
+
+    public static function findOrFail(string $id): self
+    {
+        $record = static::store()->findById($id);
+        if (!$record) {
+            throw new \RuntimeException("Missing translation [{$id}] not found.");
         }
-
-        // Clear both the per-locale cache entry and the legacy wildcard entry used before locale split.
-        Cache::forget('translation_missing_' . $key . ':' . ($this->locale ?? '*'));
-        Cache::forget('translation_missing_' . $key . ':*');
-        Cache::forget('translation_missing_' . $key);
+        return new self($record);
     }
 
-    public static function upsertMissingTranslation($translationKey, $package = null, ?string $locale = null, ?string $filePath = null)
+    public static function unresolved(): MissingTranslationsQuery
     {
-        $cacheKey = 'translation_missing_' . $translationKey . ':' . ($locale ?? '*');
-
-        if ($cached = Cache::get($cacheKey)) {
-            $cached->increment('hit_count');
-            $cached->last_seen_at = now();
-            $cached->save();
-            return $cached;
-        }
-
-        $translation = static::where('translation_key', $translationKey)
-            ->where(function ($q) use ($locale) {
-                $locale === null ? $q->whereNull('locale') : $q->where('locale', $locale);
-            })
-            ->first();
-
-        if (!$translation) {
-            $translation = new static();
-            $translation->translation_key = $translationKey;
-            $translation->locale = $locale;
-            $translation->hit_count = 0;
-        }
-
-        $translation->package = $package ?: $translation->package;
-        $translation->file_path = $filePath ?: $translation->file_path;
-        $translation->hit_count = ($translation->hit_count ?? 0) + 1;
-        $translation->last_seen_at = now();
-        $translation->save();
-
-        Cache::put($cacheKey, $translation, now()->addDay());
-
-        return $translation;
+        return static::store()->query()
+            ->whereNull('fixed_at')
+            ->whereNull('ignored_at');
     }
 
-    public function scopeUnresolved($query)
+    // -------------------------------------------------------------- instance
+
+    /**
+     * Proxy reads to the underlying record so callers can keep using
+     * `$row->translation_key`, `$row->hit_count`, etc.
+     */
+    public function __get(string $name): mixed
     {
-        return $query->whereNull('fixed_at')->whereNull('ignored_at');
+        return $this->record->{$name} ?? null;
     }
 
-    public function scopeForLocale($query, ?string $locale)
+    public function markFixed(): self
     {
-        return $query->where('locale', $locale);
+        return new self(static::store()->markFixed($this->record->id) ?? $this->record);
+    }
+
+    public function markIgnored(): self
+    {
+        return new self(static::store()->markIgnored($this->record->id) ?? $this->record);
+    }
+
+    public function reset(): self
+    {
+        return new self(static::store()->reset($this->record->id) ?? $this->record);
+    }
+
+    public function delete(): bool
+    {
+        return static::store()->delete($this->record->id);
+    }
+
+    // -------------------------------------------------------------- helpers
+
+    private static function store(): MissingTranslationsStore
+    {
+        return app(MissingTranslationsStore::class);
     }
 }
