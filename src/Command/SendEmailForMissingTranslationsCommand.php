@@ -2,58 +2,49 @@
 
 namespace Condoedge\Utils\Command;
 
+use Condoedge\Utils\Services\Translation\MissingTranslationRecord;
+use Condoedge\Utils\Services\Translation\MissingTranslationsStore;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
-use Symfony\Component\Finder\Finder;
 
 class SendEmailForMissingTranslationsCommand extends Command
 {
-
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
     protected $signature = 'app:send-missing-translations-email';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
     protected $description = 'Sends an email report of missing translations to the configured translator email address.';
 
-
-    /**
-     * Execute the console command.
-     */
-    public function handle()
+    public function __construct(private readonly MissingTranslationsStore $store)
     {
-        $missingTranslations = \Condoedge\Utils\Models\MissingTranslation::unresolved()->get();
+        parent::__construct();
+    }
 
-        if ($missingTranslations->isEmpty()) {
+    public function handle(): int
+    {
+        $unresolved = $this->store->unresolved();
+
+        if ($unresolved->isEmpty()) {
             $this->info('No missing translations found.');
-            return 0;
+            return Command::SUCCESS;
         }
 
         $message = "Missing Translations Report\n\n";
-        $message .= "Total: " . $missingTranslations->count() . " missing translation(s)\n\n";
-        
-        foreach ($missingTranslations as $translation) {
-            $message .= "- {$translation->translation_key}\n";
-            if ($translation->created_at) {
-                $message .= "  Seen in file: {$translation->package}\n";
+        $message .= "Total: " . $unresolved->count() . " missing translation(s)\n\n";
+
+        foreach ($unresolved as $row) {
+            /** @var MissingTranslationRecord $row */
+            $message .= "- {$row->translation_key}\n";
+            if ($row->package) {
+                $message .= "  Seen in file: {$row->package}\n";
             }
             $message .= "\n";
         }
 
-        Mail::raw($message, function ($mail) use ($missingTranslations) {
+        Mail::raw($message, function ($mail) use ($unresolved) {
             $mail->to(config('kompo-utils.translator-email'))
-                ->subject('Missing Translations Report - ' . $missingTranslations->count() . ' keys');
+                ->subject('Missing Translations Report - ' . $unresolved->count() . ' keys');
         });
 
         $this->info('Email sent to ' . config('kompo-utils.translator-email'));
-        
-        return 0;
+        return Command::SUCCESS;
     }
 }

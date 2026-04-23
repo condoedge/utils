@@ -2,21 +2,35 @@
 
 namespace Condoedge\Utils\Command;
 
+use Condoedge\Utils\Services\Translation\ExcludedKeysRepository;
+use Condoedge\Utils\Services\Translation\KeyCodeScanner;
+use Condoedge\Utils\Services\Translation\LocaleFilesRepository;
+use Condoedge\Utils\Services\Translation\MissingTranslationCheckerInterface;
+use Condoedge\Utils\Services\Translation\ObsoleteKeyDetector;
+use Condoedge\Utils\Services\Translation\VendorTranslationMerger;
 use Illuminate\Console\Command;
-use Symfony\Component\Finder\Finder;
-use Condoedge\Utils\Services\Translation\TranslationKeyFilter;
 
 class MissingTranslationAnalyzerCommand extends Command
 {
     /**
-     * Map of translation keys to their file locations
-     *
-     * @var array
+     * Options for the --json report used by the default "missing keys" run.
+     * Kept UNESCAPED_SLASHES so file paths stay readable in the output.
      */
-    private $keyFileMap = [];
+    private const MISSING_JSON_OPTIONS = JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES;
 
-    /** @var TranslationKeyFilter|null */
-    private $keyFilter;
+    /**
+     * Options for sub-reports (empty values, obsolete keys, locale diff).
+     * Kept UNESCAPED_UNICODE so localized keys render verbatim.
+     */
+    private const SUBREPORT_JSON_OPTIONS = JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE;
+
+    /**
+     * Per-key source locations populated by {@see extractAllTranslationKeys()}
+     * and consumed by {@see checkMissingTranslations()} / the output helpers.
+     *
+     * @var array<string, array<int, array{file:string, line:int, context:string}>>
+     */
+    private array $keyFileMap = [];
 
     /**
      * The name and signature of the console command.
@@ -28,7 +42,14 @@ class MissingTranslationAnalyzerCommand extends Command
                         {--show-excluded : Show current excluded keys}
                         {--reset-excluded : Reset excluded keys to default}
                         {--json : Output missing translations as JSON with file locations}
-                        {--merge-vendor : Merge translations from vendor packages (condoedge/*, kompo/*) into project}';
+                        {--merge-vendor : Merge translations from vendor packages (condoedge/*, kompo/*) into project}
+                        {--include-plain-text : Include plain-text keys (letters+spaces only) — more coverage, more false positives}
+                        {--locale=* : Locales to check (default: config app.supported_locales or [en, fr])}
+                        {--check-empty-values : List keys with empty or self-referencing values in *.json files}
+                        {--check-obsolete : List keys present in JSON files but never used in code}
+                        {--diff-locales : Show keys present in one locale but missing in others}
+                        {--universal-detection : Capture any quoted string that LOOKS like a translation key — scoped to UI files only (Kompo/Blade/Vue/Enums with label). Higher coverage, more false positives.}
+                        {--include-triaged : Include keys already marked fixed or ignored in the DB (by default, triaged rows are hidden from the report).}';
 
     /**
      * The console command description.
@@ -37,409 +58,141 @@ class MissingTranslationAnalyzerCommand extends Command
      */
     protected $description = 'Analyze and find missing translation keys in the application';
 
-    /**
-     * Translation function patterns to match
-     */
-    private const TRANSLATION_PATTERNS = [
-        '__' => '/__\s*\(\s*[\'"]([^\'"]+)[\'"]\s*\)/',
-        'trans' => '/trans\s*\(\s*[\'"]([^\'"]+)[\'"]\s*\)/',
-        '@lang' => '/@lang\s*\(\s*[\'"]([^\'"]+)[\'"]\s*\)/',
-        'trans_choice' => '/trans_choice\s*\(\s*[\'"]([^\'"]+)[\'"]\s*,/',
-        'Lang::get' => '/Lang::get\s*\(\s*[\'"]([^\'"]+)[\'"]\s*\)/',
-        'custom_translator' => '/\$this->translator\s*\(\s*[\'"]([^\'"]+)[\'"]\s*\)/',
-        'custom_helpers' => '/_[a-zA-Z]+\s*\(\s*[\'"]([^\'"]+)[\'"]\s*\)/',
-        'underscore' => '/(?<![a-zA-Z])_\s*\(\s*[\'"]([^\'"]+)[\'"]\s*\)/',
-        'titles' => '/protected\s+\$_Title\s*=\s*[\'"](.+?)[\'"]\s*;/',
-    ];
+    public function __construct(
+        private readonly KeyCodeScanner $scanner,
+        private readonly LocaleFilesRepository $localeFiles,
+        private readonly MissingTranslationCheckerInterface $missingChecker,
+        private readonly ExcludedKeysRepository $excludedKeys,
+        private readonly ObsoleteKeyDetector $obsoleteDetector,
+        private readonly VendorTranslationMerger $vendorMerger,
+    ) {
+        parent::__construct();
+    }
 
     /**
-     * File exclusion configuration
+     * Execute the console command. Options are mutually exclusive — the first
+     * matching branch wins; the final arm is the default "check missing" flow.
      */
-    private const FILE_EXCLUSIONS = [
-        'files' => [
-            'composer.lock', 'package-lock.json', 'yarn.lock', 'webpack.mix.js',
-            'tailwind.config.js', 'vite.config.js', '_ide_helper.php', 'server.php', 'artisan'
-        ],
-        'patterns' => [
-            '/\.min\.(js|css)$/', '/\.lock$/', '/Test\.php$/', '/_test\.php$/',
-            '/Migration\.php$/', '/Seeder\.php$/', '/Factory\.php$/'
-        ],
-        'paths' => [
-            '/vendor/', '/node_modules/', '/storage/', '/bootstrap/cache/',
-            '/public/build/', '/public/hot'
-        ]
-    ];
-
-    /**
-     * File-like extensions to treat as filenames and ignore as translation keys
-     */
-    private const FILE_LIKE_EXTENSIONS = [
-        'txt', 'pdf', 'xlsx', 'xls', 'csv',
-        'doc', 'docx', 'ppt', 'pptx',
-        'png', 'jpg', 'jpeg', 'gif', 'svg', 'webp',
-        'zip', 'rar', 'tar', 'gz', '7z',
-        'mp3', 'mp4', 'mov', 'avi', 'mkv', 'webm',
-        'log', 'md', 'json', 'xml', 'html', 'htm', 'css', 'js', 'ts',
-        'yml', 'yaml', 'ini'
-    ];
-
-    /**
-     * Execute the console command.
-     */
-    public function handle()
+    public function handle(): void
     {
-        if ($this->option('show-excluded')) {
-            $this->showExcludedKeys();
-            return;
-        }
+        match (true) {
+            $this->option('show-excluded')          => $this->showExcludedKeys(),
+            $this->option('reset-excluded')         => $this->resetExcludedKeys(),
+            (bool) $this->option('exclude-key')     => $this->addToExcludeList((array) $this->option('exclude-key')),
+            $this->option('merge-vendor')           => $this->mergeVendorTranslations(),
+            $this->option('check-empty-values')     => $this->checkEmptyValues(),
+            $this->option('check-obsolete')         => $this->checkObsoleteKeys($this->extractAllTranslationKeys()),
+            $this->option('diff-locales')           => $this->diffLocales(),
+            default                                 => $this->runDefaultMissingCheck(),
+        };
+    }
 
-        if ($this->option('reset-excluded')) {
-            $this->resetExcludedKeys();
-            return;
-        }
-
-        if ($excludeKeys = $this->option('exclude-key')) {
-            $this->addToExcludeList($excludeKeys);
-            return;
-        }
-
-        if ($this->option('merge-vendor')) {
-            $this->mergeVendorTranslations();
-            return;
-        }
-
+    private function runDefaultMissingCheck(): void
+    {
         $keys = $this->extractAllTranslationKeys();
         $this->indexKeys($keys);
         $this->checkMissingTranslations($keys);
     }
     
-    private function extractAllTranslationKeys()
+    private function extractAllTranslationKeys(): array
     {
-
-        $finder = new Finder();
-        $files = $finder->files()
-            ->in(base_path())
-            ->name('*.php')
-            ->name('*.blade.php')
-            ->exclude('node_modules')
-            ->exclude('storage')
-            ->exclude('bootstrap/cache')
-            ->notName('*.lock')
-            ->notName('*.min.js')
-            ->notName('*.min.css')
-            ->notPath('*/migrations/*')
-            ->notPath('*/seeders/*')
-            ->notPath('*/factories/*')
-            ->notPath('*/tests/*')
-            ->notPath('*/Test*')
-            ->notPath('*/_ide_helper*')
-            ->notPath('*/config/cache/*')
-            ->notPath('*/lang/*')
-            ->notPath('*/resources/lang/*')
-            ->filter(function (\SplFileInfo $file) {
-                $path = $file->getRealPath();
-                
-                // If file is not in vendor, include it
-                if (strpos($path, DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR) === false) {
-                    return true;
-                }
-                
-                // If file is in vendor/condoedge or vendor/kompo, include it
-                if (strpos($path, DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'condoedge' . DIRECTORY_SEPARATOR) !== false ||
-                    strpos($path, DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'kompo' . DIRECTORY_SEPARATOR) !== false) {
-                    return true;
-                }
-                
-                // Exclude all other vendor files
-                return false;
-            });
-
-        $keys = [];
-        $this->keyFileMap = []; // Store key to file mappings
-
-        foreach ($files as $file) {
-            // Skip files that shouldn't contain translations
-            if ($this->shouldSkipFile($file->getFilename(), $file->getRealPath())) {
-                continue;
-            }
-
-            $content = file_get_contents($file->getRealPath());
-            $fileKeys = $this->extractKeysFromContent($content, $file->getRealPath());
-
-            foreach ($fileKeys as $keyData) {
-                $key = $keyData['key'];
-                $keys[] = $key;
-
-                // Store file location and context for each key
-                if (!isset($this->keyFileMap[$key])) {
-                    $this->keyFileMap[$key] = [];
-                }
-                $this->keyFileMap[$key][] = [
-                    'file' => str_replace(base_path() . DIRECTORY_SEPARATOR, '', $file->getRealPath()),
-                    'line' => $keyData['line'],
-                    'context' => $keyData['context']
-                ];
-            }
-        }
-
-        return array_unique($keys);
+        $result = $this->scanner->scan(
+            $this->localeFiles->linkedPackages(),
+            (bool) $this->option('universal-detection'),
+            (bool) $this->option('include-plain-text'),
+        );
+        $this->keyFileMap = $result['locations'];
+        return $result['keys'];
     }
 
-    private function indexKeys($keys)
+    private function indexKeys(array $keys): void
     {
         $this->info("Indexing " . count($keys) . " translation keys...");
-    
-        // Store in cache for quick access
-        cache(['translation_keys' => $keys], now()->addDay());
-        
-        // Also save to file for reference
-        file_put_contents(
-            storage_path('app/translation_keys.json'), 
-            json_encode($keys, JSON_PRETTY_PRINT)
-        );
+        $this->localeFiles->indexKeys($keys);
     }
 
-    private function checkMissingTranslations($keys)
+    private function checkMissingTranslations(array $keys): void
     {
-        $locales = ['en', 'fr']; // Configure your languages
-        $missing = [];
-
         if (!$this->option('json')) {
-            $this->info("Total translation keys found: " . count($keys));
+            $this->info('Total translation keys found: ' . count($keys));
         }
 
-        foreach ($locales as $locale) {
+        $locales = $this->resolveLocales();
+        $missingByLocale = $this->missingChecker->find(
+            $keys,
+            $locales,
+            (bool) $this->option('include-triaged')
+        );
+
+        $report = [];
+        foreach ($missingByLocale as $locale => $missingKeys) {
             if (!$this->option('json')) {
                 $this->info("Checking translations for locale: {$locale}");
             }
-
-            foreach ($keys as $key) {
-                if (!$this->hasTranslation($key, $locale)) {
-                    $locations = $this->keyFileMap[$key] ?? [];
-                    
-                    $missingData = [
-                        'key' => $key,
-                        'locations' => $locations
-                    ];
-                    $missing[$locale][] = $missingData;
-                    
-                    // Save to MissingTranslation table with file locations
-                    try {
-                        $firstLocation = !empty($locations) ? $locations[0] : null;
-
-                        $filename = $firstLocation['file'] ?? null;
-
-                        $filename = str_contains($filename, 'MissingTranslationAnalyzerCommand') ? null : $filename;
-
-                        \Condoedge\Utils\Models\MissingTranslation::upsertMissingTranslation($key, $firstLocation['file'] ?? null);
-                    } catch (\Exception $e) {
-                        // Silently continue if database save fails
-                    }
-                }
+            foreach ($missingKeys as $key) {
+                $locations = $this->keyFileMap[$key] ?? [];
+                $report[$locale][] = ['key' => $key, 'locations' => $locations];
+                $this->persistMissing($key, $locale, $locations);
             }
         }
 
         if ($this->option('json')) {
-            $this->outputJson($missing);
-        } else {
-            $this->displayMissingTranslations($missing);
+            $this->outputJson($report);
+            return;
+        }
 
-            // Ask if user wants to add some keys to exclusion list
-            if (!empty($missing)) {
-                $this->info("\nWant to add some keys to the exclusion list?");
-                $this->info("You can edit the file: " . storage_path('app/translation_exclude_keys.json'));
+        $this->displayMissingTranslations($report);
+        if (!empty($report)) {
+            $this->info("\nWant to add some keys to the exclusion list?");
+            $this->info('You can edit the file: ' . storage_path('app/translation_exclude_keys.json'));
+        }
+    }
+
+    private function persistMissing(string $key, string $locale, array $locations): void
+    {
+        try {
+            $filename = $locations[0]['file'] ?? null;
+            if ($filename && str_contains($filename, 'MissingTranslationAnalyzerCommand')) {
+                $filename = null;
             }
+            \Condoedge\Utils\Models\MissingTranslation::upsertMissingTranslation($key, $filename, $locale, $filename);
+        } catch (\Throwable $e) {
+            // Silently continue if DB save fails — JSON is the source of truth.
         }
     }
-    private function hasTranslation($key, $locale)
+
+    private function resolveLocales(): array
     {
-        // Verificar si existe la traducción
-        app()->setLocale($locale);
-        
-        // Usar Lang::has() que es más eficiente
-        return \Lang::has($key, $locale);
-    }
-   
-    private function extractKeysFromContent($content, $filepath = '')
-    {
-        if ($this->shouldSkipContent($content)) {
-            return [];
-        }
-
-        $keys = [];
-        $lines = explode("\n", $content);
-
-        foreach (self::TRANSLATION_PATTERNS as $name => $pattern) {
-            if (preg_match_all($pattern, $content, $matches, PREG_OFFSET_CAPTURE)) {
-                foreach ($matches[1] as $match) {
-                    $key = trim($match[0]);
-                    $offset = $match[1];
-
-                    // Find line number from offset
-                    $lineNumber = substr_count(substr($content, 0, $offset), "\n") + 1;
-
-                    // Get context (surrounding lines)
-                    $contextStart = max(0, $lineNumber - 3);
-                    $contextEnd = min(count($lines), $lineNumber + 2);
-                    $contextLines = array_slice($lines, $contextStart, $contextEnd - $contextStart);
-                    $context = implode("\n", $contextLines);
-
-                    if ($this->isValidTranslationKey($key, $content, $key)) {
-                        $keys[] = [
-                            'key' => $key,
-                            'line' => $lineNumber,
-                            'context' => $context
-                        ];
-                    }
-                }
-            }
-        }
-
-        return $keys;
+        return $this->localeFiles->resolveLocales((array) $this->option('locale'));
     }
 
-    private function getMatchContext($content, $match)
+    private function addToExcludeList(array $keys): void
     {
-        $position = strpos($content, $match);
-        $start = max(0, $position - 100);
-        $length = min(200, strlen($content) - $start);
-        
-        return substr($content, $start, $length);
+        $added = $this->excludedKeys->add($keys);
+        $this->info("Added {$added} key(s) to exclusion list.");
     }
 
-    private function isValidTranslationKey($key, $content = '', $matchedText = '')
+    private function showExcludedKeys(): void
     {
-        $context = $matchedText ? $this->getMatchContext($content, $matchedText) : '';
-        return $this->getKeyFilter()->isValidKey($key, $context);
-    }
-
-    private function getKeyFilter(): TranslationKeyFilter
-    {
-        if (!$this->keyFilter) {
-            $this->keyFilter = new TranslationKeyFilter();
-        }
-        return $this->keyFilter;
-    }
-    
-    private function shouldSkipFile($filename, $filepath)
-    {
-        $exclusions = self::FILE_EXCLUSIONS;
-
-        // Check specific files
-        if (in_array($filename, $exclusions['files'])) {
-            return true;
-        }
-
-        // Check file patterns
-        foreach ($exclusions['patterns'] as $pattern) {
-            if (preg_match($pattern, $filename)) {
-                return true;
-            }
-        }
-
-        // Check paths
-        foreach ($exclusions['paths'] as $path) {
-            if (strpos($filepath, $path) !== false) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-    
-    private function shouldSkipContent($content)
-    {
-        $skipPatterns = [
-            '/composer\.lock/', '/node_modules/', '/vendor\/\//',
-            '/^\s*\/\*\*/', 
-        ];
-        
-        foreach ($skipPatterns as $pattern) {
-            if (preg_match($pattern, $content)) {
-                return true;
-            }
-        }
-        
-        return false;
-    }
-    
-    private function isExcludedKey($key)
-    {
-        // Load excluded keys from file if exists
-        $excludedKeys = $this->getExcludedKeys();
-        
-        return in_array($key, $excludedKeys);
-    }
-    
-    private function getExcludedKeys()
-    {
-        $excludeFile = storage_path('app/translation_exclude_keys.json');
-        
-        if (file_exists($excludeFile)) {
-            $content = file_get_contents($excludeFile);
-            return json_decode($content, true) ?: [];
-        }
-
-        // Default keys to exclude - common function names and framework-specific terms
-        $defaultExcluded = [
-            // Framework/Helper functions
-            '_CollapsibleSideSection', '_CollapsibleInnerSection', '_CollapsibleSideTitle', '_CollapsibleSideItem',
-            '_Button', '_Link', '_Flex', '_Html', '_Sax', '_Collapsible',
-            
-            // Common attributes/properties
-            'class', 'id', 'href', 'src', 'alt', 'title', 'name', 'value', 'type',
-            
-            // Technical terms
-            'php', 'js', 'css', 'html', 'json', 'xml', 'api', 'admin',
-            
-            // States/values
-            'hidden', 'active', 'disabled', 'loading', 'home', 'login', 'logout'
-        ];
-        
-        // Create exclusion file if it doesn't exist
-        if (!file_exists($excludeFile)) {
-            file_put_contents($excludeFile, json_encode($defaultExcluded, JSON_PRETTY_PRINT));
-        }
-        
-        return $defaultExcluded;
-    }
-    
-    private function addToExcludeList($keys)
-    {
-        $excludeFile = storage_path('app/translation_exclude_keys.json');
-        $currentExcluded = $this->getExcludedKeys();
-        
-        $newExcluded = array_unique(array_merge($currentExcluded, (array)$keys));
-        
-        file_put_contents($excludeFile, json_encode($newExcluded, JSON_PRETTY_PRINT));
-        
-        $this->info("Added " . count((array)$keys) . " keys to exclusion list.");
-    }
-    
-    private function showExcludedKeys()
-    {
-        $excluded = $this->getExcludedKeys();
-        $this->info("Currently excluded keys (" . count($excluded) . "):");
+        $excluded = $this->excludedKeys->all();
+        $this->info('Currently excluded keys (' . count($excluded) . '):');
         foreach ($excluded as $key) {
             $this->line("  - {$key}");
         }
     }
-    
-    private function resetExcludedKeys()
+
+    private function resetExcludedKeys(): void
     {
-        $excludeFile = storage_path('app/translation_exclude_keys.json');
-        if (file_exists($excludeFile)) {
-            unlink($excludeFile);
-        }
-        $this->info("Exclusion list reset to default values.");
+        $this->excludedKeys->reset();
+        $this->info('Exclusion list reset to default values.');
     }
     
-    private function outputJson($missing)
+    private function outputJson(array $missing): void
     {
-        echo json_encode($missing, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+        echo json_encode($missing, self::MISSING_JSON_OPTIONS);
     }
 
-    private function displayMissingTranslations($missing)
+    private function displayMissingTranslations(array $missing): void
     {
         foreach ($missing as $locale => $items) {
             if (!empty($items)) {
@@ -455,82 +208,85 @@ class MissingTranslationAnalyzerCommand extends Command
         }
     }
 
-    private function mergeVendorTranslations()
+    private function checkEmptyValues(): void
+    {
+        $report = $this->localeFiles->emptyValuesReport($this->resolveLocales());
+
+        if ($this->option('json')) {
+            echo json_encode($report, self::SUBREPORT_JSON_OPTIONS);
+            return;
+        }
+
+        foreach ($report as $locale => $buckets) {
+            $this->info("Locale [{$locale}]:");
+            $this->line('  Empty values: ' . count($buckets['empty']));
+            foreach ($buckets['empty'] as $k) $this->line("    - {$k}");
+            $this->line('  Self-referencing (value === key): ' . count($buckets['self_ref']));
+            foreach ($buckets['self_ref'] as $k) $this->line("    - {$k}");
+            $this->line('');
+        }
+    }
+
+    private function checkObsoleteKeys(array $usedKeys): void
+    {
+        $result = $this->obsoleteDetector->detect($usedKeys, $this->resolveLocales());
+        $report = $result['report'];
+
+        if ($this->option('json')) {
+            echo json_encode($report, self::SUBREPORT_JSON_OPTIONS);
+            return;
+        }
+
+        $this->info("Dynamic prefixes detected (" . count($result['prefixes']) . "): " . implode(', ', $result['prefixes']));
+        $this->info("Skipped {$result['skippedByDynamicPrefix']} candidate keys matching dynamic prefixes.");
+        $this->info("Literal-grep pass rescued {$result['rescued']} more keys (found as quoted strings elsewhere in code).");
+        $this->line('');
+
+        foreach ($report as $locale => $keys) {
+            $this->warn("Locale [{$locale}] — " . count($keys) . ' obsolete keys (present in JSON, never used in code):');
+            foreach ($keys as $k) $this->line("  - {$k}");
+            $this->line('');
+        }
+    }
+
+    private function diffLocales(): void
+    {
+        $report = $this->localeFiles->diffLocalesReport($this->resolveLocales());
+
+        if ($this->option('json')) {
+            echo json_encode($report, self::SUBREPORT_JSON_OPTIONS);
+            return;
+        }
+
+        foreach ($report as $bucket => $keys) {
+            $this->warn(str_replace('_', ' ', $bucket) . ' (' . count($keys) . '):');
+            foreach ($keys as $k) $this->line("  - {$k}");
+            $this->line('');
+        }
+    }
+
+    private function mergeVendorTranslations(): void
     {
         $this->info("Merging vendor package translations...");
 
-        $vendorPaths = [
-            'vendor/condoedge',
-            'vendor/kompo'
-        ];
+        $report = $this->vendorMerger->merge();
 
-        $locales = ['en', 'fr'];
-        $mergedTranslations = [];
-
-        foreach ($locales as $locale) {
-            $mergedTranslations[$locale] = [];
+        foreach ($report['missingPaths'] as $missing) {
+            $this->warn("Vendor path not found: {$missing}");
         }
 
-        // Scan vendor directories for translation files
-        $packageCount = 0;
-        foreach ($vendorPaths as $vendorPath) {
-            $fullPath = base_path($vendorPath);
-
-            if (!is_dir($fullPath)) {
-                $this->warn("Vendor path not found: {$vendorPath}");
-                continue;
-            }
-
-            $packages = glob($fullPath . '/*', GLOB_ONLYDIR);
-
-            foreach ($packages as $package) {
-                $packageName = basename(dirname($package)) . '/' . basename($package);
-
-                foreach ($locales as $locale) {
-                    $translationFile = $package . '/resources/lang/' . $locale . '.json';
-
-                    if (file_exists($translationFile)) {
-                        $translations = json_decode(file_get_contents($translationFile), true);
-
-                        if ($translations && is_array($translations)) {
-                            $count = count($translations);
-                            $this->line("  Found {$count} {$locale} translations in {$packageName}");
-                            $mergedTranslations[$locale] = array_merge($mergedTranslations[$locale], $translations);
-                            $packageCount++;
-                        }
-                    }
-                }
-            }
+        foreach ($report['discoveries'] as $d) {
+            $label = $d['source'] === 'json' ? 'JSON' : 'PHP-array';
+            $this->line("  Found {$d['count']} {$d['locale']} {$label} translations in {$d['package']}");
         }
 
-        if ($packageCount === 0) {
+        if ($report['packageCount'] === 0) {
             $this->warn("No vendor translations found.");
             return;
         }
 
-        // Load existing project translations
-        foreach ($locales as $locale) {
-            $projectFile = resource_path("lang/{$locale}.json");
-            $projectTranslations = [];
-
-            if (file_exists($projectFile)) {
-                $projectTranslations = json_decode(file_get_contents($projectFile), true) ?: [];
-            }
-
-            // Merge: project translations take priority over vendor
-            $finalTranslations = array_merge($mergedTranslations[$locale], $projectTranslations);
-
-            // Sort alphabetically
-            ksort($finalTranslations);
-
-            // Save back to project
-            file_put_contents(
-                $projectFile,
-                json_encode($finalTranslations, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n"
-            );
-
-            $newCount = count($finalTranslations) - count($projectTranslations);
-            $this->info("✓ Merged {$locale}.json - Added {$newCount} new translations, total: " . count($finalTranslations));
+        foreach ($report['merges'] as $locale => $stats) {
+            $this->info("✓ Merged {$locale}.json - Added {$stats['added']} new translations, total: {$stats['total']}");
         }
 
         $this->info("\n✨ Vendor translations merged successfully!");

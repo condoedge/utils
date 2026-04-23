@@ -20,20 +20,25 @@ use Condoedge\Utils\Kompo\Plugins\EnableResponsiveTable;
 use Condoedge\Utils\Kompo\Plugins\EnableWhiteTableStyle;
 use Condoedge\Utils\Kompo\Plugins\TableIntoFormSetValuesPlugin;
 use Condoedge\Utils\Services\GlobalConfig\GlobalConfigServiceContract;
-
 use App\Models\User;
 use Condoedge\Utils\Command\FixIncompleteAddressesCommand;
 use Condoedge\Utils\Command\RunComplianceValidationCommand;
 use Condoedge\Utils\Events\MultipleComplianceIssuesDetected;
 use Condoedge\Utils\Kompo\Plugins\DebugReload;
-use Condoedge\Utils\Kompo\Plugins\HasIntroAnimation;
 use Condoedge\Utils\Listeners\HandleBatchComplianceNotifications;
 use Condoedge\Utils\Services\ComplianceValidation\NotificationStrategyRegistry;
 use Condoedge\Utils\Services\Maps\GeocodioService;
 use Condoedge\Utils\Services\Maps\GoogleMapsService;
 use Condoedge\Utils\Services\Maps\NominatimService;
 use Illuminate\Support\Facades\Event;
+use Condoedge\Utils\Command\ClearLazyComponentsCommand;
 use Condoedge\Utils\Command\MissingTranslationAnalyzerCommand;
+use Condoedge\Utils\Command\MarkMissingTranslationCommand;
+use Condoedge\Utils\Command\OpenTranslatorCommand;
+use Condoedge\Utils\Command\LinkedPackagesCommand;
+use Condoedge\Utils\Kompo\Common\Grid;
+use Condoedge\Utils\Kompo\Plugins\HasTutorial;
+use Condoedge\Utils\Kompo\Plugins\LazyComponentPlugin;
 
 class CondoedgeUtilsServiceProvider extends ServiceProvider
 {
@@ -62,6 +67,7 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
             __DIR__ . '/../config/kompo-utils.php' => config_path('kompo-utils.php'),
             __DIR__ . '/../config/kompo-files.php' => config_path('kompo-files.php'),
             __DIR__ . '/../config/kompo-tags.php' => config_path('kompo-tags.php'),
+            __DIR__ . '/../config/analytics.php' => config_path('analytics.php'),
         ], 'kompo-utils-config');
 
         $this->publishes([
@@ -84,8 +90,9 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
 
         Query::setPlugins([
             ExportPlugin::class,
-            HasIntroAnimation::class,
+            HasTutorial::class,
             EnableWhiteTableStyle::class,
+            LazyComponentPlugin::class,
         ]);
 
         Table::setPlugins([
@@ -93,21 +100,29 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
             EnableWhiteTableStyle::class,
             EnableResponsiveTable::class,
             TableIntoFormSetValuesPlugin::class,
-            HasIntroAnimation::class,
+            HasTutorial::class,
+            LazyComponentPlugin::class,
         ]);
 
         Form::setPlugins([
             DebugReload::class,
-            HasIntroAnimation::class,
+            HasTutorial::class,
+            LazyComponentPlugin::class,
         ]);
 
         Modal::setPlugins([
             HasScroll::class,
             DebugReload::class,
-            HasIntroAnimation::class,
+            HasTutorial::class,
+            LazyComponentPlugin::class,
+        ]);
+
+        Grid::setPlugins([
+            LazyComponentPlugin::class,
         ]);
 
         $this->registerComplianceNotificationSystem();
+        $this->registerAnalyticsListeners();
     }
 
     /**
@@ -139,6 +154,21 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
             return new PluginsManager();
         });
 
+        // Translation analyzer services — singletons so each run of the analyzer
+        // command reuses the same scanner / detector instances across helper calls.
+        $this->app->singleton(\Condoedge\Utils\Services\Translation\PhpArrayLangReader::class);
+        $this->app->singleton(\Condoedge\Utils\Services\Translation\TranslationKeyFilter::class);
+        $this->app->singleton(\Condoedge\Utils\Services\Translation\ExcludedKeysRepository::class);
+        $this->app->singleton(\Condoedge\Utils\Services\Translation\LocaleFilesRepository::class);
+        $this->app->singleton(\Condoedge\Utils\Services\Translation\KeyCodeScanner::class);
+        $this->app->singleton(\Condoedge\Utils\Services\Translation\ObsoleteKeyDetector::class);
+        $this->app->singleton(\Condoedge\Utils\Services\Translation\VendorTranslationMerger::class);
+        $this->app->singleton(\Condoedge\Utils\Services\Translation\MissingTranslationsStore::class);
+        $this->app->singleton(
+            \Condoedge\Utils\Services\Translation\MissingTranslationCheckerInterface::class,
+            \Condoedge\Utils\Services\Translation\MissingTranslationChecker::class,
+        );
+
         // Register services for integrity checking
         $this->app->bind('finance.graph', function ($app) {
             return new Graph();
@@ -155,7 +185,7 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
 
             $driverClass = $driverConfig['class'];
 
-            return new $driverClass();
+            return app()->make($driverClass);
         });
 
         $this->app->bind('note-model', function () {
@@ -188,6 +218,10 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
 
         $this->app->bind(\Condoedge\Utils\Services\Maps\GeocodingService::class, function ($app) {
             return $app->make(NominatimService::class);
+        });
+
+        $this->app->singleton(\Condoedge\Utils\Services\Analytics\GoogleAnalyticsService::class, function ($app) {
+            return new \Condoedge\Utils\Services\Analytics\GoogleAnalyticsService();
         });
 
         // Register compliance notification system
@@ -225,6 +259,7 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
             'kompo-utils' => __DIR__.'/../config/kompo-utils.php',
             'kompo-tags' => __DIR__.'/../config/kompo-tags.php',
             'errors-views' => __DIR__.'/../config/errors-views.php',
+            'analytics' => __DIR__.'/../config/analytics.php',
         ];
 
         foreach ($dirs as $key => $path) {
@@ -249,7 +284,11 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
                 RunComplianceValidationCommand::class,
                 FixIncompleteAddressesCommand::class,
                 MissingTranslationAnalyzerCommand::class,
+                MarkMissingTranslationCommand::class,
+                OpenTranslatorCommand::class,
+                LinkedPackagesCommand::class,
                 SendEmailForMissingTranslationsCommand::class,
+                ClearLazyComponentsCommand::class,
             ]);
         }
     }
@@ -274,6 +313,21 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
             // Option 3: Hourly checks (good compromise)
             $schedule->command('compliance:run-validation --scheduled')->hourly();
         });
+    }
+
+    /**
+     * Register Google Analytics event listeners
+     */
+    protected function registerAnalyticsListeners(): void
+    {
+        if (!config('services.google_analytics.measurement_id')) {
+            return;
+        }
+
+        Event::listen(\Illuminate\Auth\Events\Login::class,
+            \Condoedge\Utils\Listeners\TrackUserLogin::class);
+        Event::listen(\Illuminate\Auth\Events\Logout::class,
+            \Condoedge\Utils\Listeners\TrackUserLogout::class);
     }
 
     /**
