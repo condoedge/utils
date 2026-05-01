@@ -30,11 +30,11 @@ class LazyComponentController
             $komponentClass = $retrieved['class'];
             return $komponentClass::boot($retrieved['store'] ?? []);
         }
-        
-        app()->instance('bootFlag', true);
 
         // Closure — boot Komponent from KompoInfo to provide $this context
         $komponent = Dispatcher::bootKomponentForAction();
+
+        app()->instance('bootFlag', true);
 
         $bound = Closure::bind($retrieved, $komponent, get_class($komponent));
         $result = $bound ? $bound() : $retrieved();
@@ -50,12 +50,12 @@ class LazyComponentController
             abort(400, 'Missing lazy batch items.');
         }
 
-        app()->instance('bootFlag', true);
-
         $lazyItems = json_decode($lazyItemsJson, true);
 
         // Boot Komponent once for all closures
         $komponent = Dispatcher::bootKomponentForAction();
+
+        app()->instance('bootFlag', true);
 
         $registry = new LazyComponentRegistry();
         $results = [];
