@@ -4,7 +4,7 @@ namespace Condoedge\Utils\Jobs;
 
 use Condoedge\Utils\Facades\UserModel;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Bus\Queueable;
 use Illuminate\Http\Request as HttpRequest;
 
 class SendExportViaEmail implements ShouldQueue
