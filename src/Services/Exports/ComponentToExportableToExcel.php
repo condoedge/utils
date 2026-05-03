@@ -224,7 +224,7 @@ class ComponentToExportableToExcel implements FromArray, WithHeadings, ShouldAut
                 return implode($implodeUnion, $labels);
             }
 
-            if (property_exists($el, 'label')) {
+            if (property_exists($el, 'label') && is_string($el->label)) {
                 if (preg_match('/<[^>]*>/', $el->label)) {
                     return $this->convertHtmlToPlainText($el->label);
                 }
