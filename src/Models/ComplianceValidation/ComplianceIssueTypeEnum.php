@@ -25,4 +25,12 @@ enum ComplianceIssueTypeEnum: int
             self::ERROR => 'bg-danger text-white',
         };
     }
+
+    public function accent(): string
+    {
+        return match($this) {
+            self::WARNING => 'warning',
+            self::ERROR => 'danger',
+        };
+    }
 }

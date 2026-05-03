@@ -1,5 +1,6 @@
 <?php
 
+use Condoedge\Utils\Services\ComplianceValidation\ComplianceNotificationLogger;
 use Condoedge\Utils\Services\ComplianceValidation\ComplianceValidationService;
 use Condoedge\Utils\Services\ComplianceValidation\RulesGetter;
 use Condoedge\Utils\Services\Maps\GoogleMapsService;
@@ -15,6 +16,13 @@ if (!function_exists('complianceRulesService')) {
     function complianceRulesService(): RulesGetter
     {
         return app(RulesGetter::class);
+    }
+}
+
+if (!function_exists('complianceNotificationLogger')) {
+    function complianceNotificationLogger(): ComplianceNotificationLogger
+    {
+        return app(ComplianceNotificationLogger::class);
     }
 }
 

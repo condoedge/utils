@@ -5,12 +5,12 @@ namespace Condoedge\Utils\Events;
 use Condoedge\Utils\Models\ComplianceValidation\ComplianceIssue;
 use Condoedge\Utils\Services\ComplianceValidation\ValidatableContract;
 use Illuminate\Foundation\Events\Dispatchable;
+use Illuminate\Queue\SerializesModels;
 
 
 class ComplianceIssueDetected
 {
-    use Dispatchable;
-    // use SerializesModels; Removed from now, because model is not saved yet when this is dispatched
+    use Dispatchable, SerializesModels;
 
     public ComplianceIssue $complianceIssue;
     public ValidatableContract $validatable;

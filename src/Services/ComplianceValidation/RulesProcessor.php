@@ -4,6 +4,7 @@ namespace Condoedge\Utils\Services\ComplianceValidation;
 
 use Condoedge\Utils\Events\ComplianceIssueDetected;
 use Condoedge\Utils\Events\MultipleComplianceIssuesDetected;
+use Condoedge\Utils\Models\ComplianceValidation\ComplianceIssue;
 use Condoedge\Utils\Models\ComplianceValidation\ValidationExecution;
 use Condoedge\Utils\Services\ComplianceValidation\Rules\RuleContract;
 use Illuminate\Support\Collection;
@@ -25,11 +26,14 @@ class RulesProcessor
         $startedAt = now();
         [$failingValidatables, $testedCount] = $rule->findViolations();
 
-        event(new MultipleComplianceIssuesDetected($rule->getCode(), $failingValidatables));
-
         $complianceIssuesData = $this->createComplianceIssuesData($rule, $failingValidatables);
         $this->repository->syncIssues($rule->getCode(), $complianceIssuesData, $failingValidatables);
-        
+
+        $persistedIssues = $this->loadPersistedIssues($rule->getCode(), $failingValidatables);
+
+        $this->dispatchPerIssueEvents($rule, $failingValidatables, $persistedIssues);
+        event(new MultipleComplianceIssuesDetected($rule->getCode(), $failingValidatables, $persistedIssues->pluck('id')->all()));
+
         return $this->createExecutionRecord($rule, $startedAt, $testedCount, $failingValidatables);
     }
 
@@ -39,7 +43,7 @@ class RulesProcessor
     protected function createComplianceIssuesData(RuleContract $rule, array $failingValidatables): Collection
     {
         $now = now()->format('Y-m-d H:i:s');
-        
+
         return collect($failingValidatables)
             ->map(function (ValidatableContract $validatable) use ($rule, $now) {
                 $complianceIssue = $validatable->getFailedValidationObject();
@@ -48,16 +52,49 @@ class RulesProcessor
                 $complianceIssue->resolved_at = null;
                 $complianceIssue->rule_code = $rule->getCode();
                 $complianceIssue->detail_message = $rule->getIssueDescription($validatable);
-
-                // Dispatch event for notifications (before persisting to database)
-                event(new ComplianceIssueDetected($complianceIssue, $validatable, $rule->getCode()));
+                $complianceIssue->extra_data = $rule->getComplianceIssueExtraData($validatable);
 
                 $data = $complianceIssue->toArray();
                 $data['created_at'] = $now;
                 $data['updated_at'] = $now;
-                
+
                 return $data;
             });
+    }
+
+    /**
+     * Re-fetch the open issues for this run so listeners get saved models with ids.
+     * Keyed by "morphClass:id" for fast lookup against validatables.
+     */
+    protected function loadPersistedIssues(string $ruleCode, array $failingValidatables): Collection
+    {
+        if (empty($failingValidatables)) {
+            return collect();
+        }
+
+        $validatableIds = collect($failingValidatables)->pluck('id')->all();
+        $validatableTypes = collect($failingValidatables)->map->getMorphClass()->unique()->all();
+
+        return ComplianceIssue::where('rule_code', $ruleCode)
+            ->whereNull('resolved_at')
+            ->whereIn('validatable_id', $validatableIds)
+            ->whereIn('validatable_type', $validatableTypes)
+            ->get()
+            ->keyBy(fn (ComplianceIssue $issue) => $issue->validatable_type . ':' . $issue->validatable_id);
+    }
+
+    protected function dispatchPerIssueEvents(RuleContract $rule, array $failingValidatables, Collection $persistedIssues): void
+    {
+        foreach ($failingValidatables as $validatable) {
+            $key = $validatable->getMorphClass() . ':' . $validatable->getKey();
+            $issue = $persistedIssues->get($key);
+
+            if (!$issue) {
+                continue;
+            }
+
+            event(new ComplianceIssueDetected($issue, $validatable, $rule->getCode()));
+        }
     }
 
     /**

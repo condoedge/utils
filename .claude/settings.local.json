@@ -5,7 +5,28 @@
       "Bash(xargs -I {} basename {})",
       "Bash(grep -iE \"^.*/\\(Element|Component|Dropdown\\)\\\\.php$\")",
       "Bash(xargs grep:*)",
-      "Bash(find C:/Users/jkend/Documents/Projects/kompo/utils/vendor/kompo/kompo/resources/views/components -name *.blade.php)"
+      "Bash(find C:/Users/jkend/Documents/Projects/kompo/utils/vendor/kompo/kompo/resources/views/components -name *.blade.php)",
+      "mcp__code-index__build_deep_index",
+      "mcp__code-index__find_files",
+      "mcp__code-index__get_settings_info",
+      "mcp__code-index__set_project_path",
+      "mcp__code-index__search_code_advanced",
+      "Bash(ls \"C:\\\\Users\\\\jkend\\\\Documents\\\\Projects\\\\kompo\\\\communications\")",
+      "Read(//c/Users/jkend/Documents/Projects/**)",
+      "Bash(php -r \"json_decode\\(file_get_contents\\('C:/Users/jkend/Documents/Projects/kompo/utils/resources/lang/en.json'\\), true, 512, JSON_THROW_ON_ERROR\\); echo 'en.json ok'.PHP_EOL;\")",
+      "Bash(php -r \"json_decode\\(file_get_contents\\('C:/Users/jkend/Documents/Projects/kompo/utils/resources/lang/fr.json'\\), true, 512, JSON_THROW_ON_ERROR\\); echo 'fr.json ok'.PHP_EOL;\")",
+      "Bash(php -l src/Kompo/ComplianceValidation/ComplianceIssueBulletinPage.php)",
+      "Bash(php -l src/Services/ComplianceValidation/Rules/RuleContract.php)",
+      "Bash(php -l src/Services/ComplianceValidation/Rules/BaseRule.php)",
+      "Bash(php -l src/Services/ComplianceValidation/Solutions/AbstractComplianceSolutionHandler.php)",
+      "Bash(php -l src/Services/ComplianceValidation/Solutions/DefaultComplianceSolutionHandler.php)",
+      "Bash(php -l src/Services/ComplianceValidation/RulesProcessor.php)",
+      "Bash(php -l src/Events/ComplianceIssueDetected.php)",
+      "Bash(php -l src/Events/MultipleComplianceIssuesDetected.php)",
+      "Bash(php -l src/Listeners/HandleBatchComplianceNotifications.php)",
+      "Bash(php -r \"json_decode\\(file_get_contents\\('resources/lang/en.json'\\), true, 512, JSON_THROW_ON_ERROR\\); echo 'en ok'.PHP_EOL;\")",
+      "Bash(php -r \"json_decode\\(file_get_contents\\('resources/lang/fr.json'\\), true, 512, JSON_THROW_ON_ERROR\\); echo 'fr ok'.PHP_EOL;\")",
+      "mcp__code-index__refresh_index"
     ]
   }
 }

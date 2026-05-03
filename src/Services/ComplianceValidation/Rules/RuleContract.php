@@ -27,16 +27,36 @@ interface RuleContract
     public function findViolations(): array;
 
     /**
-     * Get description of why this validatable failed
+     * Get description of why this validatable failed.
+     * It can be a translatable key that accepts parameters, or a plain string.
      */
     public function getIssueDescription(ValidatableContract $validatable): string;
+
+    /**
+     * Get any extra data to be stored with the compliance issue for this rule
+     * Will be stored as JSON and passed as parameter also in translation of getIssueDescription
+    */
+    public function getComplianceIssueExtraData(ValidatableContract $validatable): ?array;
 
     /**
      * Get the type/severity of issue for this validatable
      */
     public function getIssueType(ValidatableContract $validatable): ComplianceIssueTypeEnum;
 
+    /**
+     * Optional long-form context shown in the overview "problem" section.
+     * Return null when the issue description (with extra_data) is enough.
+     */
+    public function getProblemExplanation(ValidatableContract $validatable): ?string;
+
     public function runIndividualRevalidation(ComplianceIssue $complianceIssue): bool;
 
     public function individualValidationDetailsComponent(ComplianceIssue $complianceIssue): ?BaseElement;
+
+    /**
+     * Solution handler used to render the "Solution" section of the issue overview.
+     * Default implementation in BaseRule wraps individualValidationDetailsComponent.
+     * Override to plug in a richer flow (redirect, bulk action, multi-step form...).
+     */
+    public function getSolutionHandler(ComplianceIssue $complianceIssue): \Condoedge\Utils\Services\ComplianceValidation\Solutions\AbstractComplianceSolutionHandler;
 }

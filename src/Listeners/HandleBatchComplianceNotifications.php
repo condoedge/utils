@@ -3,6 +3,8 @@
 namespace Condoedge\Utils\Listeners;
 
 use Condoedge\Utils\Events\MultipleComplianceIssuesDetected;
+use Condoedge\Utils\Models\ComplianceValidation\ComplianceIssue;
+use Condoedge\Utils\Services\ComplianceValidation\ComplianceNotificationLogger;
 use Condoedge\Utils\Services\ComplianceValidation\ComplianceNotificationService;
 use Condoedge\Utils\Services\ComplianceValidation\NotificationStrategyRegistry;
 use Condoedge\Utils\Services\ComplianceValidation\Rules\RuleContract;
@@ -16,16 +18,19 @@ class HandleBatchComplianceNotifications implements ShouldQueue
 
     protected NotificationStrategyRegistry $strategyRegistry;
     protected ComplianceNotificationService $notificationService;
+    protected ComplianceNotificationLogger $logger;
 
     /**
      * Create the event listener
      */
     public function __construct(
         NotificationStrategyRegistry $strategyRegistry,
-        ComplianceNotificationService $notificationService
+        ComplianceNotificationService $notificationService,
+        ComplianceNotificationLogger $logger
     ) {
         $this->strategyRegistry = $strategyRegistry;
         $this->notificationService = $notificationService;
+        $this->logger = $logger;
     }
 
     /**
@@ -155,11 +160,33 @@ class HandleBatchComplianceNotifications implements ShouldQueue
     }
 
     /**
-     * Send batch notification to a specific notifiable with multiple validatables
+     * Send batch notification to a specific notifiable with multiple validatables,
+     * then write a "dispatched" log row per (issue, notifiable) so the overview
+     * can render notification history. Project-side adapters can call the logger
+     * again with per-channel detail (sent, failed, ...) once delivery completes.
      */
     protected function sendBatchNotification($notifiable, MultipleComplianceIssuesDetected $event, array $validatables): void
     {
         $this->notificationService->sendBatchNotification($notifiable, $event, $validatables);
+
+        $issuesByValidatable = $event->getPersistedIssues()
+            ->keyBy(fn (ComplianceIssue $issue) => $issue->validatable_type . ':' . $issue->validatable_id);
+
+        foreach ($validatables as $validatable) {
+            $issue = $issuesByValidatable->get($validatable->getMorphClass() . ':' . $validatable->getKey());
+
+            if (!$issue) {
+                continue;
+            }
+
+            $this->logger->log(
+                issue: $issue,
+                notifiable: $notifiable,
+                channel: 'compliance-pipeline',
+                status: 'dispatched',
+                statusColor: 'info',
+            );
+        }
     }
 
     /**

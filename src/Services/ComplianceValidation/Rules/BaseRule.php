@@ -11,6 +11,8 @@ use Condoedge\Utils\Services\ComplianceValidation\Schedules\DailySchedule;
 use Condoedge\Utils\Services\ComplianceValidation\Schedules\MonthlySchedule;
 use Condoedge\Utils\Services\ComplianceValidation\Schedules\ScheduleContract;
 use Condoedge\Utils\Services\ComplianceValidation\Schedules\WeeklySchedule;
+use Condoedge\Utils\Services\ComplianceValidation\Solutions\AbstractComplianceSolutionHandler;
+use Condoedge\Utils\Services\ComplianceValidation\Solutions\DefaultComplianceSolutionHandler;
 use Condoedge\Utils\Services\ComplianceValidation\Strategies\NoNotificationStrategy;
 use Condoedge\Utils\Services\ComplianceValidation\Strategies\ValidatableIsNotificableStrategy;
 use Condoedge\Utils\Services\ComplianceValidation\ValidatableContract;
@@ -47,6 +49,21 @@ abstract class BaseRule implements RuleContract, ScheduledRuleContract
     abstract public function getIssueType(ValidatableContract $validatable): ComplianceIssueTypeEnum;
 
     abstract public function individualRevalidate(ComplianceIssue $complianceIssue): bool;
+
+    public function getComplianceIssueExtraData(ValidatableContract $validatable): ?array
+    {
+        return [];
+    }
+
+    public function getProblemExplanation(ValidatableContract $validatable): ?string
+    {
+        return null;
+    }
+
+    public function getSolutionHandler(ComplianceIssue $complianceIssue): AbstractComplianceSolutionHandler
+    {
+        return new DefaultComplianceSolutionHandler($complianceIssue);
+    }
 
     public function runIndividualRevalidation(ComplianceIssue $complianceIssue): bool
     {

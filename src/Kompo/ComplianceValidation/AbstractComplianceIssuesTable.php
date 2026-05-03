@@ -55,11 +55,12 @@ abstract class AbstractComplianceIssuesTable extends WhiteTable
     public function headers()
     {
         return [
-            _Th('compliance.detected-at')->sort('detected_at'),
-            _Th('compliance.validatable'),
             _Th('compliance.type')->sort('type'),
+            _Th('compliance.detected-at')->sort('detected_at'),
+            _Th('translate.rule'),
+            _Th('compliance.validatable'),
             _Th('compliance.status'),
-            _Th('compliance.detail-message'),
+            // _Th('compliance.detail-message'),
             _Th()->class('w-8'),
         ];
     }
@@ -67,21 +68,26 @@ abstract class AbstractComplianceIssuesTable extends WhiteTable
     public function render($complianceIssue)
     {
         return _TableRow(
+            $complianceIssue->typeBadge(),
+
             _Html($complianceIssue->detected_at ? 
                 \Carbon\Carbon::parse($complianceIssue->detected_at)->format('Y-m-d H:i') : '-'),
             
             _Html($complianceIssue->validatable->validatableDisplayName()),
             
-            $complianceIssue->typeBadge(),
+            _Html($complianceIssue->getRuleInstance()->getName()),
             
             $complianceIssue->statusEl(),
             
-            _Text($complianceIssue->detail_message)->maxChars(50),
+            // _Text($complianceIssue->detail_message)->maxChars(50),
             
             _TripleDotsDropdown(
                 _DropdownLink('compliance.view-details')
                     ->selfGet('getInfoModal', ['id' => $complianceIssue->id])
                     ->inModal(),
+
+                _DropdownLink('compliance.view-overview')
+                    ->href('compliance-issue.overview', ['id' => $complianceIssue->id]),
             ),
         );
     }
