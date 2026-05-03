@@ -65,6 +65,11 @@ abstract class BaseRule implements RuleContract, ScheduledRuleContract
         return new DefaultComplianceSolutionHandler($complianceIssue);
     }
 
+    public function runIndividualDiagnosis(ComplianceIssue $complianceIssue): ?string
+    {
+        return null;
+    }
+
     public function runIndividualRevalidation(ComplianceIssue $complianceIssue): bool
     {
         if ($this->individualRevalidate($complianceIssue)) {

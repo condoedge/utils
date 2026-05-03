@@ -4,7 +4,6 @@ namespace Condoedge\Utils\Models\ComplianceValidation;
 
 use Condoedge\Utils\Models\Model;
 use Condoedge\Utils\Models\Traits\BelongsToTeamTrait;
-use Condoedge\Utils\Services\ComplianceValidation\ComplianceNotificationLogContract;
 use Condoedge\Utils\Services\ComplianceValidation\HierarchicalValidatableContract;
 use Condoedge\Utils\Services\ComplianceValidation\ValidatableContract;
 
@@ -27,6 +26,11 @@ class ComplianceIssue extends Model
     public function validatable()
     {
         return $this->morphTo();
+    }
+
+    public function notificationLogs()
+    {
+        return $this->hasMany(ComplianceIssueNotificationLog::class);
     }
 
     // CALCULATED FIELDS
@@ -64,7 +68,7 @@ class ComplianceIssue extends Model
 
     public function getNotificationLog()
     {
-        return app(ComplianceNotificationLogContract::class)->forIssue($this);
+        return $this->notificationLogs()->orderByDesc('sent_at')->get();
     }
 
     public function durationLabel(): string
@@ -137,18 +141,5 @@ class ComplianceIssue extends Model
         }
 
         return _Pill('compliance.unresolved')->class('text-danger');
-    }
-
-    public function moreDetailsElement()
-    {
-        if ($this->resolved_at) {
-            return null;
-        }
-
-        $rule = $this->getRuleInstance();
-
-        $detailsEl = secureCall('individualValidationDetailsComponent', $rule, $this);
-
-        return _Rows($detailsEl);
     }
 }

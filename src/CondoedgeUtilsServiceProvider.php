@@ -26,9 +26,7 @@ use Condoedge\Utils\Command\RunComplianceValidationCommand;
 use Condoedge\Utils\Events\MultipleComplianceIssuesDetected;
 use Condoedge\Utils\Kompo\Plugins\DebugReload;
 use Condoedge\Utils\Listeners\HandleBatchComplianceNotifications;
-use Condoedge\Utils\Services\ComplianceValidation\ComplianceNotificationLogContract;
 use Condoedge\Utils\Services\ComplianceValidation\NotificationStrategyRegistry;
-use Condoedge\Utils\Services\ComplianceValidation\TableComplianceNotificationLog;
 use Condoedge\Utils\Services\Maps\GeocodioService;
 use Condoedge\Utils\Services\Maps\GoogleMapsService;
 use Condoedge\Utils\Services\Maps\NominatimService;
@@ -212,8 +210,6 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
         $this->app->singleton(NotificationStrategyRegistry::class, function ($app) {
             return new NotificationStrategyRegistry();
         });
-
-        $this->app->bindIf(ComplianceNotificationLogContract::class, TableComplianceNotificationLog::class);
 
         // Note: ComplianceNotificationService is abstract and must be bound in the consuming project
         // Example in your main project's service provider:

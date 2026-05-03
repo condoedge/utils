@@ -82,19 +82,10 @@ abstract class AbstractComplianceIssuesTable extends WhiteTable
             // _Text($complianceIssue->detail_message)->maxChars(50),
             
             _TripleDotsDropdown(
-                _DropdownLink('compliance.view-details')
-                    ->selfGet('getInfoModal', ['id' => $complianceIssue->id])
-                    ->inModal(),
-
                 _DropdownLink('compliance.view-overview')
                     ->href('compliance-issue.overview', ['id' => $complianceIssue->id]),
             ),
         );
-    }
-
-    public function getInfoModal($id)
-    {
-        return new ComplianceIssueInfoModal($id);
     }
 
     public function runComplianceValidation()

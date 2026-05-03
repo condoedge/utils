@@ -32,6 +32,7 @@ class ComplianceIssueOverviewPage extends Form
         $detected = $this->model->detected_at ? Carbon::parse($this->model->detected_at) : null;
         $resolved = $this->model->resolved_at ? Carbon::parse($this->model->resolved_at) : null;
         $explanation = $this->validatable ? $this->rule?->getProblemExplanation($this->validatable) : null;
+        $detailMessage = $this->rule?->runIndividualDiagnosis($this->model) ?? $this->model->getTranslatedDetailMessage();
         $solutionComponent = $this->solutionHandler?->getComponent();
         $solutionActions = $this->solutionHandler?->getActions() ?? [];
 
@@ -76,7 +77,7 @@ class ComplianceIssueOverviewPage extends Form
                 _Rows(
                     $this->sectionHeading('warning-2', 'compliance.overview.problem-section', 'text-danger'),
 
-                    _Html($this->model->getTranslatedDetailMessage())
+                    _Html($detailMessage)
                         ->class('text-base font-semibold text-gray-900 leading-snug ' . ($explanation ? 'mb-3' : '')),
 
                     !$explanation ? null : _Html($explanation)
@@ -136,23 +137,17 @@ class ComplianceIssueOverviewPage extends Form
 
     protected function notificationRow($row)
     {
-        $sentAt = $row['sent_at'] ?? null;
-
-        if ($sentAt instanceof \DateTimeInterface) {
-            $sentAt = Carbon::instance($sentAt)->format('Y-m-d H:i');
-        }
-
         return _FlexBetween(
             _Flex(
-                _Sax($row['channel_icon'] ?? 'notification', 18)->class('text-' . ($row['channel_color'] ?? 'info')),
+                _Sax($row->channel_icon, 18)->class('text-' . $row->channel_color),
                 _Rows(
-                    _Html($row['recipient'] ?? '-')->class('text-sm font-medium text-gray-900'),
-                    _Html($sentAt ?? '-')->class('text-xs text-gray-500'),
+                    _Html($row->recipient_label ?? '-')->class('text-sm font-medium text-gray-900'),
+                    _Html($row->sent_at ? $row->sent_at->format('Y-m-d H:i') : '-')->class('text-xs text-gray-500'),
                 )->class('gap-0'),
             )->class('gap-3 items-center'),
 
-            _Pill($row['status'] ?? '-')
-                ->class('bg-' . ($row['status_color'] ?? 'gray') . '/15 text-' . ($row['status_color'] ?? 'gray') . ' text-xs font-semibold'),
+            _Pill($row->status ?? '-')
+                ->class('bg-' . ($row->status_color ?? 'gray') . '/15 text-' . ($row->status_color ?? 'gray') . ' text-xs font-semibold'),
         )->class('py-3 border-b border-gray-100 last:border-b-0');
     }
 

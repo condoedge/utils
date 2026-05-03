@@ -51,6 +51,19 @@ interface RuleContract
 
     public function runIndividualRevalidation(ComplianceIssue $complianceIssue): bool;
 
+    /**
+     * Enhanced detail message for the overview, computed lazily for a single issue.
+     *
+     * Reserved for genuinely expensive computations (extra joins, computed counts,
+     * relation walks) — the cheap stuff stays in extra_data + getIssueDescription
+     * which are populated once at detection time for all failing validatables.
+     * Only override when bulk-time computation would be too costly at scale
+     * (e.g. 300k validatables) and the data only matters when one issue is viewed.
+     *
+     * Return null to fall back to ComplianceIssue::getTranslatedDetailMessage().
+     */
+    public function runIndividualDiagnosis(ComplianceIssue $complianceIssue): ?string;
+
     public function individualValidationDetailsComponent(ComplianceIssue $complianceIssue): ?BaseElement;
 
     /**

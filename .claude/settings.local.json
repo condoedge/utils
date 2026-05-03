@@ -26,7 +26,14 @@
       "Bash(php -l src/Listeners/HandleBatchComplianceNotifications.php)",
       "Bash(php -r \"json_decode\\(file_get_contents\\('resources/lang/en.json'\\), true, 512, JSON_THROW_ON_ERROR\\); echo 'en ok'.PHP_EOL;\")",
       "Bash(php -r \"json_decode\\(file_get_contents\\('resources/lang/fr.json'\\), true, 512, JSON_THROW_ON_ERROR\\); echo 'fr ok'.PHP_EOL;\")",
-      "mcp__code-index__refresh_index"
+      "mcp__code-index__refresh_index",
+      "Bash(php -l src/Models/ComplianceValidation/ComplianceIssueNotificationLog.php)",
+      "Bash(php -l src/Models/ComplianceValidation/ComplianceIssue.php)",
+      "Bash(php -l src/CondoedgeUtilsServiceProvider.php)",
+      "Bash(php -l src/Kompo/ComplianceValidation/ComplianceIssueOverviewPage.php)",
+      "Bash(php -l src/Kompo/ComplianceValidation/AbstractComplianceIssuesTable.php)",
+      "Bash(php -l src/Kompo/ComplianceValidation/ComplianceIssuesTable.php)",
+      "Bash(php *)"
     ]
   }
 }

@@ -79,16 +79,10 @@ class ComplianceIssuesTable extends WhiteTable
             _Html($complianceIssue->getRuleInstance()?->getName()),
             
             _TripleDotsDropdown(
-                _DropdownLink('compliance.view-details')
-                    ->selfGet('getInfoModal', ['id' => $complianceIssue->id])
-                    ->inModal(),
+                _DropdownLink('compliance.view-overview')
+                    ->href('compliance-issue.overview', ['id' => $complianceIssue->id]),
             ),
         );
-    }
-
-    public function getInfoModal($id)
-    {
-        return new ComplianceIssueInfoModal($id);
     }
 
     public function runComplianceValidation()

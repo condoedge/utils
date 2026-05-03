@@ -21,4 +21,25 @@ class ComplianceIssueNotificationLog extends Model
     {
         return $this->morphTo();
     }
+
+    // CALCULATED FIELDS
+    public function getChannelIconAttribute(): string
+    {
+        return match ($this->channel) {
+            'email' => 'sms',
+            'sms' => 'mobile',
+            'in-app', 'database' => 'notification-bing',
+            default => 'notification',
+        };
+    }
+
+    public function getChannelColorAttribute(): string
+    {
+        return match ($this->channel) {
+            'email' => 'info',
+            'sms' => 'warning',
+            'in-app', 'database' => 'mauve',
+            default => 'gray',
+        };
+    }
 }
