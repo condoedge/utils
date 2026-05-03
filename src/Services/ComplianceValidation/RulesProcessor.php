@@ -54,7 +54,9 @@ class RulesProcessor
                 $complianceIssue->detail_message = $rule->getIssueDescription($validatable);
                 $complianceIssue->extra_data = $rule->getComplianceIssueExtraData($validatable);
 
-                $data = $complianceIssue->toArray();
+                // getAttributes() preserves the JSON-encoded extra_data the cast wrote
+                // on assignment; toArray() would re-decode it and break the bulk insert.
+                $data = $complianceIssue->getAttributes();
                 $data['created_at'] = $now;
                 $data['updated_at'] = $now;
 

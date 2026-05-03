@@ -15,7 +15,7 @@ abstract class AbstractComplianceIssuesTable extends WhiteTable
                 _Html('compliance.compliance-issues')->class('text-2xl font-semibold'),
                 _Flex(
                     !safeIsSuperAdmin() ? null : 
-                        _ButtonOutlined('compliance.manual-run')->selfPost('runComplianceValidation')->alert('compliance.compliance-executed-successfully')->refresh(),
+                        _ButtonOutlined('compliance.manual-run')->selfPost('runComplianceValidation')->alert('translate.running-compliance-in-background'),
                     !safeIsSuperAdmin() ? null : _ExcelExportButton()->class('!mb-0'),
                 )->class('gap-4')
             ),
@@ -90,6 +90,8 @@ abstract class AbstractComplianceIssuesTable extends WhiteTable
 
     public function runComplianceValidation()
     {
-        complianceService()->validateDefaultRules();
+        dispatch(function () {
+            complianceService()->validateDefaultRules();
+        });
     }
 }
