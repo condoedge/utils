@@ -20,7 +20,7 @@ return new class extends Migration
             $table->timestamp('sent_at')->nullable();
             $table->text('error_message')->nullable();
 
-            $table->index(['compliance_issue_id', 'sent_at']);
+            $table->index(['compliance_issue_id', 'sent_at'], 'coinl_compliance_issue_id_sent_at_index');
         });
     }
 

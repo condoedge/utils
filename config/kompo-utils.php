@@ -24,4 +24,6 @@ return [
     'lazy_hierarchy' => [
         'enabled' => false,
     ],
+
+    'enable-compliance-command-execution' => true,
 ];
