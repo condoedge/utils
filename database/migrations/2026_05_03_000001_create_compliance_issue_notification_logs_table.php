@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('compliance_issue_notification_logs', function (Blueprint $table) {
             addMetaData($table);
 
-            $table->foreignId('compliance_issue_id')->constrained('compliance_issues', 'compliance_issue_logs_compliance_issue_id_foreign')->cascadeOnDelete();
+            $table->foreignId('compliance_issue_id')->constrained('compliance_issues', indexName: 'compliance_issue_logs_compliance_issue_id_foreign')->cascadeOnDelete();
             $table->nullableMorphs('notifiable');
             $table->string('channel')->nullable();
             $table->string('recipient_label')->nullable();
