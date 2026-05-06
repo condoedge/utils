@@ -180,9 +180,15 @@ function _LazyTabs(...$tabs)
                     $closure = getPrivateProperty($lazyElement, 'closure') ?? null;
 
                     if ($closure) {
-                        return _SwipeableTab(
+                        $rebuilt = _SwipeableTab(
                             $closure()
                         )->label(getPrivateProperty($tab, 'label'));
+
+                        if ($tab && !empty($tab->id)) {
+                            $rebuilt->id($tab->id);
+                        }
+
+                        return $rebuilt;
                     }
                 } catch (\Exception $e) {
                     // If any error occurs during reflection, fallback to original tab (that uses by default lazy loading)
