@@ -20,6 +20,8 @@ class ResponsiveTabs extends Rows
 
     protected $tabsCallbackDecoration;
 
+    protected $tabParamKey = 'tab_number';
+
     public static $breakpoints = [
         'sm' => 'sm:block sm:hidden',
         'md' => 'md:block md:hidden',
@@ -104,6 +106,13 @@ class ResponsiveTabs extends Rows
         return $this;
     }
 
+    public function tabParamKey($key = 'tab_number')
+    {
+        $this->tabParamKey = $key;
+
+        return $this;
+    }
+
     protected function tabsDecorated()
     {
         $callback = $this->tabsCallbackDecoration;
@@ -115,6 +124,7 @@ class ResponsiveTabs extends Rows
             ->when($this->tabsSelectedClass, fn ($el) => $el->selectedClass($this->tabsSelectedClass, $this->tabsUnselectedClass))
             ->id('responsive-tabs-' . $this->uniqueId)
             ->config(['selectId' => 'tabs-select-' . $this->uniqueId])
+            ->config(['tabParamKey' => $this->tabParamKey])
             ->when($callback && is_callable($callback), fn ($el) => $callback($el));
     }
 

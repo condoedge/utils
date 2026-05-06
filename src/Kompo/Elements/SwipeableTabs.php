@@ -12,4 +12,11 @@ class SwipeableTabs extends \Kompo\Tabs
             'swipeable' => $value,
         ]);
     }
+
+    public function tabParamKey($key = 'tab_number')
+    {
+        return $this->config([
+            'tabParamKey' => $key,
+        ]);
+    }
 }
