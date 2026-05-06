@@ -222,3 +222,7 @@ body::has(.loading-screen) {
     max-height: 0;
     overflow: hidden;
 }
+
+.remove-x>.vlInputWrapper  i.icon-times {
+    display: none;
+}
