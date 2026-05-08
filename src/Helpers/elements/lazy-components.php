@@ -160,6 +160,14 @@ if (!function_exists('_lazyPlaceholder')) {
                 ),
             )->class('animate-pulse')->style('width: var(--lazy-w, auto)'),
 
+            'rows' => _Rows(
+                ...array_map(fn() =>
+                    _Rows()->class("$bar h-8 my-1")->style($bg),
+                    range(1, 4)
+                ),
+            )->class('animate-pulse p-2 opacity-60')
+              ->style('width: var(--lazy-w, auto)'),
+
             default => _Rows(
                 _Rows()->class("$bar rounded-xl")
                     ->style("$bgDim; min-height: var(--lazy-h, 200px); width: var(--lazy-w, 100%)"),
@@ -201,5 +209,24 @@ if (!function_exists('_LazyTab')) {
         return _SwipeableTab(
             _LazyComponent($closure, $placeholderPreset),
         )->style('--lazy-bg: #aaa; --lazy-opacity: 0.65; --lazy-h: 300px');
+    }
+}
+
+if (!function_exists('_LazyCollapsible')) {
+    /**
+     * Lazy-loading collapsible. Title bar always visible; body slides in/out.
+     * Body lazy-loads via the closure on FIRST expand; subsequent toggles
+     * are pure slide animations (no re-fetch).
+     *
+     *   _LazyCollapsible(
+     *       _Flex(_Html('Section'), _Html()->icon('icon-up')->id('icon-1')),
+     *       fn() => new MyTable(['id' => $id]),
+     *       'table',
+     *       iconId: 'icon-1',
+     *   )
+     */
+    function _LazyCollapsible($title, $bodyClosure, string $skeletonPreset = 'default', ?string $iconId = null)
+    {
+        return new \Condoedge\Utils\Kompo\Elements\LazyCollapsible($title, $bodyClosure, $skeletonPreset, $iconId);
     }
 }

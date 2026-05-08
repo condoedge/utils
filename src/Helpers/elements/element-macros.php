@@ -9,6 +9,29 @@ use Kompo\Elements\Layout;
 use Kompo\Img;
 use Kompo\Interactions\Interaction;
 
+/**
+ * Whitelist methods on this element so they can be invoked from JS-side
+ * `selfGet()` / `selfPost()` (the `({ selfGet }) => …` ctx in `->run()`).
+ *
+ * The vue-kompo runtime looks up the encrypted method name in the *clicking
+ * element's* config — not on the parent Komponent — so any element that
+ * triggers a JS-side selfGet/selfPost needs `_selfMethods` in its own config.
+ *
+ * Usage:
+ *   _Flex(...)->onClick(fn($e) => $e->run('({ selfGet }) => selfGet("doThing")'))
+ *           ->selfMethods(['doThing'])
+ */
+Element::macro('selfMethods', function (array $methods) {
+    $encrypted = [];
+    foreach ($methods as $method) {
+        $encrypted[$method] = \Kompo\Core\KompoTarget::getEncrypted($method);
+    }
+
+    return $this->config([
+        '_selfMethods' => array_replace($this->config('_selfMethods') ?: [], $encrypted),
+    ]);
+});
+
 /* TABS */
 
 /**
