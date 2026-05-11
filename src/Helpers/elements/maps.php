@@ -21,7 +21,7 @@ if (!function_exists('_CustomPlace')) {
 }
 
 if (!function_exists('_CanadianPlace')) {
-    function _CanadianPlace($label = 'crm.contact.address', $name = 'address1')
+    function _CanadianPlace($label = 'maps-address-address1', $name = 'address1')
     {
         return _CustomPlace($label, $name)
             ->placeholder('inscriptions.123-Main-Street')
