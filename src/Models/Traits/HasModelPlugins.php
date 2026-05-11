@@ -27,10 +27,10 @@ trait HasModelPlugins
      * Get the security state for this model instance.
      * Lazily created on first access.
      */
-    public function getSecurityState(): \Kompo\Auth\Models\Plugins\Services\ModelSecurityState
+    public function getSecurityState(): \Kompo\Auth\Teams\Security\ModelSecurityState
     {
         if ($this->_securityState === null) {
-            $this->_securityState = new \Kompo\Auth\Models\Plugins\Services\ModelSecurityState();
+            $this->_securityState = new \Kompo\Auth\Teams\Security\ModelSecurityState();
         }
         return $this->_securityState;
     }

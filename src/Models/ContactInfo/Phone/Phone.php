@@ -2,13 +2,20 @@
 
 namespace Condoedge\Utils\Models\ContactInfo\Phone;
 
+use Condoedge\Utils\Contracts\Security\HasOwnedRecords;
+use Condoedge\Utils\Models\Concerns\Security\OwnedRecordsViaMorphContact;
 use Condoedge\Utils\Models\Model;
-use Illuminate\Support\Facades\Schema;
 use Propaganistas\LaravelPhone\PhoneNumber;
 
-class Phone extends Model
+class Phone extends Model implements HasOwnedRecords
 {
     use \Condoedge\Utils\Models\Traits\BelongsToTeamTrait;
+    use OwnedRecordsViaMorphContact;
+
+    protected function morphContactColumnName(): string
+    {
+        return 'phonable';
+    }
 
     public const TYPE_PH_WORK = 1;
     public const TYPE_PH_CELLULAR = 2;
@@ -50,24 +57,6 @@ class Phone extends Model
     public function scopeMatchNumber($query, $phoneNumber)
     {
         $query->where('number_ph', $phoneNumber);
-    }
-
-    public function scopeUserOwnedRecords($query)
-    {
-        return $query->whereIn('phonable_type', config('kompo-utils.morphables-contact-associated-to-user', []))
-            ->whereHas('phonable', function ($q) {
-                $q->where(function($subquery) {
-                    $model = $subquery->getModel();
-
-                    if (Schema::hasColumn($model->getTable(), 'user_id')) {
-                        $subquery->where('user_id', auth()->id());
-                    } elseif (method_exists($model, 'user')) {
-                        $subquery->whereHas('user', function($userQuery) {
-                            $userQuery->where('id', auth()->id());
-                        });
-                    }
-                });
-            });
     }
 
     /* CALCULATED FIELDS */

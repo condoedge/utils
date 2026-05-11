@@ -3,6 +3,8 @@
 namespace Condoedge\Utils\Models\Files;
 
 use Carbon\Carbon;
+use Condoedge\Utils\Contracts\Security\HasOwnedRecords;
+use Condoedge\Utils\Models\Concerns\Security\OwnedRecordsViaMorphContact;
 use Condoedge\Utils\Models\Contracts\Searchable;
 use Condoedge\Utils\Models\Files\FileVisibilityEnum;
 use Condoedge\Utils\Models\Files\FileableFile;
@@ -11,19 +13,24 @@ use Condoedge\Utils\Models\Tags\MorphToManyTagsTrait;
 use Condoedge\Utils\Models\Traits\BelongsToTeamTrait;
 use Condoedge\Utils\Models\Traits\BelongsToUserTrait;
 use Condoedge\Utils\Models\Traits\HasSearchableNameTrait;
-use Illuminate\Support\Facades\Schema;
 use Intervention\Image\Facades\Image;
 use Kompo\Core\FileHandler;
 
-class File extends Model implements Searchable
+class File extends Model implements Searchable, HasOwnedRecords
 {
     use BelongsToTeamTrait;
     use BelongsToUserTrait;
     use MorphToManyTagsTrait;
+    use OwnedRecordsViaMorphContact;
 
     use FileActionsKomponents;
 
     use HasSearchableNameTrait;
+
+    protected function morphContactColumnName(): string
+    {
+        return 'fileable';
+    }
 
     public $fileType = 'file';
 
@@ -217,24 +224,6 @@ class File extends Model implements Searchable
     }
 
     /* SCOPES */
-    public function scopeUserOwnedRecords($query)
-    {
-        return $query->whereIn('fileable_type', config('kompo-utils.morphables-contact-associated-to-user', []))
-            ->whereHas('fileable', function ($q) {
-                $q->where(function($subquery) {
-                    $model = $subquery->getModel();
-
-                    if (Schema::hasColumn($model->getTable(), 'user_id')) {
-                        $subquery->where('user_id', auth()->id());
-                    } elseif (method_exists($model, 'user')) {
-                        $subquery->whereHas('user', function($userQuery) {
-                            $userQuery->where('id', auth()->id());
-                        });
-                    }
-                });
-            });
-    }
-
     /* ELEMENTS */
     public function uploadedAt()
     {

@@ -2,12 +2,19 @@
 
 namespace Condoedge\Utils\Models\ContactInfo\Email;
 
+use Condoedge\Utils\Contracts\Security\HasOwnedRecords;
+use Condoedge\Utils\Models\Concerns\Security\OwnedRecordsViaMorphContact;
 use Condoedge\Utils\Models\Model;
-use Illuminate\Support\Facades\Schema;
 
-class Email extends Model
+class Email extends Model implements HasOwnedRecords
 {
     use \Condoedge\Utils\Models\Traits\BelongsToTeamTrait;
+    use OwnedRecordsViaMorphContact;
+
+    protected function morphContactColumnName(): string
+    {
+        return 'emailable';
+    }
 
     public const TYPE_EM_PERSONAL = 1;
     public const TYPE_EM_WORK = 2;
@@ -52,24 +59,6 @@ class Email extends Model
     }
 
     /* SCOPES */
-    public function scopeUserOwnedRecords($query)
-    {
-        return $query->whereIn('emailable_type', config('kompo-utils.morphables-contact-associated-to-user', []))
-            ->whereHas('emailable', function ($q) {
-                $q->where(function($subquery) {
-                    $model = $subquery->getModel();
-
-                    if (Schema::hasColumn($model->getTable(), 'user_id')) {
-                        $subquery->where('user_id', auth()->id());
-                    } elseif (method_exists($model, 'user')) {
-                        $subquery->whereHas('user', function($userQuery) {
-                            $userQuery->where('id', auth()->id());
-                        });
-                    }
-                });
-            });
-    }
-
     /* ACTIONS */
     public function setEmailable($model)
     {

@@ -2,13 +2,20 @@
 
 namespace Condoedge\Utils\Models\ContactInfo\Maps;
 
+use Condoedge\Utils\Contracts\Security\HasOwnedRecords;
+use Condoedge\Utils\Models\Concerns\Security\OwnedRecordsViaMorphContact;
 use Condoedge\Utils\Models\Model;
-use Illuminate\Support\Facades\Schema;
 use Kompo\Place;
 
-class Address extends Model
+class Address extends Model implements HasOwnedRecords
 {
     use \Condoedge\Utils\Models\Traits\BelongsToTeamTrait;
+    use OwnedRecordsViaMorphContact;
+
+    protected function morphContactColumnName(): string
+    {
+        return 'addressable';
+    }
 
     public const BASE_SEPARATOR = '<br>';
 
@@ -124,24 +131,6 @@ class Address extends Model
 
 
     /* SCOPES */
-    public function scopeUserOwnedRecords($query)
-    {
-        return $query->whereIn('addressable_type', config('kompo-utils.morphables-contact-associated-to-user', []))
-            ->whereHas('addressable', function ($q) {
-                $q->where(function($subquery) {
-                    $model = $subquery->getModel();
-
-                    if (Schema::hasColumn($model->getTable(), 'user_id')) {
-                        $subquery->where('user_id', auth()->id());
-                    } elseif (method_exists($model, 'user')) {
-                        $subquery->whereHas('user', function($userQuery) {
-                            $userQuery->where('id', auth()->id());
-                        });
-                    }
-                });
-            });
-    }
-
     /* ACTIONS */
     public function setAddressable($model)
     {
