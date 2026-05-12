@@ -8,12 +8,14 @@ use Illuminate\Contracts\Validation\ValidationRule;
 class NameRule implements ValidationRule
 {
     protected $maxLength = 100;
+    protected $allowNumbers = false;
+    protected $allowParentheses = false;
 
-    public function __construct(int $maxLength = 100)
+    public function __construct(int $maxLength = 100, bool $allowNumbers = false, bool $allowParentheses = false)
     {
-        if ($maxLength) {
-            $this->maxLength = $maxLength;
-        }
+        $this->maxLength = $maxLength;
+        $this->allowNumbers = $allowNumbers;
+        $this->allowParentheses = $allowParentheses;
     }
 
     /**
@@ -31,7 +33,7 @@ class NameRule implements ValidationRule
             $fail(__('validation.invalid_length', ['attribute' => $attribute]));
         }
 
-        if (!preg_match('/^[\p{L} \-()\']{2,'.$this->maxLength.'}$/u', $value)) {
+        if (!preg_match($this->buildValidCharsPattern(), $value)) {
             $fail(__('validation.invalid_format', ['attribute' => $attribute]));
         }
 
@@ -42,5 +44,19 @@ class NameRule implements ValidationRule
         if (preg_match('/^(.)\1{2,}$/', $value)) {
             $fail(__('validation.no_repeated_characters', ['attribute' => $attribute]));
         }
+    }
+
+    protected function buildValidCharsPattern(): string
+    {
+        $pattern = '/^[\p{L}\s\.';
+        if ($this->allowNumbers) {
+            $pattern .= '0-9';
+        }
+        if ($this->allowParentheses) {
+            $pattern .= '\(\)';
+        }
+        $pattern .= '\-\'`]{2,'.$this->maxLength.'}$/u';
+
+        return $pattern;
     }
 }
