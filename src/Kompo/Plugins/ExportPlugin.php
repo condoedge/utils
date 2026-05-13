@@ -59,7 +59,7 @@ class ExportPlugin extends ComponentPlugin
                 $filename,
             );
         } catch (\Exception $e) {
-            Log::error($e->getMessage(), ['class' => static::class, 'trace' => $e->getTraceAsString(), 'user' => auth()->user()]);
+            Log::error($e->getMessage(), ['class' => static::class, 'trace' => $e->getTraceAsString(), 'user' => auth()->user(), 'campaign' => currentCampaign()]);
 
             throw new \Exception(__('error.error-exporting-excel-file'));
         }
@@ -88,6 +88,8 @@ class ExportPlugin extends ComponentPlugin
         return _Rows(
             _Html('utils.request-for-export-done')->icon('icon-check')->class('text-lg font-semibold'),
             _Html('utils.wait-for-the-email-to-download-your-file'),
+
+            _Button('utils.close')->class('mt-4')->run('({modal}) => modal().close() && modal().close();'),
         )->class('bg-white rounded-lg p-6');
     }
 
@@ -127,14 +129,14 @@ class ExportPlugin extends ComponentPlugin
                 ->run('() => {
                     const value = $("#export-email-visual").val();
 
-                    const patchId = "#export-email-patch" + "' . $this->componentId . '";
+                    const patchId = "#export-email-patch" + "' . (request('componentId') ?: $this->componentId) . '";
 
                     $(patchId).val(value);
 
                     $(patchId).get(0).dispatchEvent(new Event("input"))
                 }'),
 
-            _ButtonOutlined('utils.export-via-email')->class('w-full')
+            _ButtonOutlined('utils.export-via-email')
                 ->selfPost('pluginMethod', array_merge(request()->all(), [
                     'method' => 'exportToExcelViaEmail',
                     'from_route' => request('from_route')

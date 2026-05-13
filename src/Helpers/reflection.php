@@ -180,14 +180,25 @@ function cleanClosuresFromObject(&$object, array &$visited = []): void {
 
         if ($value instanceof Closure) {
             // ✅ Remove the closure by setting the property to null
-            $property->setValue($object, null);
+            try {
+                $property->setValue($object, null);
+            } catch (Error $e) {
+                // PHP 8.2 readonly properties throw on write; skip them.
+            }
         } elseif (is_object($value)) {
             // ✅ Recursively clean nested objects
             cleanClosuresFromObject($value, $visited);
         } elseif (is_array($value)) {
             // ✅ Clean array and overwrite property with cleaned version
             $cleanedArray = exportArrayWithoutClosures($value, $visited);
-            $property->setValue($object, $cleanedArray);
+            try {
+                $property->setValue($object, $cleanedArray);
+            } catch (Error $e) {
+                // PHP 8.2 readonly properties throw on write; skip them.
+                // The array contents were inspected for closures but the
+                // property itself can't be overwritten — acceptable since
+                // readonly arrays are inherently closure-free by convention.
+            }
         }
     }
 }

@@ -20,6 +20,8 @@ class ComponentToExportableToExcel implements FromArray, WithHeadings, ShouldAut
 
     public const REGEX_CURRENCY = '/^\$\s*-?\d{1,3}(,\d{3})*(\.\d{2})?$/';
     public const REGEX_CURRENCY_FR = '/^-?\d{1,3}(.\d{3})*(\,\d{2})?\s*\$$/';
+    public const REGEX_DATE_ISO   = '/^\d{4}-\d{2}-\d{2}$/';
+    public const REGEX_DATE_LOCAL = '/^(\d{2}\/\d{2}\/\d{4}|\d{2}-\d{2}-\d{4})$/';
 
     protected $component;
     protected $filename;
@@ -291,11 +293,20 @@ class ComponentToExportableToExcel implements FromArray, WithHeadings, ShouldAut
         return NumberFormat::FORMAT_CURRENCY_USD;
     }
 
+    protected function dateFormat()
+    {
+        return NumberFormat::FORMAT_DATE_YYYYMMDD;
+    }
+
     protected function getCurrencyFormat($text)
     {
         try {
             if (preg_match(static::REGEX_CURRENCY, $text) || preg_match(static::REGEX_CURRENCY_FR, $text)) {
                 return $this->currencyFormat();
+            }
+
+            if ($text && (preg_match(static::REGEX_DATE_ISO, $text) || preg_match(static::REGEX_DATE_LOCAL, $text))) {
+                return $this->dateFormat();
             }
 
             return null;
