@@ -24,4 +24,9 @@ return [
     'lazy_hierarchy' => [
         'enabled' => false,
     ],
+
+    // Kill switch for Condoedge\Utils\Services\CachedServiceWrapper.
+    // When false, the wrapper passes through to the underlying service without
+    // touching the Cache facade — so tests and local dev see fresh results.
+    'cache_wrapping_enabled' => env('CACHE_WRAPPING_ENABLED', false),
 ];

@@ -1,5 +1,12 @@
 @use "./IntroJs";
 
+/* TH ALIGN HELPERS */
+// `text-right` on a <th> doesn't reach the inner .vlThHeader flex container,
+// so this class right-aligns the header label by overriding the flex.
+.th-right .vlThHeader {
+  justify-content: flex-end;
+}
+
 /* DROPDOWN MACROS */
 .dropdown-with-scroll {
   --dropdown-max-height: 30rem;
