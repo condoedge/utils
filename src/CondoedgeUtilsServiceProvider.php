@@ -199,7 +199,7 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
         });
 
         $this->app->bind(\Condoedge\Utils\Services\Maps\GeocodingService::class, function ($app) {
-            return $app->make(NominatimService::class);
+            return $app->make(GoogleMapsService::class);
         });
 
         $this->app->singleton(\Condoedge\Utils\Services\Analytics\GoogleAnalyticsService::class, function ($app) {

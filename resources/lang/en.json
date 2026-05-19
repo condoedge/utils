@@ -64,6 +64,7 @@
 	"notes.content": "Content",
 	"translate.email-is-invalid": "Email is invalid",
 	"translate.files-select-type-fileable-first": "Please select a file type first",
+	"utils.close": "Close",
 	"utils.direct-export": "Export report here",
 	"utils.email-is-required": "Email is required",
 	"utils.export-ready": "Excel export is ready",
