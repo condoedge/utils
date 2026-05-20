@@ -12,5 +12,8 @@ class ComplianceValidationRouter
 
         Route::get('compliance-issue-overview/{id}', \Condoedge\Utils\Kompo\ComplianceValidation\ComplianceIssueOverviewPage::class)
             ->name('compliance-issue.overview');
+
+        Route::get('compliance-rule/{rule_code}', \Condoedge\Utils\Kompo\ComplianceValidation\ComplianceRuleDetailsPage::class)
+            ->name('compliance-rule.details');
     }
 }

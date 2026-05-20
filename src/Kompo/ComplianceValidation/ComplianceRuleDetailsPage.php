@@ -2,7 +2,6 @@
 
 namespace Condoedge\Utils\Kompo\ComplianceValidation;
 
-use App\Services\ComplianceRulesCatalog;
 use Condoedge\Utils\Kompo\Common\Form;
 use Condoedge\Utils\Models\ComplianceValidation\ComplianceIssue;
 
@@ -15,7 +14,8 @@ class ComplianceRuleDetailsPage extends Form
     public function created()
     {
         $code = $this->prop('rule_code') ?: request()->route('rule_code');
-        $this->rule = ComplianceRulesCatalog::find($code);
+        $this->rule = complianceRulesService()->getRuleFromCode($code);
+
         if (!$this->rule) {
             abort(404);
         }
@@ -23,8 +23,7 @@ class ComplianceRuleDetailsPage extends Form
 
     public function render()
     {
-        $code = $this->rule['code'];
-        $openIssues = ComplianceIssue::where('rule_code', $code)
+        $openIssues = ComplianceIssue::where('rule_code', $this->rule->getCode())
             ->whereNull('resolved_at')
             ->count();
 
@@ -35,7 +34,7 @@ class ComplianceRuleDetailsPage extends Form
                 ->href('compliances-issues.list'),
 
             _FlexBetween(
-                _TitleMain($this->rule['name_key']),
+                _TitleMain($this->rule->getName()),
                 $this->severityBadge(),
             )->class('mb-4'),
 
@@ -46,25 +45,29 @@ class ComplianceRuleDetailsPage extends Form
                 $openIssues > 0 ? 'bg-danger' : 'bg-greenmain'
             )->class('mb-6'),
 
-            $this->section('compliance.rules-catalog.what-it-checks', $this->rule['short_desc_key']),
-            $this->section('compliance.rules-catalog.why-matters',    $this->rule['why_matters_key']),
-            $this->section('compliance.rules-catalog.how-triggers',   $this->rule['how_triggers_key']),
-            $this->section('compliance.rules-catalog.how-resolve',    $this->rule['how_to_resolve_key']),
+            $this->section('compliance.rules-catalog.what-it-checks', $this->rule->getShortDescription()),
+            $this->section('compliance.rules-catalog.why-matters',    $this->rule->getWhyItMatters()),
+            $this->section('compliance.rules-catalog.how-triggers',   $this->rule->getHowItTriggers()),
+            $this->section('compliance.rules-catalog.how-resolve',    $this->rule->getHowToResolve()),
         )->class('p-6 max-w-4xl mx-auto');
     }
 
-    protected function section(string $titleKey, string $bodyKey)
+    protected function section(string $titleKey, ?string $body)
     {
+        if (!$body) {
+            return null;
+        }
+
         return _Rows(
             _Html($titleKey)->class('text-lg font-semibold mt-4 mb-2'),
-            _Html($bodyKey)->class('text-base text-gray-700 leading-relaxed'),
+            _Html($body)->class('text-base text-gray-700 leading-relaxed'),
         )->class('mb-2');
     }
 
     protected function severityBadge()
     {
-        return $this->rule['severity'] === ComplianceRulesCatalog::SEVERITY_ERROR
-            ? _Pill('compliance.rules-catalog.severity-critical')->class('bg-danger text-white text-lg px-4 py-2')
-            : _Pill('compliance.rules-catalog.severity-warning')->class('bg-warning text-white text-lg px-4 py-2');
+        $type = $this->rule->getDefaultIssueType();
+
+        return _Pill($type->label())->class($type->classes() . ' text-lg px-4 py-2');
     }
 }

@@ -3,6 +3,7 @@
 namespace Condoedge\Utils\Services\ComplianceValidation;
 
 use Carbon\Carbon;
+use Condoedge\Utils\Models\ComplianceValidation\ComplianceIssueTypeEnum;
 use Condoedge\Utils\Services\ComplianceValidation\Rules\RuleContract;
 use Condoedge\Utils\Services\ComplianceValidation\ScheduledRuleContract;
 
@@ -65,8 +66,33 @@ class RulesGetter
                 return $rule;
             }
         }
-        
+
         return null;
+    }
+
+    /**
+     * All registered rules grouped by validatable class.
+     * Within each group: ERROR before WARNING, then alphabetical by name.
+     *
+     * @return array<string, RuleContract[]>
+     */
+    public function getRulesByCategory(): array
+    {
+        $grouped = [];
+
+        foreach ($this->getAllDefaultRules() as $rule) {
+            $grouped[$rule->getValidatableClass()][] = $rule;
+        }
+
+        // Ordering by severity (First error) and name.
+        foreach ($grouped as $validatableClass => $groupedRules) {
+            $grouped[$validatableClass] = collect($groupedRules)->sortBy([
+                fn (RuleContract $r) => $r->getDefaultIssueType() == ComplianceIssueTypeEnum::ERROR ? 0 : 1,
+                fn (RuleContract $r) => $r->getName(),
+            ])->all();
+        }
+    
+        return $grouped;
     }
 
     /**

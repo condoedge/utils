@@ -72,4 +72,31 @@ interface RuleContract
      * Override to plug in a richer flow (redirect, bulk action, multi-step form...).
      */
     public function getSolutionHandler(ComplianceIssue $complianceIssue): \Condoedge\Utils\Services\ComplianceValidation\Solutions\AbstractComplianceSolutionHandler;
+
+    // ============================================================
+    // Catalog metadata — human-facing rule information
+    // ============================================================
+
+    /**
+     * Model class this rule validates (e.g. Person::class).
+     * Drives the rules-catalog category/grouping.
+     */
+    public function getValidatableClass(): string;
+
+    /**
+     * Rule-level severity. Also the default returned by getIssueType().
+     */
+    public function getDefaultIssueType(): ComplianceIssueTypeEnum;
+
+    /** One-line summary of what the rule checks. Null = no summary. */
+    public function getShortDescription(): ?string;
+
+    /** Why this rule matters (business/compliance angle). */
+    public function getWhyItMatters(): ?string;
+
+    /** What conditions cause this rule to flag an issue. */
+    public function getHowItTriggers(): ?string;
+
+    /** How an admin resolves a flagged issue. */
+    public function getHowToResolve(): ?string;
 }

@@ -8,6 +8,8 @@ use Condoedge\Utils\Models\ComplianceValidation\ComplianceIssueTypeEnum;
 
 abstract class AbstractComplianceIssuesTable extends WhiteTable
 {
+    protected $permissionKey = 'ComplianceIssue';
+
     public function top()
     {
         $errorCount = (clone $this->query())->error()->count();
@@ -38,23 +40,34 @@ abstract class AbstractComplianceIssuesTable extends WhiteTable
                 )->class('flex-1 gap-2'),
                 _Rows(
                     _MiniStatCard('compliance.type-warning-filter', $warningCount, 'clock', 'bg-warning'),
-                    _Select()->name('type')->options(
-                        ComplianceIssueTypeEnum::optionsWithLabels(),
-                    )->placeholder('compliance.filter-by-type')->filter()->class('w-full !mb-0'),
+                    _Flex(
+                        _Select()->name('validatable_type', false)
+                            ->options($this->validatableTypeOptions())
+                            ->default($this->defaultValidatableType())
+                            ->placeholder('compliance.filter-by-validatable-type')
+                            ->serverFilter()
+                            ->class('w-full !mb-0'),
+                        _Select()->name('type')->options(
+                            ComplianceIssueTypeEnum::optionsWithLabels(),
+                        )->placeholder('compliance.filter-by-type')->serverFilter()->class('w-full !mb-0'),
+                    )->class('gap-2'),
                 )->class('flex-1 gap-2'),
             )->class('gap-4 mt-4 mb-3 items-start'),
 
             _Input()->name('search', false)->placeholder('generic.search')
-                ->filter()
+                ->serverFilter()
                 ->class('w-full'),
         );
     }
 
     public function baseQuery()
     {
+        $validatableType = !request('validatable_type') ? $this->defaultValidatableType() : request('validatable_type');
+
         return ComplianceIssue::query()
             ->has('validatable')
             ->when(request('search'), fn($q, $term) => $q->search($term))
+            ->when($validatableType && $validatableType !== 'all', fn($q) => $q->where('validatable_type', (new $validatableType)->getMorphClass()))
             ->with('validatable')
             ->orderBy('type', 'desc')
             ->orderBy('detected_at', 'desc');
@@ -106,5 +119,27 @@ abstract class AbstractComplianceIssuesTable extends WhiteTable
     public function openRulesCatalog()
     {
         return new ComplianceRulesCatalogModal();
+    }
+
+    /**
+     * Validatable-type select options, derived from the rules catalog.
+     * @return array<string, string>  [class => type label]
+     */
+    protected function validatableTypeOptions(): array
+    {
+        $options = collect(complianceRulesService()->getRulesByCategory())
+            ->keys()
+            ->mapWithKeys(fn ($class) => [$class => $class::validatableTypeName()])
+            ->all();
+        
+        return ['all' => __('compliance.all-validatable-types')] + $options;
+    }
+
+    /**
+     * Pre-selected validatable type. Null = no default (all types).
+     */
+    protected function defaultValidatableType(): ?string
+    {
+        return null;
     }
 }

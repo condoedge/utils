@@ -44,9 +44,44 @@ abstract class BaseRule implements RuleContract, ScheduledRuleContract
     abstract public function getIssueDescription(ValidatableContract $validatable): string;
 
     /**
-     * Get the type/severity of issue for this validatable
+     * Get the type/severity of issue for this validatable.
+     * Defaults to the rule-level getDefaultIssueType(); override only
+     * when severity genuinely varies per validatable.
      */
-    abstract public function getIssueType(ValidatableContract $validatable): ComplianceIssueTypeEnum;
+    public function getIssueType(ValidatableContract $validatable): ComplianceIssueTypeEnum
+    {
+        return $this->getDefaultIssueType();
+    }
+
+    /**
+     * Model class this rule validates (e.g. Person::class).
+     */
+    abstract public function getValidatableClass(): string;
+
+    /**
+     * Rule-level severity. Also the default for getIssueType().
+     */
+    abstract public function getDefaultIssueType(): ComplianceIssueTypeEnum;
+
+    public function getShortDescription(): ?string
+    {
+        return null;
+    }
+
+    public function getWhyItMatters(): ?string
+    {
+        return null;
+    }
+
+    public function getHowItTriggers(): ?string
+    {
+        return null;
+    }
+
+    public function getHowToResolve(): ?string
+    {
+        return null;
+    }
 
     abstract public function individualRevalidate(ComplianceIssue $complianceIssue): bool;
 

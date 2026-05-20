@@ -32,4 +32,9 @@ class TeamComplianceIssuesTable extends AbstractComplianceIssuesTable
     {
         return safeGetAllTeamChildrenIds();
     }
+
+    protected function defaultValidatableType(): ?string
+    {
+        return \Condoedge\Utils\Facades\TeamModel::getClass();
+    }
 }
