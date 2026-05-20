@@ -41,7 +41,7 @@ class ComplianceIssue extends Model
 
     public function getTranslatedDetailMessage()
     {
-        return __($this->detail_message, $this->extra_data ?? []);
+        return $this->getRuleInstance()?->getTranslatedMessage($this) ?? __($this->detailed_message, $this->extra_data ?? []);
     }
 
     public function lastExecution(): ?ValidationExecution

@@ -60,6 +60,11 @@ abstract class BaseRule implements RuleContract, ScheduledRuleContract
         return null;
     }
 
+    public function getTranslatedMessage(ComplianceIssue $issue): string
+    {
+        return __($issue->detailed_message, $issue->extra_data ?? []);
+    }
+
     public function getSolutionHandler(ComplianceIssue $complianceIssue): AbstractComplianceSolutionHandler
     {
         return new DefaultComplianceSolutionHandler($complianceIssue);
