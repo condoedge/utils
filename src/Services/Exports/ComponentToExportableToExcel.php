@@ -176,24 +176,26 @@ class ComponentToExportableToExcel implements FromArray, WithHeadings, ShouldAut
         }
 
         $result = [];
+        $realOutputIndex = 0;
         // Using foreach instead of collect to reduce overhead
         foreach ($renderedItem->elements as $i => $element) {
             if (!$element || (property_exists($element, 'class') && str_contains($element->class, 'exclude-export'))) {
                 continue;
             }
             
-            $letter = chr(65 + $i);
+            $letter = chr(65 + $realOutputIndex); // Convert index to letter (A, B, C, ...)
             $text = $this->getLabelsFromComponent($element);
 
-            $format = $this->getCurrencyFormat($text);
+            $format = $this->getCurrencyFormat($text, property_exists($element, 'class') ? $element->class : null);
 
             if ($format) {
                 $this->columnFormats[strtoupper($letter)] = $format;
             }
 
-            $result[] = $this->sanatizeText($text);
+            $result[] = $this->sanatizeText($text, $this->columnFormats[strtoupper($letter)] ?? null);
+            $realOutputIndex++;
         }
-        
+
         unset($renderedItem); // Free memory
         
         return $result;
@@ -298,14 +300,14 @@ class ComponentToExportableToExcel implements FromArray, WithHeadings, ShouldAut
         return NumberFormat::FORMAT_DATE_YYYYMMDD;
     }
 
-    protected function getCurrencyFormat($text)
+    protected function getCurrencyFormat($text, $class = '')
     {
         try {
-            if (preg_match(static::REGEX_CURRENCY, $text) || preg_match(static::REGEX_CURRENCY_FR, $text)) {
+            if (preg_match(static::REGEX_CURRENCY, $text) || preg_match(static::REGEX_CURRENCY_FR, $text) || str_contains($class, 'currency')) {
                 return $this->currencyFormat();
             }
 
-            if ($text && (preg_match(static::REGEX_DATE_ISO, $text) || preg_match(static::REGEX_DATE_LOCAL, $text))) {
+            if ($text && (preg_match(static::REGEX_DATE_ISO, $text) || preg_match(static::REGEX_DATE_LOCAL, $text)) || str_contains($class, 'date')) {
                 return $this->dateFormat();
             }
 
@@ -317,9 +319,15 @@ class ComponentToExportableToExcel implements FromArray, WithHeadings, ShouldAut
     }
 
     /* SANATIZE */
-    protected function sanatizeText($text)
+    protected function sanatizeText($text, $format = null)
     {
         try {
+            $text = strip_tags(html_entity_decode(trim($text)));
+
+            if ($format == $this->currencyFormat()) {
+                $text = preg_replace('/[^\d.,-]/', '', $text);
+            }
+
             if (preg_match(static::REGEX_CURRENCY, $text)) {
                 return floatval(preg_replace('/[^0-9.-]/', '', $text));
             }
@@ -328,7 +336,14 @@ class ComponentToExportableToExcel implements FromArray, WithHeadings, ShouldAut
                 return floatval(str_replace(',', '.', preg_replace('/[^0-9.,-]/', '', $text)));
             }
 
-            return  html_entity_decode(trim($text));
+            if ($format === $this->dateFormat()) {
+                $date = \Carbon\Carbon::parse($text);
+                if ($date) {
+                    return $date->format('Y-m-d');
+                }
+            }
+
+            return $text;
             // return mb_convert_encoding(trim($text), 'ISO-8859-1', 'UTF-8');
         } catch (\Throwable $e) {
             Log::error($e->getMessage(), ['class' => static::class, 'text' => $text, 'trace' => $e->getTraceAsString(), 'user' => auth()->user()]);
