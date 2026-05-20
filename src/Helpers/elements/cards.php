@@ -204,3 +204,50 @@ if (!function_exists("_CardGray300")) {
 		)->cardGray300();
 	}
 }
+
+if (!function_exists("_StatCard")) {
+	function _StatCard($title, $value, $icon, $color = 'bg-greenmain')
+	{
+		return _Card(
+			_FlexBetween(
+				_Sax($icon, 52)->class('text-white opacity-80'),
+				_Rows(
+					_Html($title)->class('text-white mb-1 opacity-80'),
+					_Html($value)->class('text-3xl text-white'),
+				)->class('text-right'),
+			)->class('gap-6'),
+		)->p4()->class($color)->style('min-width:320px');
+	}
+}
+
+if (!function_exists("_WhiteKpiCard")) {
+	/**
+	 * KPI card with white background and green text — opposite of _MiniStatCard.
+	 * Used when the KPI sits on an already-colored section and needs to recede.
+	 */
+	function _WhiteKpiCard($title, $value, $icon)
+	{
+		return _Flex(
+			_Sax($icon, 32)->class('text-greenmain'),
+			_Rows(
+				_Html($title)->class('text-xs uppercase tracking-wide text-gray-500'),
+				_Html((string) $value)->class('text-2xl font-bold text-greenmain'),
+			)->class('gap-0'),
+		)->class('gap-3 items-center p-3 rounded-lg bg-white border border-gray-100');
+	}
+}
+
+if (!function_exists("_MiniStatCard")) {
+	function _MiniStatCard($title, $value, $icon, $color = 'bg-greenmain')
+	{
+		return _Card(
+			_FlexBetween(
+				_Sax($icon, 32)->class('text-white opacity-80'),
+				_Rows(
+					_Html($title)->class('text-white text-xs opacity-80'),
+					_Html($value)->class('text-2xl text-white font-bold'),
+				)->class('text-right'),
+			)->class('gap-3'),
+		)->class($color . ' flex-1 p-3 rounded-lg');
+	}
+}

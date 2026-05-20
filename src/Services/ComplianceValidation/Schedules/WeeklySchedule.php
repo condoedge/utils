@@ -38,10 +38,12 @@ class WeeklySchedule implements ScheduleContract
 
     public function getDescription(): string
     {
-        $days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-        $dayName = $days[$this->dayOfWeek];
+        $localizedDay = Carbon::now()->locale(app()->getLocale())->startOfWeek(Carbon::SUNDAY)->addDays($this->dayOfWeek)->dayName;
         
-        return sprintf('Weekly on %s at %02d:%02d', $dayName, $this->hour, $this->minute);
+        return __('compliance.schedule.weekly-on-day-at', [
+            'day'  => $localizedDay,
+            'time' => sprintf('%02d:%02d', $this->hour, $this->minute),
+        ]);
     }
 
     public function getFrequency(): string

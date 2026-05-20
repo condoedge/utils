@@ -33,7 +33,9 @@
       "Bash(php -l src/Kompo/ComplianceValidation/ComplianceIssueOverviewPage.php)",
       "Bash(php -l src/Kompo/ComplianceValidation/AbstractComplianceIssuesTable.php)",
       "Bash(php -l src/Kompo/ComplianceValidation/ComplianceIssuesTable.php)",
-      "Bash(php *)"
+      "Bash(php *)",
+      "Bash(git *)",
+      "PowerShell(Get-Item *)"
     ]
   }
 }

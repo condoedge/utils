@@ -54,10 +54,15 @@ class MonthlySchedule implements ScheduleContract
     public function getDescription(): string
     {
         if ($this->dayOfMonth === -1) {
-            return sprintf('Monthly on last day at %02d:%02d', $this->hour, $this->minute);
+            return __('compliance.schedule.monthly-on-last-day-at', [
+                'time' => sprintf('%02d:%02d', $this->hour, $this->minute),
+            ]);
         }
         
-        return sprintf('Monthly on day %d at %02d:%02d', $this->dayOfMonth, $this->hour, $this->minute);
+        return __('compliance.schedule.monthly-on-day-at', [
+            'day'  => $this->dayOfMonth,
+            'time' => sprintf('%02d:%02d', $this->hour, $this->minute),
+        ]);
     }
 
     public function getFrequency(): string

@@ -104,6 +104,16 @@ class ComplianceIssue extends Model
         });
     }
 
+    public function scopeError($query)
+    {
+        $query->where('type', ComplianceIssueTypeEnum::ERROR);
+    }
+
+    public function scopeWarning($query)
+    {
+        $query->where('type', ComplianceIssueTypeEnum::WARNING);
+    }
+
     // ACTIONS
     public function setValidatable(ValidatableContract $validatable)
     {

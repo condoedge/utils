@@ -34,7 +34,9 @@ class DailySchedule implements ScheduleContract
 
     public function getDescription(): string
     {
-        return sprintf('Daily at %02d:%02d', $this->hour, $this->minute);
+        return __('compliance.schedule.daily-at', [
+            'time' => sprintf('%02d:%02d', $this->hour, $this->minute),
+        ]);
     }
 
     public function getFrequency(): string

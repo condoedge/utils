@@ -10,33 +10,43 @@ abstract class AbstractComplianceIssuesTable extends WhiteTable
 {
     public function top()
     {
+        $errorCount = (clone $this->query())->error()->count();
+        $warningCount = (clone $this->query())->warning()->count();
+
         return _Rows(
             _FlexBetween(
                 _Html('compliance.compliance-issues')->class('text-2xl font-semibold'),
                 _Flex(
+                    _Button()
+                        ->icon(_Sax('info-circle', 20))
+                        ->title('compliance.rules-catalog.open')
+                        ->class('!bg-info text-white')
+                        ->selfGet('openRulesCatalog')->inModal(),
                     !safeIsSuperAdmin() ? null : 
                         _ButtonOutlined('compliance.manual-run')->selfPost('runComplianceValidation')->alert('translate.running-compliance-in-background'),
                     !safeIsSuperAdmin() ? null : _ExcelExportButton()->class('!mb-0'),
                 )->class('gap-4')
             ),
-            _FlexBetween(
-                _FlexEnd(
-                    _Input()->name('search', false)->placeholder('generic.search')->filter(),
-                )->class('gap-3'),
-                _FlexEnd(
+            _Flex(
+                _Rows(
+                    _MiniStatCard('compliance.type-error-filter', $errorCount, 'danger', 'bg-danger'),
                     _MultiSelect()->name('rule_code')
                         ->options(complianceRulesService()->getDefaultRulesWithLabels())
                         ->placeholder('compliance.filter-by-rules')
-                        ->filter(),
-                    _Select()->name('type')
-                        ->options(ComplianceIssueTypeEnum::optionsWithLabels())
-                        ->placeholder('compliance.filter-by-type')
-                        ->filter(),
-                    _Toggle('compliance.show-resolved')->name('show_resolved', false)
                         ->filter()
-                        ->class('w-full min-w-[150px]'),
-                )->class('gap-3'),
-            )->class('gap-3 mt-2'),
+                        ->class('!mb-0 w-full'),
+                )->class('flex-1 gap-2'),
+                _Rows(
+                    _MiniStatCard('compliance.type-warning-filter', $warningCount, 'clock', 'bg-warning'),
+                    _Select()->name('type')->options(
+                        ComplianceIssueTypeEnum::optionsWithLabels(),
+                    )->placeholder('compliance.filter-by-type')->filter()->class('w-full !mb-0'),
+                )->class('flex-1 gap-2'),
+            )->class('gap-4 mt-4 mb-3 items-start'),
+
+            _Input()->name('search', false)->placeholder('generic.search')
+                ->filter()
+                ->class('w-full'),
         );
     }
 
@@ -44,11 +54,9 @@ abstract class AbstractComplianceIssuesTable extends WhiteTable
     {
         return ComplianceIssue::query()
             ->has('validatable')
-            ->when(!request('show_resolved'), function ($query) {
-                $query->whereNull('resolved_at');
-            })
             ->when(request('search'), fn($q, $term) => $q->search($term))
             ->with('validatable')
+            ->orderBy('type', 'desc')
             ->orderBy('detected_at', 'desc');
     }
 
@@ -57,8 +65,8 @@ abstract class AbstractComplianceIssuesTable extends WhiteTable
         return [
             _Th('compliance.type')->sort('type'),
             _Th('compliance.detected-at')->sort('detected_at'),
-            _Th('translate.rule'),
             _Th('compliance.validatable'),
+            _Th('compliance.rule'),
             _Th('compliance.status'),
             // _Th('compliance.detail-message'),
             _Th()->class('w-8'),
@@ -93,5 +101,10 @@ abstract class AbstractComplianceIssuesTable extends WhiteTable
         dispatch(function () {
             complianceService()->validateDefaultRules();
         });
+    }
+
+    public function openRulesCatalog()
+    {
+        return new ComplianceRulesCatalogModal();
     }
 }
