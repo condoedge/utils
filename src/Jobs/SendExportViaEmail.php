@@ -47,11 +47,14 @@ class SendExportViaEmail implements ShouldQueue
     public function handle(): void
     {
         app()->instance('bootFlag', true);
-        
-        $this->setOriginalRequest();
 
-        if ($this->userId && $user = UserModel::find($this->userId)) {
-            auth()->login($user);
+        // Rebuilding the request context just if running through queue worker.
+        if (app()->runningInConsole()) {
+            $this->setOriginalRequest();
+
+            if ($this->userId && $user = UserModel::find($this->userId)) {
+                auth()->login($user);
+            }
         }
 
         $exportableInstance = $this->exportableInstance;
