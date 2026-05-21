@@ -2,7 +2,7 @@
 
 namespace Condoedge\Utils\Services\ComplianceValidation\Solutions;
 
-use Kompo\Elements\Element;
+use Kompo\Elements\BaseElement;
 
 /**
  * Default handler: delegates to the rule's individualValidationDetailsComponent.
@@ -10,7 +10,7 @@ use Kompo\Elements\Element;
  */
 class DefaultComplianceSolutionHandler extends AbstractComplianceSolutionHandler
 {
-    public function getComponent(): ?Element
+    public function getComponent(): ?BaseElement
     {
         return $this->rule?->individualValidationDetailsComponent($this->issue);
     }

@@ -4,7 +4,7 @@ namespace Condoedge\Utils\Services\ComplianceValidation\Solutions;
 
 use Condoedge\Utils\Models\ComplianceValidation\ComplianceIssue;
 use Condoedge\Utils\Services\ComplianceValidation\Rules\RuleContract;
-use Kompo\Elements\Element;
+use Kompo\Elements\BaseElement;
 
 /**
  * Mirrors the AbstractCommunicationHandler / AbstractNotificationButtonHandler shape:
