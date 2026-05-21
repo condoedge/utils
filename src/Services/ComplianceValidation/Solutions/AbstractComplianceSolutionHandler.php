@@ -30,7 +30,7 @@ abstract class AbstractComplianceSolutionHandler
     /**
      * Component rendered inside the "Solution" section. Null hides the slot.
      */
-    abstract public function getComponent(): ?Element;
+    abstract public function getComponent(): ?BaseElement;
 
     /**
      * Action buttons shown under the component.
