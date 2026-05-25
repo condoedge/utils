@@ -3,12 +3,15 @@
 namespace Condoedge\Utils\Models\ContactInfo\Phone;
 
 use Condoedge\Utils\Contracts\Security\HasOwnedRecords;
+use Condoedge\Utils\Contracts\Security\ScopedToTeam;
+use Condoedge\Utils\Models\Concerns\Security\BelongsToOneTeam;
 use Condoedge\Utils\Models\Concerns\Security\OwnedRecordsViaMorphContact;
 use Condoedge\Utils\Models\Model;
 use Propaganistas\LaravelPhone\PhoneNumber;
 
-class Phone extends Model implements HasOwnedRecords
+class Phone extends Model implements HasOwnedRecords, ScopedToTeam
 {
+    use BelongsToOneTeam;
     use \Condoedge\Utils\Models\Traits\BelongsToTeamTrait;
     use OwnedRecordsViaMorphContact;
 

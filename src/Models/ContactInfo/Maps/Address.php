@@ -3,12 +3,15 @@
 namespace Condoedge\Utils\Models\ContactInfo\Maps;
 
 use Condoedge\Utils\Contracts\Security\HasOwnedRecords;
+use Condoedge\Utils\Contracts\Security\ScopedToTeam;
+use Condoedge\Utils\Models\Concerns\Security\BelongsToOneTeam;
 use Condoedge\Utils\Models\Concerns\Security\OwnedRecordsViaMorphContact;
 use Condoedge\Utils\Models\Model;
 use Kompo\Place;
 
-class Address extends Model implements HasOwnedRecords
+class Address extends Model implements HasOwnedRecords, ScopedToTeam
 {
+    use BelongsToOneTeam;
     use \Condoedge\Utils\Models\Traits\BelongsToTeamTrait;
     use OwnedRecordsViaMorphContact;
 
