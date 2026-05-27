@@ -2,10 +2,14 @@
 
 namespace Condoedge\Utils\Models\Notes;
 
+use Condoedge\Utils\Contracts\Security\HasOwnedRecords;
+use Condoedge\Utils\Contracts\Security\ScopedToTeam;
+use Condoedge\Utils\Models\Concerns\Security\BelongsToOneTeam;
 use Condoedge\Utils\Models\Model;
 
-class Note extends Model
+class Note extends Model implements ScopedToTeam, HasOwnedRecords
 {
+    use BelongsToOneTeam;
     use \Condoedge\Utils\Models\Traits\BelongsToTeamTrait;
 
     protected $casts = [
@@ -16,6 +20,11 @@ class Note extends Model
     public function notable()
     {
         return $this->morphTo();
+    }
+
+    public function ownedRecordIdsForUser(int $userId): array
+    {
+        return $this->where('added_by', $userId)->pluck('id')->toArray();
     }
 
     /* SCOPES */

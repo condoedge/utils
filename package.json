@@ -1,4 +1,8 @@
 {
+  "scripts": {
+    "translate": "node .github/scripts/generate-translations.js --provider=claude-cli",
+    "translate:dry": "node .github/scripts/generate-translations.js --provider=claude-cli --dry-run"
+  },
   "devDependencies": {
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/exec": "^7.1.0",

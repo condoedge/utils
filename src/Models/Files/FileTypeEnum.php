@@ -34,7 +34,7 @@ enum FileTypeEnum: int
             self::SPREADSHEET => __('file-type-spreadsheet'),
             self::AUDIO => __('file-type-audio'),
             self::VIDEO => __('file-type-video'),
-            self::RAW_DOCUMENT => __('translate.file-type-raw-document'),
+            self::RAW_DOCUMENT => __('file-type-raw-document'),
             default => __('file-type-unknown'),
         };
     }
@@ -113,7 +113,10 @@ enum FileTypeEnum: int
             self::AUDIO => _Audio($route),
             self::VIDEO => _Video($route),
             self::RAW_DOCUMENT => _Html('<embed src="' . $route . '" frameborder="0" width="100%" height="100%">'),
-            default => null,
+            default => _Rows(
+                _Sax('document-upload', 52)->class('text-gray-500 mb-2'),
+                _Html('utils.no-preview-available')->class('text-gray-500 text-lg'),
+            )->class('flex items-center justify-center text-center px-4'),
         };
     }
 
