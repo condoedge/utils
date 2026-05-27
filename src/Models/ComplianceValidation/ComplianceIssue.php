@@ -2,13 +2,16 @@
 
 namespace Condoedge\Utils\Models\ComplianceValidation;
 
+use Condoedge\Utils\Contracts\Security\ScopedToTeam;
+use Condoedge\Utils\Models\Concerns\Security\BelongsToOneTeam;
 use Condoedge\Utils\Models\Model;
 use Condoedge\Utils\Models\Traits\BelongsToTeamTrait;
 use Condoedge\Utils\Services\ComplianceValidation\HierarchicalValidatableContract;
 use Condoedge\Utils\Services\ComplianceValidation\ValidatableContract;
 
-class ComplianceIssue extends Model
+class ComplianceIssue extends Model implements ScopedToTeam
 {
+    use BelongsToOneTeam;
     use BelongsToTeamTrait;
 
     protected $table = 'compliance_issues';
