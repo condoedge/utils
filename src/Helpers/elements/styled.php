@@ -146,7 +146,7 @@ if (!function_exists('_ModalHeader')) {
         return _FlexBetween(
             $els,
         )
-            ->class('justify-between items-start border-b border-gray-200 py-4 px-6 rounded-t-xl bg-white ModalHeader');
+            ->class('justify-between items-start pt-8 pb-4 px-6 ModalHeader');
     }
 }
 
