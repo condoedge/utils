@@ -4,12 +4,18 @@ namespace Condoedge\Utils\Services\Translation;
 
 class TranslationKeyFilter
 {
+    /**
+     * When true, plain-text keys (letters + spaces only, no namespace) are allowed.
+     * Useful to detect flat-JSON keys like "Save changes" at the cost of more false positives.
+     */
+    public bool $allowPlainText = false;
+
     private const EXCLUSION_RULES = [
         'contexts' => [
             'config(', 'env(', '->get(', 'Config::', 'config/', 'config.',
             'rules(', 'validator(', 'validate(', 'Validator::', 'function_exists(',
             'class_exists(', 'method_exists(', 'interface_exists(', 'trait_exists(',
-            'defined(', 'constant(', 'storage_path(', 'resource_path(', '_Sax(', 
+            'defined(', 'constant(', 'storage_path(', 'resource_path(', '_Sax(',
             'icon(', 'svg(', 'path(', 'url(', 'route(', 'asset(',
             'Auth::', 'auth(', 'Gate::', 'gate(', 'DB::', 'db(',
             'Session::', 'session(', 'Cache::', 'cache(', 'Log::', 'log(',
@@ -18,6 +24,12 @@ class TranslationKeyFilter
             'Request::', 'request(', 'Route::', 'route(', 'URL::', 'url(',
             'Redirect::', 'redirect(', 'Schema::', 'schema(', 'Artisan::', 'artisan(',
             'Broadcast::', 'broadcast(', 'Password::', 'password(', 'Notification::', 'notification(',
+            // Non-translation Kompo/HTML method calls
+            '->id(', '->attr(', '->addHeader(', '->href(', '->src(', '->format(',
+            '->onKeyDown(', '->onClick(', '->onBlur(', '->onChange(',
+            '->inDrawer(', '->inPanel(', '->inModal(', // panel/modal target IDs
+            '->browse(', '->redirect(', '->emit(',
+            'addHeader(', '::class',
         ],
         'config_patterns' => [
             'app.', 'database.', 'cache.', 'queue.', 'mail.', 'session.',
@@ -48,7 +60,9 @@ class TranslationKeyFilter
             '/^(function|class|return)/',
             '/^validation\.values[^,]*$/', // validation.values.something
             '/^validation\.custom[^,]*$/', // validation.custom.something
-            '/^[a-zA-Z ]*$/' // only letters and spaces
+        ],
+        'plain_text_patterns' => [
+            '/^[a-zA-Z ]*$/',        // only letters and spaces — opt-in via $allowPlainText
         ]
     ];
 
@@ -117,13 +131,22 @@ class TranslationKeyFilter
             if (preg_match($pattern, $key)) return false;
         }
 
+        if (!$this->allowPlainText) {
+            foreach ($rules['plain_text_patterns'] as $pattern) {
+                if (preg_match($pattern, $key)) return false;
+            }
+        }
+
         return true;
     }
 
     private function isValidInContext(string $key, string $context): bool
     {
         foreach (self::EXCLUSION_RULES['contexts'] as $contextPattern) {
-            if (stripos($context, $contextPattern) !== false) {
+            // Word-boundary match so "->revalidate()" does NOT match "validate(",
+            // "->reconfigure()" does NOT match "config(", etc.
+            $escaped = preg_quote($contextPattern, '/');
+            if (preg_match('/(?<![a-zA-Z0-9_:>])' . $escaped . '/i', $context)) {
                 return false;
             }
         }
@@ -132,32 +155,6 @@ class TranslationKeyFilter
 
     private function isExcludedKey(string $key): bool
     {
-        $excludedKeys = $this->getExcludedKeys();
-        return in_array($key, $excludedKeys, true);
-    }
-
-    private function getExcludedKeys(): array
-    {
-        $excludeFile = storage_path('app/translation_exclude_keys.json');
-
-        if (file_exists($excludeFile)) {
-            $content = file_get_contents($excludeFile);
-            $parsed = json_decode($content, true);
-            if (is_array($parsed)) return $parsed;
-        }
-
-        $defaultExcluded = [
-            '_CollapsibleSideSection', '_CollapsibleInnerSection', '_CollapsibleSideTitle', '_CollapsibleSideItem',
-            '_Button', '_Link', '_Flex', '_Html', '_Sax', '_Collapsible',
-            'class', 'id', 'href', 'src', 'alt', 'title', 'name', 'value', 'type',
-            'php', 'js', 'css', 'html', 'json', 'xml', 'api', 'admin',
-            'hidden', 'active', 'disabled', 'loading', 'home', 'login', 'logout'
-        ];
-
-        if (!file_exists($excludeFile)) {
-            @file_put_contents($excludeFile, json_encode($defaultExcluded, JSON_PRETTY_PRINT));
-        }
-
-        return $defaultExcluded;
+        return app(ExcludedKeysRepository::class)->contains($key);
     }
 }
