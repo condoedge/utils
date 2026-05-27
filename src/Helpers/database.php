@@ -25,7 +25,7 @@ if (!function_exists('addMetaData')) {
         // $table->timestamps();
 
         $table->timestamp('created_at')->useCurrent();
-        $table->timestamp('updated_at')->useCurrentOnUpdate();
+        $table->timestamp('updated_at')->defaultRaw('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP');
 
         $table->softDeletes();
     }
