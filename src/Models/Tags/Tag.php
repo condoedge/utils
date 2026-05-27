@@ -2,10 +2,13 @@
 
 namespace Condoedge\Utils\Models\Tags;
 
+use Condoedge\Utils\Contracts\Security\ScopedToTeam;
+use Condoedge\Utils\Models\Concerns\Security\BelongsToOneTeam;
 use Condoedge\Utils\Models\Model;
 
-class Tag extends Model
+class Tag extends Model implements ScopedToTeam
 {
+	use BelongsToOneTeam;
 	use \Condoedge\Utils\Models\Traits\BelongsToTeamTrait;
 	use \Kompo\Database\HasTranslations;
 
