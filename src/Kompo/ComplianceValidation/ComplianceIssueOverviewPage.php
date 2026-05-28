@@ -8,6 +8,7 @@ use Condoedge\Utils\Models\ComplianceValidation\ComplianceIssue;
 
 class ComplianceIssueOverviewPage extends Form
 {
+    public const ID = 'compliance-issue-overview-page';
     public $id = 'compliance-issue-overview-page';
     public $model = ComplianceIssue::class;
 
@@ -19,6 +20,7 @@ class ComplianceIssueOverviewPage extends Form
 
     public function created()
     {
+        $this->id = static::ID;
         $this->rule = $this->model->getRuleInstance();
         $this->validatable = $this->model->validatable;
         $this->lastExecution = $this->model->lastExecution();
