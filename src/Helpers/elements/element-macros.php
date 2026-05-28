@@ -298,3 +298,11 @@ Kompo\Elements\BaseElement::macro('conditionToShow', function ($condition, $retu
 
     return (new ($this::class))->class('hidden');
 });
+
+\Kompo\Html::macro('replaceCKEditorContent', function ($mentions = []) {
+    $text = $this->label;
+
+    $text = replaceAllMentions($text, $mentions);
+
+    return $this->label($text);
+});
