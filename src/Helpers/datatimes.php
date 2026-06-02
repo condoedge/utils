@@ -2,6 +2,13 @@
 
 use Illuminate\Support\Carbon;
 
+if (!function_exists('tsToDate')) {
+	function tsToDate($timestamp, $format = 'Y-m-d')
+	{
+		return Carbon::createFromTimestamp($timestamp)->translatedFormat($format);
+	}
+}
+
 if (!function_exists("carbonNow")) {
 	function carbonNow()
 	{

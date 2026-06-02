@@ -89,7 +89,7 @@ class ComponentToExportableToExcel implements FromArray, WithHeadings, ShouldAut
         try {
             return $this->parseHeaders($this->component->headers());
         } catch (\Exception $e) {
-            Log::error($e->getMessage(), ['class' => static::class, 'trace' => $e->getTraceAsString(), 'user' => auth()->user()]);
+            Log::error($e->getMessage(), ['class' => static::class, 'component' => get_class($this->component), 'trace' => $e->getTraceAsString(), 'user' => auth()->user()]);
             abort(500);
         }
         
@@ -238,7 +238,7 @@ class ComponentToExportableToExcel implements FromArray, WithHeadings, ShouldAut
 
             return "";
         } catch (\Throwable $e) {
-            Log::error($e->getMessage(), ['class' => static::class, 'element' => $el, 'trace' => $e->getTraceAsString(), 'user' => auth()->user()]);
+            Log::error($e->getMessage(), ['class' => static::class, 'component' => get_class($this->component), 'element' => $el, 'trace' => $e->getTraceAsString(), 'user' => auth()->user()]);
             return "";
         }
 
@@ -303,17 +303,17 @@ class ComponentToExportableToExcel implements FromArray, WithHeadings, ShouldAut
     protected function getCurrencyFormat($text, $class = '')
     {
         try {
-            if (preg_match(static::REGEX_CURRENCY, $text) || preg_match(static::REGEX_CURRENCY_FR, $text) || str_contains($class, 'currency')) {
+            if (preg_match(static::REGEX_CURRENCY, $text) || preg_match(static::REGEX_CURRENCY_FR, $text) || preg_match('/(^| )currency( |$)/', $class)) {
                 return $this->currencyFormat();
             }
 
-            if ($text && (preg_match(static::REGEX_DATE_ISO, $text) || preg_match(static::REGEX_DATE_LOCAL, $text)) || str_contains($class, 'date')) {
+            if ($text && (preg_match(static::REGEX_DATE_ISO, $text) || preg_match(static::REGEX_DATE_LOCAL, $text)) || preg_match('/(^| )date( |$)/', $class)) {
                 return $this->dateFormat();
             }
 
             return null;
         } catch (\Throwable $e) {
-            Log::error($e->getMessage(), ['class' => static::class, 'text' => $text, 'trace' => $e->getTraceAsString(), 'user' => auth()->user()]);
+            Log::error($e->getMessage(), ['class' => static::class, 'component' => get_class($this->component), 'text' => $text, 'trace' => $e->getTraceAsString(), 'user' => auth()->user()]);
             return null;
         }
     }
@@ -346,7 +346,7 @@ class ComponentToExportableToExcel implements FromArray, WithHeadings, ShouldAut
             return $text;
             // return mb_convert_encoding(trim($text), 'ISO-8859-1', 'UTF-8');
         } catch (\Throwable $e) {
-            Log::error($e->getMessage(), ['class' => static::class, 'text' => $text, 'trace' => $e->getTraceAsString(), 'user' => auth()->user()]);
+            Log::error($e->getMessage(), ['class' => static::class, 'component' => get_class($this->component), 'text' => $text, 'trace' => $e->getTraceAsString(), 'user' => auth()->user()]);
             return $text;
         }
     }
@@ -363,7 +363,7 @@ class ComponentToExportableToExcel implements FromArray, WithHeadings, ShouldAut
             libxml_clear_errors();
             libxml_use_internal_errors($internalErrors);
         } catch (\Exception $e) {
-            Log::error($e->getMessage(), ['class' => static::class, 'html' => $html, 'trace' => $e->getTraceAsString(), 'user' => auth()->user()]);
+            Log::error($e->getMessage(), ['class' => static::class, 'component' => get_class($this->component), 'html' => $html, 'trace' => $e->getTraceAsString(), 'user' => auth()->user()]);
 
             return preg_replace("/\n+/", "\n", strip_tags($html));
         }
