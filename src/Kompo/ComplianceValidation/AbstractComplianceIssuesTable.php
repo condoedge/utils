@@ -66,6 +66,7 @@ abstract class AbstractComplianceIssuesTable extends WhiteTable
 
         return ComplianceIssue::query()
             ->alreadyVerifiedAccess()
+            ->whereNull('resolved_at')
             ->has('validatable')
             ->with('validatable')
             ->when(request('search'), fn($q, $term) => $q->search($term))
