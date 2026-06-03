@@ -39,7 +39,7 @@ class ComplianceIssueOverviewPage extends Form
         $solutionActions = $this->solutionHandler?->getActions() ?? [];
 
         if ($resolved) {
-            $accent = 'bg-green-600';
+            $accent = 'green-600';
         }
 
         return _Rows(
