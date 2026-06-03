@@ -38,6 +38,10 @@ class ComplianceIssueOverviewPage extends Form
         $solutionComponent = $this->solutionHandler?->getComponent();
         $solutionActions = $this->solutionHandler?->getActions() ?? [];
 
+        if ($resolved) {
+            $accent = 'bg-green-400';
+        }
+
         return _Rows(
             _BackButton('compliances-issues.list')->class('mb-3'),
 
@@ -45,7 +49,7 @@ class ComplianceIssueOverviewPage extends Form
                 // Header
                 _Rows(
                     _Flex(
-                        $this->model->typeBadge(),
+                        $resolved ? _Pill('compliance.resolved')->class('bg-green-400 text-white') : $this->model->typeBadge(),
                         _Html('compliance.overview.title')
                             ->class('text-xs uppercase tracking-[0.2em] text-' . $accent . ' font-semibold'),
                     )->class('gap-2 items-center mb-2'),
@@ -87,7 +91,7 @@ class ComplianceIssueOverviewPage extends Form
                 )->class('px-8 py-6 border-b border-gray-200'),
 
                 // Solution
-                _Rows(
+                $resolved ? null : _Rows(
                     $this->sectionHeading('lamp-on', 'compliance.overview.solution-section', 'text-positive'),
 
                     $solutionComponent ?: _Html('compliance.overview.no-solution-component')->class('text-sm text-gray-500'),

@@ -25,7 +25,7 @@ abstract class AbstractComplianceIssuesTable extends WhiteTable
                         ->class('!bg-info text-white')
                         ->selfGet('openRulesCatalog')->inModal(),
                     !safeIsSuperAdmin() ? null : 
-                        _ButtonOutlined('compliance.manual-run')->selfPost('runComplianceValidation')->alert('translate.running-compliance-in-background'),
+                        _ButtonOutlined('compliance.manual-run')->selfPost('runComplianceValidation')->alert('compliance.running-in-background'),
                     !safeIsSuperAdmin() ? null : _ExcelExportButton()->class('!mb-0'),
                 )->class('gap-4')
             ),
@@ -65,10 +65,11 @@ abstract class AbstractComplianceIssuesTable extends WhiteTable
         $validatableType = !request('validatable_type') ? $this->defaultValidatableType() : request('validatable_type');
 
         return ComplianceIssue::query()
+            ->alreadyVerifiedAccess()
             ->has('validatable')
+            ->with('validatable')
             ->when(request('search'), fn($q, $term) => $q->search($term))
             ->when($validatableType && $validatableType !== 'all', fn($q) => $q->where('validatable_type', (new $validatableType)->getMorphClass()))
-            ->with('validatable')
             ->orderBy('type', 'desc')
             ->orderBy('detected_at', 'desc');
     }

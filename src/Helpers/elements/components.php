@@ -5,6 +5,7 @@ use Condoedge\Utils\Kompo\Elements\ResponsiveTabs;
 use Condoedge\Utils\Kompo\Elements\InternationalPhoneInput;
 use Condoedge\Utils\Kompo\Elements\LazyHierarchy;
 use Condoedge\Utils\Kompo\Elements\PasswordInput;
+use Condoedge\Utils\Kompo\Elements\Repeater;
 
 if (!function_exists('_Collapsible')) {
     function _Collapsible() {
@@ -17,7 +18,6 @@ if (!function_exists('_LazyHierarchy')) {
         return LazyHierarchy::form(...func_get_args());
     }
 }
-
 
 if (!function_exists('_ResponsiveTabs')) {
     /**

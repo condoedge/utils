@@ -40,6 +40,7 @@
 	"compliance.rules-catalog.title": "Catalogue des règles de conformité",
 	"compliance.rules-catalog.what-it-checks": "Ce qui est vérifié",
 	"compliance.rules-catalog.why-matters": "Pourquoi c'est important",
+	"compliance.running-in-background": "Le contrôle de non-conformité s'exécute en arrière-plan.",
 	"compliance.show-resolved": "Afficher résolu",
 	"compliance.status": "Statut",
 	"compliance.type": "Type",

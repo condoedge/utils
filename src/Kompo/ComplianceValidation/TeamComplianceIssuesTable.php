@@ -6,6 +6,8 @@ use Condoedge\Utils\Facades\TeamModel;
 
 class TeamComplianceIssuesTable extends AbstractComplianceIssuesTable
 {
+    protected $permissionKey = 'ComplianceIssue';
+
     public function query()
     {
         $teamsIds = $this->getTeamsIds();

@@ -40,6 +40,7 @@
 	"compliance.rules-catalog.title": "Compliance rules catalog",
 	"compliance.rules-catalog.what-it-checks": "What it checks",
 	"compliance.rules-catalog.why-matters": "Why it matters",
+	"compliance.running-in-background": "Compliance check is running in the background.",
 	"compliance.show-resolved": "Show resolved",
 	"compliance.status": "Status",
 	"compliance.type": "Type",

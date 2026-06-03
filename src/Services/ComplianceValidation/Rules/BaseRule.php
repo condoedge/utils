@@ -97,7 +97,7 @@ abstract class BaseRule implements RuleContract, ScheduledRuleContract
 
     public function getTranslatedMessage(ComplianceIssue $issue): ?string
     {
-        return __($issue->detailed_message, $issue->extra_data ?? []);
+        return __($issue->detail_message, $issue->extra_data ?? []);
     }
 
     public function getSolutionHandler(ComplianceIssue $complianceIssue): AbstractComplianceSolutionHandler

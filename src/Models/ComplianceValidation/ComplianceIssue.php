@@ -3,6 +3,8 @@
 namespace Condoedge\Utils\Models\ComplianceValidation;
 
 use Condoedge\Utils\Contracts\Security\ScopedToTeam;
+use Condoedge\Utils\Facades\TeamModel;
+use Illuminate\Database\Eloquent\Builder;
 use Condoedge\Utils\Models\Concerns\Security\BelongsToOneTeam;
 use Condoedge\Utils\Models\Model;
 use Condoedge\Utils\Models\Traits\BelongsToTeamTrait;
@@ -44,7 +46,7 @@ class ComplianceIssue extends Model implements ScopedToTeam
 
     public function getTranslatedDetailMessage()
     {
-        return $this->getRuleInstance()?->getTranslatedMessage($this) ?? __($this->detailed_message, $this->extra_data ?? []);
+        return $this->getRuleInstance()?->getTranslatedMessage($this) ?? __($this->detail_message, $this->extra_data ?? []);
     }
 
     public function lastExecution(): ?ValidationExecution
@@ -115,6 +117,25 @@ class ComplianceIssue extends Model implements ScopedToTeam
     public function scopeWarning($query)
     {
         $query->where('type', ComplianceIssueTypeEnum::WARNING);
+    }
+
+    public function applyTeamSecurityScope(Builder $query, array $teamIds): void
+    {
+        $query->where(fn($q) => $q->forTeam($teamIds)
+            ->orWhereHas('validatable', function ($q) use ($teamIds) {
+                $q->alreadyVerifiedAccess();
+                
+                $teamClass = TeamModel::getClass();
+
+                if ($q->getModel() instanceof $teamClass) {
+                    $q->whereIn('id', $teamIds);
+                    return;
+                }
+
+                if (method_exists($q->getModel(), 'scopeForTeams')) {
+                    $q->forTeams($teamIds);
+                }
+            }));
     }
 
     // ACTIONS
