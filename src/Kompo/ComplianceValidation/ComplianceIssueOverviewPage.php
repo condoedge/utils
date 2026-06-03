@@ -39,7 +39,7 @@ class ComplianceIssueOverviewPage extends Form
         $solutionActions = $this->solutionHandler?->getActions() ?? [];
 
         if ($resolved) {
-            $accent = 'bg-green-400';
+            $accent = 'bg-green-600';
         }
 
         return _Rows(
@@ -49,7 +49,7 @@ class ComplianceIssueOverviewPage extends Form
                 // Header
                 _Rows(
                     _Flex(
-                        $resolved ? _Pill('compliance.resolved')->class('bg-green-400 text-white') : $this->model->typeBadge(),
+                        $resolved ? _Pill('compliance.resolved')->class('bg-green-600 text-white') : $this->model->typeBadge(),
                         _Html('compliance.overview.title')
                             ->class('text-xs uppercase tracking-[0.2em] text-' . $accent . ' font-semibold'),
                     )->class('gap-2 items-center mb-2'),

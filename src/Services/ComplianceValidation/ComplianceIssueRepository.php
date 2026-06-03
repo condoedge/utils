@@ -60,9 +60,13 @@ class ComplianceIssueRepository
      */
     protected function resolveFixedIssues(string $ruleCode, array $currentFailingValidatables): void
     {
+        $stillFailingIds = collect($currentFailingValidatables)
+            ->map(fn ($validatable) => $validatable->getKey())
+            ->all();
+
         ComplianceIssue::where('rule_code', $ruleCode)
             ->whereNull('resolved_at')
-            ->whereNotIn('validatable_id', collect($currentFailingValidatables)->pluck('validatable_id'))
+            ->whereNotIn('validatable_id', $stillFailingIds)
             ->update(['resolved_at' => now()]);
     }
 }
