@@ -73,13 +73,21 @@ if (!function_exists('loadFormattedLabel')) {
             return;
         }
 
-        $value = collect(config('kompo.places_attributes'))->mapWithKeys(fn ($col, $key) => [$col => $address->{$col}]);
+        $value = collect(config('kompo.places_attributes'))->mapWithKeys(fn ($col, $key) => [$col => $address->{$col} ?? $address[$col]]);
 
-        $address->setRawAttributes(array_filter([
-            ...$value->all(),
-            'address_label' => $address->getAddressInline(),
-            // ...$address->getAttributes()
-        ]));
+        if (is_object($address)) {
+            $address->setRawAttributes(array_filter([
+                ...$value->all(),
+                'address_label' => $address->getAddressInline(),
+                // ...$address->getAttributes()
+            ]));
+        } else {
+            $address = (object) array_filter([
+                ...$value->all(),
+                'address_label' => implode(' ', [$address['address1'] ?? null, $address['city'] ?? null, $address['province'] ?? null, $address['postal_code'] ?? null]),
+                // ...$address
+            ]);
+        }
 
         return $address;
     }
