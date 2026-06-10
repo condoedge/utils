@@ -88,6 +88,8 @@
 	"utils.file-preview": "Aperçu du fichier",
 	"utils.fixed": "Traduit",
 	"utils.ignore": "Ignorer",
+	"utils.image-could-not-be-compressed": "L'image n'a pas pu être réduite sous :max Mo. Veuillez utiliser une image plus petite.",
+	"utils.image-too-large-to-process": "L'image est trop volumineuse pour être traitée (max :max Mo).",
 	"utils.include-ignored-ones": "Inclure les traductions ignorées",
 	"utils.manage-address": "Gérer l'adresse",
 	"utils.maps-address-city": "Ville",

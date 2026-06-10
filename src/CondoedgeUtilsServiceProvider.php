@@ -27,6 +27,8 @@ use Condoedge\Utils\Events\MultipleComplianceIssuesDetected;
 use Condoedge\Utils\Kompo\Plugins\DebugReload;
 use Condoedge\Utils\Listeners\HandleBatchComplianceNotifications;
 use Condoedge\Utils\Services\ComplianceValidation\NotificationStrategyRegistry;
+use Condoedge\Utils\Services\Images\ImageCompressionServiceContract;
+use Condoedge\Utils\Services\Images\InterventionImageCompressionService;
 use Condoedge\Utils\Services\Maps\GeocodioService;
 use Condoedge\Utils\Services\Maps\GoogleMapsService;
 use Condoedge\Utils\Services\Maps\NominatimService;
@@ -196,6 +198,10 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
             return new GeocodioService(
                 apiKey: config('services.geocodio.api_key')
             );
+        });
+
+        $this->app->singleton(ImageCompressionServiceContract::class, function ($app) {
+            return new InterventionImageCompressionService();
         });
 
         $this->app->bind(\Condoedge\Utils\Services\Maps\GeocodingService::class, function ($app) {

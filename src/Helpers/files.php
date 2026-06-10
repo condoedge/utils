@@ -199,3 +199,38 @@ if (!function_exists('validateFileRules')) {
     }
 
 }
+
+if (!function_exists('validateCompressibleImage')) {
+    function validateCompressibleImage(string $field, ?int $maxKb = null, ?int $maxIncomingKb = null, ?int $maxWidth = null)
+    {
+        return Rule::when(
+            request($field) instanceof \Illuminate\Http\UploadedFile,
+            ['image', new \Condoedge\Utils\Rule\CompressibleImageRule($maxKb, $maxIncomingKb, $maxWidth)],
+            ['json'],
+        );
+    }
+}
+
+if (!function_exists('validateCompressibleLogoImage')) {
+    function validateCompressibleLogoImage(string $field, ?int $maxKb = null, ?int $maxIncomingKb = null, ?int $maxWidth = null)
+    {
+        return validateCompressibleImage(
+            $field,
+            $maxKb,
+            $maxIncomingKb,
+            $maxWidth ?? (int) config('kompo-files.image-compression.max-widths.logo', 200),
+        );
+    }
+}
+
+if (!function_exists('validateCompressibleCoverImage')) {
+    function validateCompressibleCoverImage(string $field, ?int $maxKb = null, ?int $maxIncomingKb = null, ?int $maxWidth = null)
+    {
+        return validateCompressibleImage(
+            $field,
+            $maxKb,
+            $maxIncomingKb,
+            $maxWidth ?? (int) config('kompo-files.image-compression.max-widths.cover', 1600),
+        );
+    }
+}

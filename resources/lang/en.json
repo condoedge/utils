@@ -88,6 +88,8 @@
 	"utils.file-preview": "File preview",
 	"utils.fixed": "Translated",
 	"utils.ignore": "Ignore",
+	"utils.image-could-not-be-compressed": "The image could not be reduced below :max MB. Please use a smaller image.",
+	"utils.image-too-large-to-process": "The image is too large to process (max :max MB).",
 	"utils.include-ignored-ones": "Include ignored translations",
 	"utils.manage-address": "Manage address",
 	"utils.maps-address-city": "City",
