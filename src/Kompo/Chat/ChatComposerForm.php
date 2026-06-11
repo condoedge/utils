@@ -51,16 +51,43 @@ abstract class ChatComposerForm extends Form
             $this->selfMethods(['sendChatMessage']);
         }
 
+        // Komponent id so the classic (attachment) send can refresh/remount this
+        // composer, which is what clears the file chips and resets the editor
+        $this->id($this->composerId());
+
+        $input = $this->composerInput();
+
+        if ($channel = $this->typingWhisperChannel()) {
+            // Client-to-client whisper on the already-authorized private channel;
+            // the messages panel shows the kit typing indicator on the same event
+            $input = $input->whisperOnInput($channel, $this->typingWhisperEvent());
+        }
+
         return _Rows(
             $this->topSlot(),
             _Flex(
                 $this->attachmentElement(),
-                $this->composerInput(),
+                $input,
                 $this->sendButton(),
             )->class($this->composerRowClass()),
+            $this->bottomSlot(),
             ChatScripts::initComposer($this->composerConfig()),
         )->class($this->composerClass())
         ->id($this->composerId());
+    }
+
+    /**
+     * Private channel to whisper typing events on (null disables). Pair with
+     * ChatScripts::typingIndicator($channel, $event) near the messages panel.
+     */
+    protected function typingWhisperChannel(): ?string
+    {
+        return null;
+    }
+
+    protected function typingWhisperEvent(): string
+    {
+        return 'typing';
     }
 
     /* BACKGROUND SEND (JS Bridge) */
@@ -106,6 +133,8 @@ abstract class ChatComposerForm extends Form
             'timeHour12' => $this->optimisticTimeHour12(),
             'requireContentSelectors' => $this->requireContentSelectors(),
             'failedText' => __('chat.send-failed'),
+            'uploadingText' => __('chat.sending'),
+            'expireMs' => $this->optimisticExpireMs(),
         ]);
 
         // Plain (non-async) arrow on the outside: vue-kompo's run() arrow-function
@@ -123,19 +152,50 @@ abstract class ChatComposerForm extends Form
 
             if (!text && !hasFiles) return;
 
+            const esc = (s) => { const d = document.createElement("div"); d.textContent = s == null ? "" : String(s); return d.innerHTML; };
+            const tempId = "chat-temp-" + Date.now() + "-" + Math.random().toString(36).slice(2, 7);
+            const time = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: !!cfg.timeHour12 });
+            const makeSpec = (contentHtml) => {
+                const spec = JSON.parse(JSON.stringify(cfg.tempItemSpec));
+                spec.label = cfg.bubbleTemplate.replace("$TIME", () => time).replace("$HTML", () => contentHtml);
+                return spec;
+            };
+
             if (hasFiles) {
-                // Attachments need a multipart form submit: classic path
+                // Attachments need a multipart form submit: classic path — but show an
+                // optimistic placeholder immediately (local thumbnails for images) so
+                // the user sees the upload is underway
                 const classic = form.querySelector(".chat-send-classic");
-                if (classic) classic.click();
+                if (!classic) return;
+
+                let thumbs = "";
+                const fileInput = form.querySelector("input[type=file]");
+                if (fileInput && fileInput.files) {
+                    Array.from(fileInput.files).forEach((f) => {
+                        if (f.type && f.type.indexOf("image/") === 0) {
+                            thumbs += \'<img src="\' + URL.createObjectURL(f) + \'" class="chat-attachment-image rounded-xl object-cover" />\';
+                        }
+                    });
+                }
+                const names = Array.from(form.querySelectorAll(".chat-composer-upload .vlCustomLabel, .discussion-composer-upload .vlCustomLabel"))
+                    .map((n) => (n.textContent || "").trim()).filter(Boolean);
+
+                const placeholder = (text ? html : "")
+                    + (thumbs ? \'<div class="flex flex-wrap gap-2 mt-1">\' + thumbs + "</div>" : "")
+                    + \'<div class="text-xs opacity-75 mt-1">\' + esc(names.join(", ")) + (names.length ? " &mdash; " : "") + esc(cfg.uploadingText) + "</div>";
+
+                ctx.$k.query(cfg.panelId).prepend(makeSpec(placeholder), tempId);
+                if (window.KompoChatKit) window.KompoChatKit.snapToBottom(cfg.panelSelector, false);
+
+                // The panel refresh after the upload wipes the placeholder; if the
+                // upload fails it self-expires (uploads are slow: triple the budget)
+                setTimeout(() => { try { ctx.$k.query(cfg.panelId).remove(tempId); } catch (e) {} }, (cfg.expireMs || 20000) * 3);
+
+                classic.click();
                 return;
             }
 
-            const tempId = "chat-temp-" + Date.now() + "-" + Math.random().toString(36).slice(2, 7);
-            const time = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: !!cfg.timeHour12 });
-            const bubble = cfg.bubbleTemplate.replace("$TIME", () => time).replace("$HTML", () => html);
-
-            const spec = JSON.parse(JSON.stringify(cfg.tempItemSpec));
-            spec.label = bubble;
+            const spec = makeSpec(html);
 
             ctx.$k.query(cfg.panelId).prepend(spec, tempId);
             if (window.KompoChatKit) window.KompoChatKit.snapToBottom(cfg.panelSelector, false);
@@ -171,6 +231,14 @@ abstract class ChatComposerForm extends Form
     }
 
     /**
+     * Optional element below the composer row (quick-action chips, hints, counters...).
+     */
+    protected function bottomSlot()
+    {
+        return null;
+    }
+
+    /**
      * Optional attachment control left of the input (e.g. _MultiFile()->name('files')
      * ->class('chat-composer-upload mb-0 shrink-0')). Null hides the slot.
      */
@@ -200,8 +268,10 @@ abstract class ChatComposerForm extends Form
 
     protected function classicSendButton()
     {
+        // Refreshes the composer too: it lives outside the messages Query, so this
+        // remount is what clears the attachment chips after a file send
         return _SubmitButton($this->sendButtonLabel())
-            ->refresh($this->refreshTargetId());
+            ->refresh([$this->refreshTargetId(), $this->composerId()]);
     }
 
     protected function sendButtonLabel(): string

@@ -27,8 +27,9 @@ class ChatBubbleRenderer
      * @param bool        $unread     Highlight ring for unread messages.
      * @param bool        $pending    Optimistic/sending style (reduced opacity).
      * @param bool        $animate    Entrance animation (use for newly created messages only).
+     * @param bool        $read       Delivery state ticks: false = sent (one tick), true = read (two ticks).
      */
-    public function ownBubble($content, ?string $authorName = null, $avatar = null, ?string $timestamp = null, $footer = null, bool $unread = false, bool $pending = false, bool $animate = false)
+    public function ownBubble($content, ?string $authorName = null, $avatar = null, ?string $timestamp = null, $footer = null, bool $unread = false, bool $pending = false, bool $animate = false, bool $read = false)
     {
         $animationClass = $animate ? ' animate-message-user' : '';
         $highlightClass = $animate ? ' animate-new-message-highlight' : '';
@@ -39,8 +40,11 @@ class ChatBubbleRenderer
                     $this->authorRow($authorName, true),
                     _Rows(
                         $this->contentElement($content),
-                        $this->timestampRow($timestamp, $footer, true),
+                        $this->timestampRow($timestamp, null, true, $this->ticksHtml($pending, $read)),
                     )->class($this->ownBubbleClass() . $highlightClass . $this->stateClasses($unread, $pending)),
+                    // Read receipts (e.g. reader avatars) sit UNDER the bubble,
+                    // Messenger-style, so they don't crowd the timestamp/ticks row
+                    $footer ? _FlexEnd($footer)->class('mt-1 pr-1') : null,
                 ),
                 $avatar ? $this->avatarElement($avatar, 'ml-3 flex-shrink-0') : null,
             )->class('items-end' . $animationClass),
@@ -96,7 +100,7 @@ class ChatBubbleRenderer
                     . $authorRow
                     . '<div class="' . $this->ownBubbleClass() . ' chat-bubble-pending animate-new-message-highlight">'
                         . '<div class="chat-bubble-content' . ($contentClass !== '' ? ' ' . $contentClass : '') . '">$HTML</div>'
-                        . '<div class="flex mt-2 items-center justify-end gap-2"><span class="text-xs opacity-60">$TIME</span></div>'
+                        . '<div class="flex mt-2 items-center justify-end gap-2"><span class="text-xs opacity-60">$TIME</span>' . $this->ticksHtml(true, false) . '</div>'
                     . '</div>'
                 . '</div>'
                 . $avatar
@@ -132,16 +136,33 @@ class ChatBubbleRenderer
         )->class('items-center mb-1' . ($own ? ' justify-end' : ''));
     }
 
-    protected function timestampRow(?string $timestamp, $footer, bool $own)
+    protected function timestampRow(?string $timestamp, $footer, bool $own, ?string $ticksHtml = null)
     {
-        if (!$timestamp && !$footer) {
+        if (!$timestamp && !$footer && !$ticksHtml) {
             return null;
         }
 
         return _Flex(
             $timestamp ? _Html(e($timestamp))->class('text-xs ' . ($own ? 'opacity-60' : 'text-gray-400')) : null,
+            $ticksHtml ? _Html($ticksHtml) : null,
             $footer,
         )->class('mt-2 items-center justify-end gap-2');
+    }
+
+    /**
+     * WhatsApp-style delivery ticks for own messages: clock while sending,
+     * one tick when persisted, two (colored) once read.
+     */
+    protected function ticksHtml(bool $pending, bool $read): string
+    {
+        if ($pending) {
+            // Empty span: scss renders it as a small hollow "clock" circle
+            return '<span class="chat-tick chat-tick-pending" aria-label="sending"></span>';
+        }
+
+        return $read
+            ? '<span class="chat-tick chat-tick-read" aria-label="read">&#10003;&#10003;</span>'
+            : '<span class="chat-tick" aria-label="sent">&#10003;</span>';
     }
 
     protected function contentElement($content)

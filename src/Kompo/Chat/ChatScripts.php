@@ -61,6 +61,23 @@ class ChatScripts
     }
 
     /**
+     * "X is typing..." indicator: hidden by default, shown when a typing whisper
+     * arrives on the (already-authorized) private channel, self-hides after 3s.
+     * Pair with ChatComposerForm::typingWhisperChannel()/typingWhisperEvent().
+     */
+    public static function typingIndicator(string $channel, string $eventName = 'typing', ?string $label = null)
+    {
+        return _Flex(
+            _Html('<span></span><span></span><span></span>')->class('chat-typing-dots'),
+            _Html($label ?: __('chat.typing'))->class('text-xs text-gray-500'),
+        )
+        // Starts hidden: showOnWhisper only ever REMOVES the 'hidden' class
+        ->class('chat-typing-indicator items-center gap-2 px-6 py-1 hidden')
+        ->showOnWhisper($channel, $eventName)
+        ->hideAfter(3000);
+    }
+
+    /**
      * The chat-kit library source, read once per request. The source itself is guarded
      * (window.KompoChatKit), so executing it more than once on a page is a no-op.
      */

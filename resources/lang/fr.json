@@ -2,6 +2,8 @@
 	"auth.copied-to-clipboard": "Copié dans le presse-papiers !",
 	"chat.send": "Envoyer",
 	"chat.send-failed": "Le message n'a pas pu être envoyé",
+	"chat.sending": "envoi...",
+	"chat.typing": "écrit...",
 	"compliance.all-validatable-types": "Tous les types d'entités",
 	"compliance.close": "Fermer",
 	"compliance.compliance-executed-successfully": "Contrôle de non-conformité exécuté avec succès",
