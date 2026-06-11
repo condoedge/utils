@@ -65,16 +65,51 @@ class ChatScripts
      * arrives on the (already-authorized) private channel, self-hides after 3s.
      * Pair with ChatComposerForm::typingWhisperChannel()/typingWhisperEvent().
      */
-    public static function typingIndicator(string $channel, string $eventName = 'typing', ?string $label = null)
+    public static function typingIndicator(string $channel, string $eventName = 'typing', ?string $label = null, int $hideAfterMs = 4000)
     {
         return _Flex(
             _Html('<span></span><span></span><span></span>')->class('chat-typing-dots'),
-            _Html($label ?: __('chat.typing'))->class('text-xs text-gray-500'),
+            // The [data-whisper-name] slot is filled with the typist's name from the
+            // whisper payload ("John is typing...")
+            _Html('<span data-whisper-name class="font-medium"></span><span>'.e($label ?: __('chat.typing')).'</span>')
+                ->class('text-xs text-gray-500'),
         )
-        // Starts hidden: showOnWhisper only ever REMOVES the 'hidden' class
+        // Starts hidden: showOnWhisper only ever REMOVES the 'hidden' class.
+        // hideAfter must exceed the sender's whisper throttle (default 2500ms)
+        // so the indicator stays steady while typing continues.
         ->class('chat-typing-indicator items-center gap-2 px-6 py-1 hidden')
         ->showOnWhisper($channel, $eventName)
-        ->hideAfter(3000);
+        ->hideAfter($hideAfterMs);
+    }
+
+    /**
+     * App-wide "new message" toast listener (bottom-right, self-dismissing). Mount it
+     * once in the host's layout (e.g. the navbar komponent); it listens on a personal
+     * private channel so only actual recipients ever receive the payload.
+     *
+     * @param array $config See chat-kit.js bindMessageToasts(): channel, event,
+     *                      titleText, urlTemplate ('__ID__' placeholder), suppressPathPrefix, durationMs.
+     */
+    public static function messageToastListener(array $config)
+    {
+        $json = static::encode($config);
+
+        return _Hidden()->onLoad(
+            fn($e) => $e->run('() => { ' . static::libJs() . ' window.KompoChatKit.bindMessageToasts(' . $json . '); }')
+        );
+    }
+
+    /**
+     * Marks a chat channel as "on screen" so the toast listener suppresses its own
+     * notifications. Place inside the chat column: it re-fires on every mount/switch.
+     */
+    public static function setOpenChatChannel($channelId)
+    {
+        $id = static::encode($channelId);
+
+        return _Hidden()->onLoad(
+            fn($e) => $e->run('() => { ' . static::libJs() . ' window.KompoChatKit.setOpenChatChannel(' . $id . '); }')
+        );
     }
 
     /**

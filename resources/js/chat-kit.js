@@ -131,6 +131,102 @@
         },
 
         /**
+         * App-wide "new message" toasts: listens on the user's personal private channel
+         * and shows a styled, self-dismissing toast bottom-right on every notification.
+         *
+         * config = {
+         *   channel: string,            // e.g. 'discussion-user.42'
+         *   event: string,              // e.g. '.DiscussionNotification'
+         *   titleText: string,          // toast header, translated server-side
+         *   urlTemplate: string|null,   // click target; '__ID__' replaced with channelId
+         *   suppressPathPrefix: string, // skip the toast when already viewing that channel
+         *   durationMs: number,         // auto-dismiss delay (default 5000)
+         * }
+         */
+        bindMessageToasts: function (config) {
+            if (typeof Echo === 'undefined') return;
+            if (window.__chatToastsBound === config.channel) return;
+            window.__chatToastsBound = config.channel;
+
+            Echo.private(config.channel).listen(config.event, (data) => {
+                data = data || {};
+
+                // Already looking at that exact channel: the panel live-updates anyway.
+                // Messages for OTHER channels still toast, even on the chat page.
+                var onChatPage = config.suppressPathPrefix
+                    && window.location.pathname.indexOf(config.suppressPathPrefix) === 0;
+                var openId = window.KompoChatKit.__openChatChannelId;
+
+                if (onChatPage && data.channelId && openId && String(openId) === String(data.channelId)) {
+                    return;
+                }
+
+                // URL fallback for deep-linked channels
+                if (config.suppressPathPrefix && data.channelId
+                    && window.location.pathname.indexOf(config.suppressPathPrefix + '/' + data.channelId) === 0) {
+                    return;
+                }
+
+                window.KompoChatKit.showMessageToast(data, config);
+            });
+        },
+
+        /**
+         * Stamp which chat channel is currently on screen (re-stamped every time the
+         * chat column mounts/switches) so its own toasts are suppressed precisely.
+         */
+        setOpenChatChannel: function (id) {
+            this.__openChatChannelId = id;
+        },
+
+        showMessageToast: function (data, config) {
+            var esc = escapeHtml;
+
+            var container = document.getElementById('chat-toast-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'chat-toast-container';
+                container.className = 'chat-toast-container';
+                document.body.appendChild(container);
+            }
+
+            var toast = document.createElement('div');
+            toast.className = 'chat-toast';
+            toast.innerHTML =
+                '<div class="chat-toast-accent"></div>' +
+                '<div class="chat-toast-body">' +
+                    '<div class="chat-toast-title">' + esc(config.titleText || 'New message') + '</div>' +
+                    '<div class="chat-toast-author">' + esc(data.authorName || '')
+                        + (data.channelName ? ' &middot; ' + esc(data.channelName) : '') + '</div>' +
+                    (data.summary ? '<div class="chat-toast-summary">' + esc(data.summary) + '</div>' : '') +
+                '</div>' +
+                '<button type="button" class="chat-toast-close" aria-label="close">&times;</button>';
+            container.appendChild(toast);
+
+            var url = (config.urlTemplate && data.channelId)
+                ? config.urlTemplate.replace('__ID__', data.channelId)
+                : null;
+            if (url) {
+                toast.classList.add('chat-toast-clickable');
+                toast.addEventListener('click', function (e) {
+                    if (e.target.closest('.chat-toast-close')) return;
+                    window.location.href = url;
+                });
+            }
+
+            var remove = function () {
+                toast.classList.add('chat-toast-leaving');
+                setTimeout(function () { toast.remove(); }, 250);
+            };
+            toast.querySelector('.chat-toast-close').addEventListener('click', remove);
+
+            // Auto-dismiss; hovering pauses the timer
+            var timer = setTimeout(remove, config.durationMs || 5000);
+            toast.addEventListener('mouseenter', function () { clearTimeout(timer); });
+            toast.addEventListener('mouseleave', function () { timer = setTimeout(remove, 2000); });
+        },
+
+        /**
          * Wire a composer form: capture-phase Enter-to-send + optimistic append on send.
          *
          * config = {

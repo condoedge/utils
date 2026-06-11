@@ -60,7 +60,10 @@ abstract class ChatComposerForm extends Form
         if ($channel = $this->typingWhisperChannel()) {
             // Client-to-client whisper on the already-authorized private channel;
             // the messages panel shows the kit typing indicator on the same event
-            $input = $input->whisperOnInput($channel, $this->typingWhisperEvent());
+            // ("John is typing..." — the name travels in the whisper payload)
+            $input = $input->whisperOnInput($channel, $this->typingWhisperEvent(), [
+                'name' => auth()->user()?->name,
+            ]);
         }
 
         return _Rows(

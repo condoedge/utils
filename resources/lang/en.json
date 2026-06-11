@@ -3,7 +3,7 @@
 	"chat.send": "Send",
 	"chat.send-failed": "The message could not be sent",
 	"chat.sending": "sending...",
-	"chat.typing": "typing...",
+	"chat.typing": "is typing...",
 	"compliance.all-validatable-types": "All entity types",
 	"compliance.close": "Close",
 	"compliance.compliance-executed-successfully": "Non-compliance check executed successfully",
