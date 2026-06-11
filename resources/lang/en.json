@@ -1,5 +1,7 @@
 {
 	"auth.copied-to-clipboard": "Copied to clipboard !",
+	"chat.send": "Send",
+	"chat.send-failed": "The message could not be sent",
 	"compliance.all-validatable-types": "All entity types",
 	"compliance.close": "Close",
 	"compliance.compliance-executed-successfully": "Non-compliance check executed successfully",
@@ -108,9 +110,9 @@
 	"utils.translation-key": "Translation key",
 	"utils.wait-for-the-email-to-download-your-file": "Check your email to view your report",
 	"utils.yes": "Yes",
+	"validation.invalid-phone-format": "Invalid phone format :attribute",
 	"validation.invalid_format": "Invalid format",
 	"validation.invalid_length": "Invalid lenght",
-	"validation.invalid-phone-format": "Invalid phone format :attribute",
 	"validation.no_repeated_characters": "No repeated characters accepted",
 	"validation.no_repeated_names": "Repeated names not accepted",
 	"validation.required": "Required"

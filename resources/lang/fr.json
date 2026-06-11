@@ -1,5 +1,7 @@
 {
 	"auth.copied-to-clipboard": "Copié dans le presse-papiers !",
+	"chat.send": "Envoyer",
+	"chat.send-failed": "Le message n'a pas pu être envoyé",
 	"compliance.all-validatable-types": "Tous les types d'entités",
 	"compliance.close": "Fermer",
 	"compliance.compliance-executed-successfully": "Contrôle de non-conformité exécuté avec succès",
@@ -108,9 +110,9 @@
 	"utils.translation-key": "Clé de traduction",
 	"utils.wait-for-the-email-to-download-your-file": "Consultez vos courriels pour visualiser votre rapport",
 	"utils.yes": "Oui",
+	"validation.invalid-phone-format": "Format de téléphone invalide :attribute",
 	"validation.invalid_format": "Format invalide",
 	"validation.invalid_length": "Longueur invalide",
-	"validation.invalid-phone-format": "Format de téléphone invalide :attribute",
 	"validation.no_repeated_characters": "Aucun caractère répété n'est accepté",
 	"validation.no_repeated_names": "Les noms répétés ne sont pas acceptés",
 	"validation.required": "Requis"

@@ -1,0 +1,360 @@
+/* ==========================================================================
+   Kompo Chat Kit - shared chat presentation layer (condoedge/utils)
+
+   Consumed by relative @import from each package's scss, e.g.:
+       @import '../../utils/resources/scss/chat-kit';
+   (works from both vendor/condoedge/<pkg> and the dev kompo/<pkg> layout)
+
+   Theme by overriding the CSS custom properties below in the consumer's scss.
+   Defaults reproduce the ai chat look (indigo gradient own bubble, white card
+   other bubble).
+   ========================================================================== */
+
+:root {
+    /* Bubbles */
+    --chat-bubble-own-bg: linear-gradient(to right, #4f46e5, #9333ea); /* indigo-600 -> purple-600 */
+    --chat-bubble-own-text: #ffffff;
+    --chat-bubble-other-bg: #ffffff;
+    --chat-bubble-other-text: #1f2937;   /* gray-800 */
+    --chat-bubble-other-border: #f3f4f6; /* gray-100 */
+    --chat-bubble-author-color: #111827; /* gray-900 */
+    --chat-bubble-unread-ring: rgba(99, 102, 241, 0.3);
+    --chat-bubble-pending-opacity: 0.75;
+    --chat-bubble-highlight: rgba(99, 102, 241, 0.4);
+
+    /* Composer */
+    --chat-composer-bg: #ffffff;
+    --chat-composer-border: #d1d5db;                  /* gray-300 - clearly an input */
+    --chat-composer-focus-border: #a5b4fc;            /* indigo-300 */
+    --chat-composer-focus-ring: #e0e7ff;              /* indigo-100 */
+    --chat-composer-input-border: #e5e7eb;            /* gray-200 */
+    --chat-composer-input-focus-border: #9ca3af;      /* gray-400 */
+    --chat-upload-border: #d1d5db;                    /* gray-300 */
+    --chat-upload-bg: #f3f4f6;                        /* gray-100 - reads as a button */
+    --chat-upload-bg-hover: #e5e7eb;                  /* gray-200 */
+
+    /* Typing indicator */
+    --chat-typing-dot-color: #4f46e5;
+}
+
+
+/* ==========================================================================
+   Bubbles (colors only - radii/spacing/shadows are Tailwind utilities
+   emitted by ChatBubbleRenderer)
+   ========================================================================== */
+
+.chat-bubble-own {
+    background: var(--chat-bubble-own-bg);
+    color: var(--chat-bubble-own-text);
+}
+
+.chat-bubble-other {
+    background: var(--chat-bubble-other-bg);
+    color: var(--chat-bubble-other-text);
+    border: 1px solid var(--chat-bubble-other-border);
+}
+
+.chat-bubble-author {
+    color: var(--chat-bubble-author-color);
+}
+
+/* Unread highlight: ring layered over the Tailwind shadow. The :hover state is
+   declared too so Tailwind's hover:shadow-md (higher specificity) can't wipe it. */
+.chat-bubble-unread,
+.chat-bubble-unread:hover {
+    box-shadow: 0 0 0 2px var(--chat-bubble-unread-ring), 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+
+/* Optimistic/sending style */
+.chat-bubble-pending {
+    opacity: var(--chat-bubble-pending-opacity);
+}
+
+
+/* ==========================================================================
+   Entrance animations (ported from the ai chat)
+   ========================================================================== */
+
+/* Own message - slide from the right with a slight overshoot */
+@keyframes chatMessageInRight {
+    0% {
+        opacity: 0;
+        transform: translateX(30px) scale(0.95);
+    }
+    60% {
+        transform: translateX(-5px) scale(1.02);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+}
+
+/* Other message - slide from the left */
+@keyframes chatMessageInLeft {
+    0% {
+        opacity: 0;
+        transform: translateX(-30px) scale(0.95);
+    }
+    60% {
+        transform: translateX(5px) scale(1.02);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+}
+
+/* Expanding ring on newly added bubbles */
+@keyframes chatNewMessageHighlight {
+    0% {
+        box-shadow: 0 0 0 0 var(--chat-bubble-highlight);
+    }
+    70% {
+        box-shadow: 0 0 0 10px transparent;
+    }
+    100% {
+        box-shadow: 0 0 0 0 transparent;
+    }
+}
+
+.animate-message-user {
+    animation: chatMessageInRight 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.animate-message-assistant {
+    animation: chatMessageInLeft 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.animate-new-message-highlight {
+    animation: chatNewMessageHighlight 1s ease-out;
+}
+
+/* Typing indicator dots (pulse-bounce) */
+@keyframes chatTypingDot {
+    0%, 80%, 100% {
+        transform: translateY(0);
+        opacity: 0.5;
+    }
+    40% {
+        transform: translateY(-8px);
+        opacity: 1;
+    }
+}
+
+.animate-typing-dot-1,
+.animate-typing-dot-2,
+.animate-typing-dot-3 {
+    background: var(--chat-typing-dot-color);
+    animation: chatTypingDot 1.4s ease-in-out infinite;
+}
+
+.animate-typing-dot-2 { animation-delay: 0.2s; }
+.animate-typing-dot-3 { animation-delay: 0.4s; }
+
+@media (prefers-reduced-motion: reduce) {
+    .animate-message-user,
+    .animate-message-assistant,
+    .animate-new-message-highlight,
+    .animate-typing-dot-1,
+    .animate-typing-dot-2,
+    .animate-typing-dot-3 {
+        animation: none !important;
+    }
+}
+
+
+/* ==========================================================================
+   Composer
+   ========================================================================== */
+
+/* The composer row is the ai-style pill and owns THE single border + focus ring.
+   Inside it, BOTH default borders are neutralized further below: Kompo's
+   .vlInputWrapper (the field wrapper owns a border in the kompo theme) and
+   CKEditor's editable — that pair is what produced the double-border look. */
+.chat-composer-row {
+    display: flex;
+    background: var(--chat-composer-bg);
+    border: 1px solid var(--chat-composer-border);
+    border-radius: 1rem;
+
+    &:focus-within {
+        border-color: var(--chat-composer-focus-border);
+        box-shadow: 0 0 0 2px var(--chat-composer-focus-ring);
+    }
+}
+
+/* Chat input: no formatting toolbar, compact height that grows VERTICALLY while
+   typing (full width + wrap-anything so long content never extends sideways).
+   .ckNoToolbar is the legacy class name (discussions) kept as an alias. */
+.ckNoToolbar,
+.chat-composer-input {
+    min-width: 0;
+
+    .ck.ck-editor__top {
+        display: none;
+    }
+
+    .ck.ck-editor {
+        width: 100%;
+    }
+
+    .ck-editor__editable_inline {
+        width: 100%;
+        min-height: 2.75rem !important;
+        max-height: 40vh;
+        overflow-y: auto;
+        overflow-x: hidden;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+        /* Symmetric padding sized against min-height so a single line sits centered */
+        padding: 0.625rem 1rem !important;
+    }
+}
+
+/* Inside the pill: exactly ONE border — the pill's. */
+.chat-composer-row .chat-composer-input .vlInputWrapper,
+.chat-composer-row .ckNoToolbar .vlInputWrapper {
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent;
+}
+
+.chat-composer-row .chat-composer-input .ck-editor__editable_inline,
+.chat-composer-row .ckNoToolbar .ck-editor__editable_inline {
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: transparent;
+
+    &.ck-focused {
+        border: none !important;
+        box-shadow: none !important;
+    }
+}
+
+/* The upload control keeps a visible button look (border + filled bg) even
+   inside the pill, so users see it's clickable. */
+.chat-composer-row .chat-composer-upload .vlInputWrapper,
+.chat-composer-row .discussion-composer-upload .vlInputWrapper {
+    border: 1px solid var(--chat-upload-border) !important;
+    background: var(--chat-upload-bg);
+    border-radius: 0.75rem;
+
+    &:hover {
+        background: var(--chat-upload-bg-hover);
+    }
+}
+
+/* Upload control as a compact icon button; selected files show as small chips.
+   The visible box is Kompo's .vlInputWrapper (it owns the border and ships
+   cursor:default) — that's the element to size, center and make clickable.
+   .discussion-composer-upload is the legacy class name kept as an alias. */
+.chat-composer-upload,
+.discussion-composer-upload {
+    width: auto;
+    margin-bottom: 0;
+
+    &, * {
+        cursor: pointer !important;
+    }
+
+    /* Hidden in ALL states: Kompo's .vlFocusedField rules normally reveal the
+       native file input (with its built-in text) on click — never show it here.
+       The programmatic input.click() that opens the file picker still works. */
+    .vlSingle {
+        display: none !important;
+    }
+
+    input[type='file'] {
+        position: absolute !important;
+        opacity: 0 !important;
+        width: 1px !important;
+        height: 1px !important;
+        pointer-events: none !important;
+    }
+
+    .vlInputWrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: var(--form-control-min-height, 2.75rem);
+        min-height: var(--form-control-min-height, 2.75rem);
+        padding: 0;
+        border: 1px solid var(--chat-upload-border);
+        background: var(--chat-upload-bg);
+        border-radius: 0.75rem;
+
+        &:hover {
+            background: var(--chat-upload-bg-hover);
+        }
+    }
+
+    .vlTaggableInput {
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+    }
+
+    /* Empty (pristine) content collapses so the icon centers; with file chips it grows */
+    .vlTaggableContent {
+        flex: 0 1 auto;
+        min-height: 0;
+    }
+
+    .vlInputAppend {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+    }
+
+    .icon-upload {
+        font-size: 1.25rem;
+        color: #6b7280;
+        line-height: 1;
+    }
+
+    .vlTags {
+        max-width: 12rem;
+    }
+
+    /* When files are selected the control widens to show the chips */
+    &.vlDirtyField .vlInputWrapper {
+        width: auto;
+        padding: 0 0.5rem;
+    }
+}
+
+/* Send button: ai-look (rounded, colored, lift on hover), themeable per consumer.
+   .discussion-send-button is the legacy class name kept as an alias. */
+button.chat-send-button,
+button.discussion-send-button {
+    padding: 0.625rem 1.25rem;
+    border-radius: 0.75rem;
+    margin-bottom: 0;
+    background: var(--chat-send-bg, linear-gradient(to right, #4f46e5, #9333ea));
+    color: var(--chat-send-text, #ffffff);
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+
+    &:hover:not(:disabled) {
+        box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        transform: scale(1.05);
+    }
+
+    &:active:not(:disabled) {
+        transform: scale(0.95);
+    }
+
+    &:disabled {
+        opacity: 0.7;
+    }
+}
+
+/* Optimistic temp node (chat-kit.js appendOptimistic) - marker only; the bubble
+   inside carries its own classes (incl. chat-bubble-pending) */
+.chat-temp-message {
+    display: block;
+}
