@@ -74,7 +74,9 @@ abstract class ChatComposerForm extends Form
                 $this->sendButton(),
             )->class($this->composerRowClass()),
             $this->bottomSlot(),
-            ChatScripts::initComposer($this->composerConfig()),
+            // Consumers that run their own send pipeline (e.g. the ai chat) disable every
+            // kit JS behavior; binding an inert listener would be noise, so skip the carrier
+            $this->kitBindingEnabled() ? ChatScripts::initComposer($this->composerConfig()) : null,
         )->class($this->composerClass())
         ->id($this->composerId());
     }
@@ -316,6 +318,18 @@ abstract class ChatComposerForm extends Form
     }
 
     /* JS WIRING (overridable) */
+
+    /**
+     * Whether the composer needs the kit's JS binding at all. False when every behavior
+     * bindComposer() can perform is disabled (enter-to-send, the JS optimistic bubble and
+     * the post-send clear — the latter two are owned by sendScript() in background mode).
+     */
+    protected function kitBindingEnabled(): bool
+    {
+        return $this->enterToSendEnabled()
+            || ($this->optimisticEnabled() && !$this->backgroundSendEnabled())
+            || ($this->clearInputOnSend() && !$this->backgroundSendEnabled());
+    }
 
     /**
      * The config handed to window.KompoChatKit.bindComposer() (json_encode owns escaping).

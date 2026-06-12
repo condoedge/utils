@@ -69,6 +69,7 @@
 	"errors.server-error-subtitle": "Il semble que nous ne puissions pas nous connecter au serveur de Coolecto pour le moment",
 	"errors.server-error-title": "Erreur de serveur",
 	"file-type-raw-document": "Document texte",
+	"files-advanced-options": "Advanced options",
 	"files-attach-files": "Joindre des fichiers",
 	"files.browse-files": "Parcourir les fichiers",
 	"files.download": "Télécharger",

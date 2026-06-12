@@ -46,7 +46,7 @@ class FileUploadModalManager extends Modal
                     _Html('files-fileable')->class('text-lg font-semibold mb-2'),
                     new FileFileableForm($this->model->id),
                 ),
-            )->titleLabel('translate.advanced-options')
+            )->titleLabel('files-advanced-options')
                 ->titleElClass('!text-level1 !font-regular')
                 ->class('mb-4'),
 

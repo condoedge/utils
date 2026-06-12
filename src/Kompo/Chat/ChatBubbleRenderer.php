@@ -48,7 +48,7 @@ class ChatBubbleRenderer
                 ),
                 $avatar ? $this->avatarElement($avatar, 'ml-3 flex-shrink-0') : null,
             )->class('items-end' . $animationClass),
-        )->class('group chat-bubble-row');
+        )->class('chat-bubble-row');
     }
 
     /**
@@ -72,7 +72,7 @@ class ChatBubbleRenderer
                     )->class($this->otherBubbleClass() . $this->stateClasses($unread, $pending)),
                 ),
             )->class('items-start' . $animationClass),
-        )->class('group chat-bubble-row');
+        )->class('chat-bubble-row');
     }
 
     /**
@@ -94,18 +94,28 @@ class ChatBubbleRenderer
             ? '<div class="ml-3 flex-shrink-0">' . $avatarHtml . '</div>'
             : '';
 
-        return '<div class="group chat-bubble-row">'
+        return '<div class="chat-bubble-row">'
             . '<div class="vlFlex flex justify-end items-end animate-message-user">'
                 . '<div>'
                     . $authorRow
                     . '<div class="' . $this->ownBubbleClass() . ' chat-bubble-pending animate-new-message-highlight">'
                         . '<div class="chat-bubble-content' . ($contentClass !== '' ? ' ' . $contentClass : '') . '">$HTML</div>'
-                        . '<div class="flex mt-2 items-center justify-end gap-2"><span class="text-xs opacity-60">$TIME</span>' . $this->ticksHtml(true, false) . '</div>'
+                        . $this->ownTemplateMetaHtml()
                     . '</div>'
                 . '</div>'
                 . $avatar
             . '</div>'
         . '</div>';
+    }
+
+    /**
+     * The timestamp/ticks row of the optimistic template ($TIME substituted at send time).
+     * Mirrors timestampRow(): override BOTH together so the temp bubble and the persisted
+     * bubble keep identical meta rows (the swap must be seamless).
+     */
+    protected function ownTemplateMetaHtml(): string
+    {
+        return '<div class="flex mt-2 items-center justify-end gap-2"><span class="text-xs opacity-60">$TIME</span>' . $this->ticksHtml(true, false) . '</div>';
     }
 
     /* SHARED PIECES */
