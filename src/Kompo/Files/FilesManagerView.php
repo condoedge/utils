@@ -10,6 +10,7 @@ class FilesManagerView extends Table
 	public $containerClass = 'container-fluid';
 
 	public $id = 'file-manager-view';
+	public $class = 'pb-4';
 
     public $paginationType = 'Scroll';
     public $itemsWrapperClass = 'overflow-y-auto mini-scroll bg-white rounded-2xl p-4';
@@ -70,12 +71,9 @@ class FilesManagerView extends Table
 
 	public function render($file)
 	{
-		$fileable = $file->fileable;
-		$canView = auth()->user()->can('viewFileOf', $fileable);
-
 		return _TableRow(
             _Html($file->name),
-            _Html(ucfirst($file->fileable_type ?: '-')),
+            _Html(ucfirst($file->fileable_type ?: __('files-general'))),
 			$file->uploadedAt(),
             _FlexBetween(
                 _Link()->class('mt-1 -mr-2')->col('col-md-3')

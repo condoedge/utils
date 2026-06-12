@@ -2,8 +2,11 @@
 
 return [
     'types' => [
-        'general' => ['general.general', ''],
+        'general' => ['files-general', ''],
     ],
+
+    'enable-strict-file-type-validation' => true,
+    'allow-fileable-type-null' => true, // GENERAL ONES (uploaded from file manager)
 
     'image-compression' => [
         'target-max-kb' => env('IMAGE_COMPRESSION_TARGET_KB', 2048),

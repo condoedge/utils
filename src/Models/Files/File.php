@@ -77,7 +77,11 @@ class File extends Model implements Searchable, HasOwnedRecords
         $query = $query->with('fileable')->where('team_id', safeCurrentTeamId())->orderByDesc('created_at');
 
         if(array_key_exists('fileable_type', $filters) && $fileableType = $filters['fileable_type']) {
-            $query = $query->where('fileable_type', $fileableType);
+            $query = $query->when($fileableType == 'general', fn($q) => $q->whereNull('fileable_type'), fn($q) => $q
+                ->where('fileable_type', $fileableType));
+        } else if (config('kompo-files.enable-strict-file-type-validation', true)) {
+            $query = $query->when(config('kompo-files.allow-fileable-type-null', true), fn($q) => $q->whereNull('fileable_type'))
+                ->orWhereIn('fileable_type', array_keys(config('kompo-files.types')));
         }
 
         if(array_key_exists('filename', $filters)) {
@@ -243,7 +247,7 @@ class File extends Model implements Searchable, HasOwnedRecords
     public static function formattedTypesOptions()
     {
         return collect(static::typesOptions())->mapWithKeys(
-            fn($label, $value) => [$value => ucfirst($label[0])]
+            fn($label, $value) => [$value => ucfirst(__($label[0]))]
         );
     }
 
@@ -263,7 +267,7 @@ class File extends Model implements Searchable, HasOwnedRecords
                     static::buttonGroup('parent_type_bis', false)
                         ->options(
                             collect(static::typesOptions())->mapWithKeys(
-                                fn($label, $value) => static::selectOption($value, $label[0], $label[1])
+                                fn($label, $value) => static::selectOption($value, __($label[0]), $label[1])
                             )
                         )->selectedClass('!bg-info text-white', '')
                 )->class('mb-4'),

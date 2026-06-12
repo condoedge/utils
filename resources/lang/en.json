@@ -73,6 +73,7 @@
 	"files-attach-files": "Attach files",
 	"files.browse-files": "Browse files",
 	"files.download": "Download",
+	"files-general": "General",
 	"files.or": "or",
 	"files.with-values-max-files-size-is": "Max total size of files is :size Mb",
 	"files.your-files-exceed-max-size": "Your files exceed max size allowed",
