@@ -337,9 +337,30 @@ class ComponentToExportableToExcel implements FromArray, WithHeadings, ShouldAut
             }
 
             if ($format === $this->dateFormat()) {
-                $date = \Carbon\Carbon::parse($text);
-                if ($date) {
-                    return $date->format('Y-m-d');
+                $text = trim($text);
+
+                if (preg_match(static::REGEX_DATE_ISO, $text)) {
+                    return $text;
+                }
+
+                if (preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $text)) {
+                    $date = \Carbon\Carbon::createFromFormat('d/m/Y', $text);
+
+                    return $date ? $date->format('Y-m-d') : $text;
+                }
+
+                if (preg_match('/^\d{2}-\d{2}-\d{4}$/', $text)) {
+                    $date = \Carbon\Carbon::createFromFormat('d-m-Y', $text);
+
+                    return $date ? $date->format('Y-m-d') : $text;
+                }
+
+                try {
+                    $date = \Carbon\Carbon::parse($text);
+
+                    return $date ? $date->format('Y-m-d') : $text;
+                } catch (\Throwable $e) {
+                    return $text;
                 }
             }
 
