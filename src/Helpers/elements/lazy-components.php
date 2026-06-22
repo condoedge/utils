@@ -212,6 +212,32 @@ if (!function_exists('_LazyTab')) {
     }
 }
 
+if (!function_exists('_LazyResponsive')) {
+    /**
+     * Render only the viewport-matching side now; lazy-load the other side once
+     * on the first resize across the breakpoint. See LazyResponsive for details.
+     *
+     *   _LazyResponsive(
+     *       fn () => new MyInvoicesMobile(),  // below breakpoint
+     *       fn () => new MyInvoicesTable(),   // at/above breakpoint
+     *       'md',
+     *   )
+     *
+     * @param Closure|object $mobile  Closure (preferred) or pre-built element
+     * @param Closure|object $desktop Closure (preferred) or pre-built element
+     */
+    function _LazyResponsive($mobile, $desktop, string $breakpoint = 'md', string $mobilePreset = 'spinner', string $desktopPreset = 'table')
+    {
+        return new \Condoedge\Utils\Kompo\Elements\LazyResponsive(
+            $mobile instanceof \Closure ? $mobile : fn () => $mobile,
+            $desktop instanceof \Closure ? $desktop : fn () => $desktop,
+            $breakpoint,
+            $mobilePreset,
+            $desktopPreset,
+        );
+    }
+}
+
 if (!function_exists('_LazyCollapsible')) {
     /**
      * Lazy-loading collapsible. Title bar always visible; body slides in/out.
