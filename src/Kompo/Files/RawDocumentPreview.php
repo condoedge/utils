@@ -9,6 +9,6 @@ class RawDocumentPreview extends AbstractPreview
 	{
 		return _Html(
             '<embed src="'.fileRoute($this->fileType, $this->model->id).'" frameborder="0" width="100%" height="100%">'
-        )->class('p-4')->style('height:55vh; width: 60vw');
+        )->class('p-4')->style('height:100%; width: 100%;');
 	}
 }
