@@ -15,7 +15,7 @@ if (!function_exists('_DropdownDelete')) {
 }
 
 \Kompo\Elements\Element::macro('asTripleDotsDropdownLink', function () {
-    return $this->class('text-sm w-48 px-4 py-2 hover:bg-gray-100');
+    return $this->class('text-sm px-4 py-2 hover:bg-gray-100');
 });
 
 \Kompo\Elements\Element::macro('asDropdownLink', function(){

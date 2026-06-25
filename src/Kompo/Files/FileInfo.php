@@ -28,6 +28,7 @@ class FileInfo extends Form
                     ->href('files.download', ['id' => $this->model->id, 'type' => $this->model->getMorphClass()]),
                     
                 $this->model->file_type_enum?->getPreviewComponent($this->model)
+                    ?->style('width: 100%;')
             )->class('mt-6'),
             // _Html(__('file.file-uploaded-by') . ': ' . $file->uploadedBy())->class('text-sm'),
         )->class('p-4')->style('width: min(30vw, 500px);');
