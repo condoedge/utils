@@ -39,7 +39,7 @@ class NoteForm extends Modal
             _FlexBetween(
                 !$this->model->id ? null : 
                     _DeleteButton('notes.delete')->outlined()->class('flex-1')->byKey($this->model)->closeModal()->refresh(NotesList::ID),
-                    _SubmitButton('notes.save')->class('flex-1')->closeModal()->refresh(NotesList::ID),
+                    _SubmitButton('notes.save')->class('flex-1')->refresh(NotesList::ID),
             )->class('gap-3')
         )->class('mx-2 mb-2');
     }
