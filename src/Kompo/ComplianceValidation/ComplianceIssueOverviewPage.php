@@ -30,7 +30,7 @@ class ComplianceIssueOverviewPage extends Form
 
     public function render()
     {
-        $accent = $this->model->type->accent();
+        $accent = $this->model->type?->accent() ?? 'gray-600';
         $detected = $this->model->detected_at ? Carbon::parse($this->model->detected_at) : null;
         $resolved = $this->model->resolved_at ? Carbon::parse($this->model->resolved_at) : null;
         $explanation = $this->validatable ? $this->rule?->getProblemExplanation($this->validatable) : null;
