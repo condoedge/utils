@@ -23,7 +23,7 @@ if(!function_exists('throwValidationConfirmation')) {
     }
 }
 
-if(!function_exists('secureCall')) {
+if(!function_exists('secureCallCb')) {
     /**
      * Run a callback and swallow any Throwable, returning $default instead. For best-effort reads
      * where a failure must not break the caller (e.g. a recipient whose getEmail() throws).
@@ -33,7 +33,7 @@ if(!function_exists('secureCall')) {
      * @param T $default
      * @return T
      */
-    function secureCall(callable $callback, $default = null)
+    function secureCallCb(callable $callback, $default = null)
     {
         try {
             return $callback();
