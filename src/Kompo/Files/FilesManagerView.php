@@ -96,7 +96,7 @@ class FilesManagerView extends Table
 
 	public function getYearsMonthsFilter()
 	{
-		return FileModel::yearlyMonthlyLinkGroup();
+		return response()->panel(_Rows(FileModel::yearlyMonthlyLinkGroup()), 'file-manager-year-month-filter');
 	}
 
 	public function getFileUploadModal()

@@ -296,7 +296,7 @@ class File extends Model implements Searchable, HasOwnedRecords
         if ($year = request('year')) {
             return _Flex4(
                 _Link(__('general-year').' '.$year)->class('text-greenmain font-bold')->icon('arrow-left')
-                    ->getElements('getYearsMonthsFilter')->inPanel('file-manager-year-month-filter'),
+                    ->selfGet('getYearsMonthsFilter')->inPanel('file-manager-year-month-filter'),
                 _LinkGroup()->name('month', false)->class('mb-0')
                     ->options(
                         static::getFilesCountFor($year)->mapWithKeys(fn($stat) => [
@@ -316,7 +316,7 @@ class File extends Model implements Searchable, HasOwnedRecords
                     ])
                 )->selectedClass('text-greenmain border-b-2 border-greenmain', 'text-greenmain border-b-2 border-transparent')
                 ->filter()
-                ->onSuccess(fn($e) => $e->getElements('getYearsMonthsFilter')->inPanel('file-manager-year-month-filter'))
+                ->onSuccess(fn($e) => $e->selfGet('getYearsMonthsFilter')->inPanel('file-manager-year-month-filter'))
         )->class('mb-4');
     }
 
@@ -326,6 +326,11 @@ class File extends Model implements Searchable, HasOwnedRecords
 
         $query = static::selectRaw($labelFunc.' as label, COUNT(*) as cn')->where('team_id', safeCurrentTeam()?->id)
             ->groupByRaw($labelFunc)->orderByRaw($labelFunc.' DESC');
+
+        if (config('kompo-files.enable-strict-file-type-validation', true)) {
+            $query = $query->when(config('kompo-files.allow-fileable-type-null', true), fn($q) => $q->whereNull('fileable_type'))
+                ->orWhereIn('fileable_type', array_keys(config('kompo-files.types')));
+        }
 
         return ($year ? $query->whereRaw('YEAR(created_at) = ?', [$year]) : $query )->get();
     }
