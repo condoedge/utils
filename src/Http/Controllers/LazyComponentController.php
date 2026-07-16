@@ -4,7 +4,9 @@ namespace Condoedge\Utils\Http\Controllers;
 
 use Closure;
 use Condoedge\Utils\Services\LazyComponent\LazyComponentRegistry;
+use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Crypt;
 use Kompo\Elements\BaseElement;
 use Kompo\Routing\Dispatcher;
 
@@ -18,71 +20,43 @@ class LazyComponentController
             abort(400, 'Missing lazy component ID.');
         }
 
-        $registry = new LazyComponentRegistry();
-        $retrieved = $registry->retrieve($lazyId);
+        $use = $this->decryptUse($request->input('_lazyUse'));
 
-        if (!$retrieved) {
+        $closure = (new LazyComponentRegistry())->retrieve($lazyId, $use);
+
+        if (!$closure) {
             abort(404, 'Lazy component expired or not found.');
         }
 
-        // Komponent class reference (sugar syntax)
-        if (is_array($retrieved) && ($retrieved['_type'] ?? null) === 'komponent') {
-            $komponentClass = $retrieved['class'];
-            return $komponentClass::boot($retrieved['store'] ?? []);
-        }
-
-        // Closure — boot Komponent from KompoInfo to provide $this context
+        // Boot the host Komponent to provide $this. Its own state comes from the
+        // encrypted kompoInfo, so $this is this request's — never a stale snapshot.
         $komponent = Dispatcher::bootKomponentForAction();
 
         app()->instance('bootFlag', true);
 
-        $bound = Closure::bind($retrieved, $komponent, get_class($komponent));
-        $result = $bound ? $bound() : $retrieved();
+        $bound = Closure::bind($closure, $komponent, get_class($komponent));
+        $result = $bound ? $bound() : $closure();
 
         return static::prepareElementsResult($result, $komponent);
     }
 
-    public function executeBatch(Request $request)
+    /**
+     * The captured variables are authenticated-encrypted, so a tampered payload fails
+     * closed rather than executing the closure with attacker-chosen values.
+     */
+    protected function decryptUse($encrypted): array
     {
-        $lazyItemsJson = $request->input('_lazyItems');
-
-        if (!$lazyItemsJson) {
-            abort(400, 'Missing lazy batch items.');
+        if (!$encrypted) {
+            return [];
         }
 
-        $lazyItems = json_decode($lazyItemsJson, true);
-
-        // Boot Komponent once for all closures
-        $komponent = Dispatcher::bootKomponentForAction();
-
-        app()->instance('bootFlag', true);
-
-        $registry = new LazyComponentRegistry();
-        $results = [];
-
-        foreach ($lazyItems as $item) {
-            $retrieved = $registry->retrieve($item['lazyId']);
-
-            if (!$retrieved) {
-                $results[$item['panelId']] = null;
-                continue;
-            }
-
-            // Komponent class reference
-            if (is_array($retrieved) && ($retrieved['_type'] ?? null) === 'komponent') {
-                $komponentClass = $retrieved['class'];
-                $results[$item['panelId']] = $komponentClass::boot($retrieved['store'] ?? []);
-                continue;
-            }
-
-            // Closure
-            $bound = Closure::bind($retrieved, $komponent, get_class($komponent));
-            $result = $bound ? $bound() : $retrieved();
-
-            $results[$item['panelId']] = static::prepareElementsResult($result, $komponent);
+        try {
+            $use = Crypt::decrypt($encrypted);
+        } catch (DecryptException) {
+            abort(400, 'Invalid lazy component payload.');
         }
 
-        return $results;
+        return is_array($use) ? $use : [];
     }
 
     protected static function prepareElementsResult($result, $komponent)

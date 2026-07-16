@@ -19,51 +19,26 @@ if (!function_exists('lazySpinnerPlaceholder')) {
     return $this->selfGet($componentName, array_merge(request()->all(), $params))->inPanel(request('panel_id'));
 });
 
-if (!function_exists('lazyComponent')) {
-    function lazyComponent($componentFnName, $placeholder = null, $params = [])
-    {
-        $panelId = uniqid('lazy-component-');
-        $containerId = uniqid('lazy-component-container-');
-
-        $placeholder = $placeholder ?: lazySpinnerPlaceholder();
-
-        $params = array_merge($params, ['_lazy' => true, 'panel_id' => $panelId, 'container_id' => $containerId, 'componentFn' => $componentFnName]);
-
-        return _Rows(
-            _Hidden()->onLoad->selfGet($componentFnName, $params)->inPanel($panelId)->panelLoading($containerId),
-
-            _Panel(
-                $placeholder
-            )->id($panelId),
-        )->id($containerId);
-    }
-}
-
-if (!function_exists('lazyBatchComponent')) {
-    function lazyBatchComponent($componentFnName, $placeholder = null, $placeholderSizes = 'w-6 h-4')
-    {
-        if ($placeholder) {
-            return _Div($placeholder->id($componentFnName));
-        }
-
-        return _Div(
-            _Rows()->class('bg-white animate-pulse rounded-lg opacity-40 animation-duration-100')->class($placeholderSizes)
-                ->id($componentFnName)
-        );
-    }
-}
-
 if (!function_exists('_LazyComponent')) {
     /**
      * Create a lazy-loaded component using an inline closure or Komponent class.
      *
-     * Closures are compiled to storage/framework/kompo-lazy/ with deterministic keys.
-     * In dev, recompiles when source file changes. In prod, compiled once.
+     * The closure's *code* is compiled to storage/framework/kompo-lazy/, keyed by the
+     * closure's own file:line:mtime. Its captured variables are NOT compiled: they are
+     * lifted out and travel with each request, encrypted. That separation is what lets
+     * one compiled file serve every person — the cache is shared, the data is not.
      *
-     * Usage:
+     * So capture freely; it is per-request:
      *   _LazyComponent(fn() => _Html('content'), 'card')
-     *   _LazyComponent(fn() => $this->heavyMethod(), 'metric')->batch('dashboard')
+     *   _LazyComponent(fn() => $this->heavyMethod(), 'metric')     // $this is rebound per request
+     *   _LazyComponent(function () use ($id) { ... }, 'table')     // $id travels encrypted
      *   _LazyComponent(MyForm::class, ['campaign_id' => $id], 'card')
+     *
+     * Two constraints:
+     *  - Capture ids, not models — every captured value is serialized into each render's
+     *    payload.
+     *  - One lazy closure per line. Two closures declared on the same line cannot be told
+     *    apart when their code is extracted, and both would compile to the first one's body.
      *
      * @param Closure|string $fn         Closure returning elements, or Komponent class name
      * @param string|array|object $placeholder  Preset name, custom element, or store array (when $fn is class)
@@ -72,18 +47,19 @@ if (!function_exists('_LazyComponent')) {
      */
     function _LazyComponent($fn, $placeholder = 'default', $presetOrPlaceholder = null)
     {
-        $registry = new LazyComponentRegistry();
-
         // Sugar syntax: _LazyComponent(MyForm::class, ['store' => 'data'], 'card')
-        if (is_string($fn) && !($fn instanceof \Closure) && class_exists($fn)) {
+        // Normalised to a closure so there is exactly one code path to reason about.
+        if (is_string($fn) && class_exists($fn)) {
             $store = is_array($placeholder) ? $placeholder : [];
             $placeholder = $presetOrPlaceholder ?? 'default';
-            $lazyId = $registry->storeKomponentClass($fn, $store);
-        } else {
-            $lazyId = $registry->store($fn);
+            $class = $fn;
+
+            $fn = fn () => new $class($store);
         }
 
-        return new \Condoedge\Utils\Kompo\Elements\LazyComponent($lazyId, $placeholder, $fn instanceof \Closure ? $fn : null);
+        $ref = (new LazyComponentRegistry())->store($fn);
+
+        return new \Condoedge\Utils\Kompo\Elements\LazyComponent($ref, $placeholder, $fn);
     }
 }
 

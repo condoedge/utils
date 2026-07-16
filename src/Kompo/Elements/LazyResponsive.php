@@ -3,6 +3,7 @@
 namespace Condoedge\Utils\Kompo\Elements;
 
 use Closure;
+use Condoedge\Utils\Services\LazyComponent\LazyComponentRef;
 use Condoedge\Utils\Services\LazyComponent\LazyComponentRegistry;
 use Kompo\Rows;
 
@@ -17,8 +18,9 @@ use Kompo\Rows;
  * The lazy side reuses the same mechanism as LazyCollapsible: its closure is
  * registered with LazyComponentRegistry and executed by the existing
  * `_execute-lazy` endpoint, so CSRF, kompoInfo headers and response wiring all
- * "just work". Both closures are always registered (stable, content-addressed
- * registry keys) even though only one is rendered lazily.
+ * "just work". Only the lazy side is registered: registry keys come from each
+ * closure's own file:line, so they no longer depend on how many closures were
+ * registered before them in the request.
  *
  * Usage:
  *   _LazyResponsive(
@@ -49,22 +51,19 @@ class LazyResponsive extends Rows
         $mobileDisplay  = "block {$breakpoint}:hidden";   // visible below the breakpoint
         $desktopDisplay = "hidden {$breakpoint}:block";   // visible at/above the breakpoint
 
-        // Register both closures regardless of which is eager, so the lazy side's
-        // registry key stays content-stable across requests (the registry keys by
-        // call-site, not by closure body).
+        // Only the lazy side is registered — the eager side is executed inline, so
+        // compiling it would write a file nobody loads.
         $registry = new LazyComponentRegistry();
-        $mobileId  = $registry->store($mobile);
-        $desktopId = $registry->store($desktop);
 
         if ($this->isMobileRequest()) {
             // Mobile eager, desktop lazy.
             $eager = _Rows($mobile())->class($mobileDisplay);
-            [$panel, $trigger, $trigId] = $this->lazySide($desktopId, $desktopPreset, $desktopDisplay);
+            [$panel, $trigger, $trigId] = $this->lazySide($registry->store($desktop), $desktopPreset, $desktopDisplay);
             $lazyIsDesktop = true;
         } else {
             // Desktop eager, mobile lazy.
             $eager = _Rows($desktop())->class($desktopDisplay);
-            [$panel, $trigger, $trigId] = $this->lazySide($mobileId, $mobilePreset, $mobileDisplay);
+            [$panel, $trigger, $trigId] = $this->lazySide($registry->store($mobile), $mobilePreset, $mobileDisplay);
             $lazyIsDesktop = false;
         }
 
@@ -76,9 +75,10 @@ class LazyResponsive extends Rows
     }
 
     /** @return array{0:\Kompo\Panel,1:\Kompo\Link,2:string} [panel, trigger, triggerId] */
-    protected function lazySide(string $lazyId, string $preset, string $displayClass): array
+    protected function lazySide(LazyComponentRef $ref, string $preset, string $displayClass): array
     {
-        $shortId = substr(md5($lazyId), 0, 10);
+        // Per-instance ids: the key is shared across renders of the same call site.
+        $shortId = uniqid();
         $panelId = 'lazy-responsive-panel-' . $shortId;
         $trigId  = 'lazy-responsive-trigger-' . $shortId;
 
@@ -88,7 +88,7 @@ class LazyResponsive extends Rows
         $trigger = _Link()
             ->id($trigId)
             ->class('hidden')
-            ->onClick(fn ($e) => $e->post('_execute-lazy', null, ['_lazyId' => $lazyId])
+            ->onClick(fn ($e) => $e->post('_execute-lazy', null, LazyComponent::lazyPayload($ref))
                 ->inPanel($panelId));
 
         $panel = _Panel(_lazyPlaceholder($preset))

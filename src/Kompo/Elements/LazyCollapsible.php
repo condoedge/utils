@@ -34,10 +34,11 @@ class LazyCollapsible extends Rows
 {
     public function __construct($title, $bodyClosure, string $skeletonPreset = 'default', ?string $iconId = null)
     {
-        $registry = new LazyComponentRegistry();
-        $lazyId = $registry->store($bodyClosure);
+        $ref = (new LazyComponentRegistry())->store($bodyClosure);
 
-        $shortId = substr(md5($lazyId), 0, 10);
+        // Per-instance ids: the key is now shared by every render of the call site, so
+        // deriving ids from it would collide when a collapsible is rendered in a loop.
+        $shortId = uniqid();
         $bodyPanelId = 'lazy-collapsible-body-' . $shortId;
         $triggerId   = 'lazy-collapsible-trigger-' . $shortId;
         $wrapperClass = 'lazy-collapsible-' . $shortId;
@@ -50,7 +51,7 @@ class LazyCollapsible extends Rows
         $trigger = _Link()
             ->id($triggerId)
             ->class('hidden')
-            ->onClick(fn($e) => $e->post('_execute-lazy', null, ['_lazyId' => $lazyId])
+            ->onClick(fn($e) => $e->post('_execute-lazy', null, LazyComponent::lazyPayload($ref))
                 ->inPanel($bodyPanelId));
 
         // Title click: slide-toggle the wrapper, then trigger the AJAX once.

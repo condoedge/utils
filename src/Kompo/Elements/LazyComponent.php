@@ -2,67 +2,77 @@
 
 namespace Condoedge\Utils\Kompo\Elements;
 
-use Condoedge\Utils\Services\LazyComponent\LazyComponentRegistry;
+use Closure;
+use Condoedge\Utils\Services\LazyComponent\LazyComponentRef;
+use Illuminate\Support\Facades\Crypt;
 use Kompo\Rows;
 
 class LazyComponent extends Rows
 {
-    protected $lazyId;
-    protected $lazyHasTrigger = true;
-    protected $closure; // Just to be able to execute directly if required
+    protected $lazyRef;
+    protected $closure; // Kept so _LazyTabs can run the active tab eagerly.
 
     /**
-     * Create a lazy-loaded component from a pre-registered lazy ID.
+     * Create a lazy-loaded component from a stored closure.
      *
-     * @param string        $lazyId      The HMAC-signed lazy component ID from the registry
-     * @param string|object $placeholder  Preset name or custom placeholder element
+     * The trigger carries two separate things: the key of the shared compiled file,
+     * and this render's captured variables, encrypted. Keeping them apart is the
+     * point — the file is shared by every render of the call site, the variables
+     * are not.
+     *
+     * @param LazyComponentRef $ref         Key + captured variables from the registry
+     * @param string|object    $placeholder Preset name or custom placeholder element
      */
-    public function __construct(string $lazyId, $placeholder = 'default', $closure = null)
+    public function __construct(LazyComponentRef $ref, $placeholder = 'default', ?Closure $closure = null)
     {
-        $this->lazyId = $lazyId;
+        $this->lazyRef = $ref;
         $this->closure = $closure;
 
-        $panelId = 'lazy-p-' . substr(md5($lazyId), 0, 10);
-        $containerId = 'lazy-c-' . substr(md5($lazyId), 0, 10);
+        // Per-instance ids, not derived from the key: one call site rendered in a loop
+        // shares a key, and would otherwise emit duplicate DOM ids for every row.
+        $panelId = uniqid('lazy-p-');
+        $containerId = uniqid('lazy-c-');
 
         $placeholderEl = is_string($placeholder)
             ? _lazyPlaceholder($placeholder)
             : $placeholder;
 
         $trigger = _Hidden()->onLoad
-            ->post('_execute-lazy', null, ['_lazyId' => $lazyId])
+            ->post('_execute-lazy', null, static::lazyPayload($ref))
             ->inPanel($panelId);
 
         parent::__construct($trigger, _Panel($placeholderEl)->id($panelId)->style('min-height: var(--lazy-h, 300px);'));
 
         $this->id($containerId)
              ->config([
-                 '_lazyId' => $lazyId,
+                 '_lazyId' => $ref->key,
                  '_lazyPanelId' => $panelId,
                  '_lazyContainerId' => $containerId,
-                 '_lazyHasTrigger' => true,
              ]);
     }
 
     /**
-     * Group this lazy component into a batch for a single combined AJAX request.
+     * Request params for a lazy fetch.
      *
-     * @param string $batchId  Shared batch identifier
-     * @return self
+     * Captured variables are encrypted with the same authenticated encryption Kompo
+     * already uses for kompoInfo, so the client can neither read nor tamper with
+     * them. Encryption is not authorization: the endpoint is behind `auth` and the
+     * target komponent still runs its own checks.
      */
-    public function batch(string $batchId)
+    public static function lazyPayload(LazyComponentRef $ref): array
     {
-        $panelId = $this->config('_lazyPanelId');
+        $payload = ['_lazyId' => $ref->key];
 
-        LazyComponentRegistry::addToBatch($batchId, $this->lazyId, $panelId);
-
-        // Remove inline trigger — batch coordinator handles it
-        if ($this->lazyHasTrigger) {
-            array_shift($this->elements);
-            $this->lazyHasTrigger = false;
-            $this->config(['_lazyHasTrigger' => false]);
+        if ($ref->use !== []) {
+            $payload['_lazyUse'] = Crypt::encrypt($ref->use);
         }
 
-        return $this;
+        return $payload;
+    }
+
+    /** The captured variables for this render, for callers that execute the closure inline. */
+    public function lazyUse(): array
+    {
+        return $this->lazyRef->use;
     }
 }
