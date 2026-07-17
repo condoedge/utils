@@ -19,6 +19,40 @@ if (!function_exists('lazySpinnerPlaceholder')) {
     return $this->selfGet($componentName, array_merge(request()->all(), $params))->inPanel(request('panel_id'));
 });
 
+if (!function_exists('lazyComponent')) {
+    function lazyComponent($componentFnName, $placeholder = null, $params = [])
+    {
+        $panelId = uniqid('lazy-component-');
+        $containerId = uniqid('lazy-component-container-');
+
+        $placeholder = $placeholder ?: lazySpinnerPlaceholder();
+
+        $params = array_merge($params, ['_lazy' => true, 'panel_id' => $panelId, 'container_id' => $containerId, 'componentFn' => $componentFnName]);
+
+        return _Rows(
+            _Hidden()->onLoad->selfGet($componentFnName, $params)->inPanel($panelId)->panelLoading($containerId),
+
+            _Panel(
+                $placeholder
+            )->id($panelId),
+        )->id($containerId);
+    }
+}
+
+if (!function_exists('lazyBatchComponent')) {
+    function lazyBatchComponent($componentFnName, $placeholder = null, $placeholderSizes = 'w-6 h-4')
+    {
+        if ($placeholder) {
+            return _Div($placeholder->id($componentFnName));
+        }
+
+        return _Div(
+            _Rows()->class('bg-white animate-pulse rounded-lg opacity-40 animation-duration-100')->class($placeholderSizes)
+                ->id($componentFnName)
+        );
+    }
+}
+
 if (!function_exists('_LazyComponent')) {
     /**
      * Create a lazy-loaded component using an inline closure or Komponent class.
