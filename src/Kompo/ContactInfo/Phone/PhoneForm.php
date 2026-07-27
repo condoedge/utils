@@ -12,11 +12,13 @@ class PhoneForm extends Modal
 
     protected $phonableId;
     protected $phonableType;
+    protected $defaultPhone;
 
     public function created()
     {
         $this->phonableId = $this->prop('phonable_id');
         $this->phonableType = $this->prop('phonable_type');
+        $this->defaultPhone = $this->prop('default_phone');
     }
 
     public function beforeSave()
@@ -36,8 +38,10 @@ class PhoneForm extends Modal
     {
     	return [
             _Columns(
-                _Input('crm-phone-number')->name('number_ph')->type('tel'),
-                _Select('crm-phone-type')->name('type_ph')->options(Phone::getTypePhLabels()),
+                _Input('crm-phone-number')->name('number_ph')->type('tel')
+                    ->default($this->defaultPhone),
+                _Select('crm-phone-type')->name('type_ph')->options(Phone::getTypePhLabels())
+                    ->default(Phone::TYPE_PH_CELLULAR),
             ),
             _Columns(
                 _Checkbox('crm-phone-is-main')->name('is_main_phone', false)->default(1),

@@ -10,6 +10,7 @@ class PhonesTable extends Table
     protected $teamId;
     protected $phonableId;
     protected $phonableType;
+	protected $defaultPhoneForForm;
 
     protected $phonable;
 
@@ -62,6 +63,7 @@ class PhonesTable extends Table
         return new PhoneForm($id, [
         	'phonable_id' => $this->phonableId,
         	'phonable_type' => $this->phonableType,
+			'default_phone' => $this->prop('default_phone_for_form'),
         ]);
     }
 }

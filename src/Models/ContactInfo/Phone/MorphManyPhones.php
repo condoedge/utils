@@ -147,6 +147,30 @@ trait MorphManyPhones
         return $existingPhone;
     }
 
+    public function createOrUpdateMainPhone($number)
+    {
+        $existingPhone = $this->phone;
+
+        if (!$existingPhone) {
+            $this->createPhoneFromNumber($number);
+        } else {
+            $existingPhone->setPhoneNumber($number);
+            $existingPhone->save();
+        }
+    }
+
+    public function manageChangesMainPhone($number)
+    {
+        $existingPhone = $this->phone;
+
+        if ($number) {
+            $this->createOrUpdateMainPhone($number);
+        } else {
+            $existingPhone?->delete();
+        }
+    }
+
+
     /* ELEMENTS */
     public function getPrimaryPhoneButton()
     {

@@ -12,11 +12,14 @@ class EmailForm extends Modal
 
     protected $emailableId;
     protected $emailableType;
+    protected $defaultEmail;
 
     public function created()
     {
         $this->emailableId = $this->prop('emailable_id');
         $this->emailableType = $this->prop('emailable_type');
+        
+        $this->defaultEmail = $this->prop('default_email');
     }
 
     public function beforeSave()
@@ -36,8 +39,10 @@ class EmailForm extends Modal
     {
     	return [
             _Columns(
-                _Input('email-email')->name('address_em')->type('email'),
-                _Select('email-email-type')->name('type_em')->options(Email::getTypeEmLabels()),
+                _Input('email-email')->name('address_em')->type('email')
+                    ->default($this->defaultEmail),
+                _Select('email-email-type')->name('type_em')->options(Email::getTypeEmLabels())
+                    ->default(Email::TYPE_EM_PERSONAL),
             ),
             _Columns(
                 _Checkbox('email-is-main')->name('is_main_email', false)->default(1),

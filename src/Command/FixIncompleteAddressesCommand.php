@@ -18,61 +18,63 @@ class FixIncompleteAddressesCommand extends Command
     {
         $this->setDedupHashMigration();
 
-        $addressableType = $this->option('addressable');
+        try {
+            $addressableType = $this->option('addressable');
 
-        $processedNumber = 0;
-        $addressesFound = 0;
+            $processedNumber = 0;
+            $addressesFound = 0;
 
-        // First, fill in lat/lng for addresses that have other entries with the same dedupe_hash
-        $this->updateAddressesThatHaveInfoInSameGroupOfHashes();
+            // First, fill in lat/lng for addresses that have other entries with the same dedupe_hash
+            $this->updateAddressesThatHaveInfoInSameGroupOfHashes();
 
-        // Get count of addresses that still need info
-        $remainingCount = Address::where(fn($q) => $q->whereNull('lat')->orWhereNull('lng')->orWhere('lat', 0)->orWhere('lng', 0))
-            ->when($addressableType, function ($query) use ($addressableType) {
-                $query->where('addressable_type', $addressableType);
-             })
-            ->whereNotNull('address1')
-            ->where('address1', '!=', '')
-            ->count();
+            // Get count of addresses that still need info
+            $remainingCount = Address::where(fn($q) => $q->whereNull('lat')->orWhereNull('lng')->orWhere('lat', 0)->orWhere('lng', 0))
+                ->when($addressableType, function ($query) use ($addressableType) {
+                    $query->where('addressable_type', $addressableType);
+                })
+                ->whereNotNull('address1')
+                ->where('address1', '!=', '')
+                ->count();
 
-        $groupedCount = Address::where(fn($q) => $q->whereNull('lat')->orWhereNull('lng')->orWhere('lat', 0)->orWhere('lng', 0))
-            ->whereNotNull('address1')
-            ->when($addressableType, function ($query) use ($addressableType) {
-                $query->where('addressable_type', $addressableType);
-            })  
-            ->where('address1', '!=', '')
-            ->selectRaw('COUNT(distinct dedupe_hash) as count')
-            ->first();
+            $groupedCount = Address::where(fn($q) => $q->whereNull('lat')->orWhereNull('lng')->orWhere('lat', 0)->orWhere('lng', 0))
+                ->whereNotNull('address1')
+                ->when($addressableType, function ($query) use ($addressableType) {
+                    $query->where('addressable_type', $addressableType);
+                })  
+                ->where('address1', '!=', '')
+                ->selectRaw('COUNT(distinct dedupe_hash) as count')
+                ->first();
 
-        $this->info("Updated addresses with available coordinate data.");
-        $this->info("Addresses still missing coordinates: $remainingCount. ($groupedCount->count unique addresses)");
-        $this->info("Going through geocoding for remaining addresses...");
+            $this->info("Updated addresses with available coordinate data.");
+            $this->info("Addresses still missing coordinates: $remainingCount. ($groupedCount->count unique addresses)");
+            $this->info("Going through geocoding for remaining addresses...");
 
-        Address::select('dedupe_hash')
-            ->where(function ($query) {
-                $query->whereNull('lat')->orWhereNull('lng')
-                    ->orWhere('lat', 0)->orWhere('lng', 0);
-            })
-            ->whereNotNull('address1')
-            ->where('address1', '!=', '')
-            ->groupBy('dedupe_hash')
-            ->when($addressableType, function ($query) use ($addressableType) {
-                $query->where('addressable_type', $addressableType);
-             })
-            ->havingRaw('MIN(COALESCE(DATE(updated_at), "1970-01-01")) < DATE(NOW())')
-            ->orderBy('dedupe_hash', 'desc')
-            ->chunk(100, function ($addresses) use (&$processedNumber, &$addressesFound) {
-                if (geocodingService()->acceptsBatch()) {
-                    $this->manageBatch($addresses, $addressesFound);
-                } else {
-                    $this->manageNonBatch($addresses, $addressesFound);
-                }
+            Address::select('dedupe_hash')
+                ->where(function ($query) {
+                    $query->whereNull('lat')->orWhereNull('lng')
+                        ->orWhere('lat', 0)->orWhere('lng', 0);
+                })
+                ->whereNotNull('address1')
+                ->where('address1', '!=', '')
+                ->groupBy('dedupe_hash')
+                ->when($addressableType, function ($query) use ($addressableType) {
+                    $query->where('addressable_type', $addressableType);
+                })
+                ->havingRaw('MIN(COALESCE(DATE(updated_at), "1970-01-01")) < DATE(NOW())')
+                ->orderBy('dedupe_hash', 'desc')
+                ->chunk(100, function ($addresses) use (&$processedNumber, &$addressesFound) {
+                    if (geocodingService()->acceptsBatch()) {
+                        $this->manageBatch($addresses, $addressesFound);
+                    } else {
+                        $this->manageNonBatch($addresses, $addressesFound);
+                    }
 
-                $processedNumber += count($addresses);
-                $this->info("Processed $processedNumber addresses. $addressesFound addresses found.");
-            });
-
-        $this->cleanUpDedupHashMigration();
+                    $processedNumber += count($addresses);
+                    $this->info("Processed $processedNumber addresses. $addressesFound addresses found.");
+                });
+        } finally {
+            $this->cleanUpDedupHashMigration();
+        }
     }
 
     protected function manageBatch($addresses, &$addressesFound)

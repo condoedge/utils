@@ -3,6 +3,7 @@
 namespace Condoedge\Utils\Kompo\ContactInfo\Email;
 
 use Condoedge\Utils\Kompo\Common\Table;
+use Condoedge\Utils\Models\ContactInfo\Email\Email;
 
 class EmailsTable extends Table
 {
@@ -49,12 +50,12 @@ class EmailsTable extends Table
 
 	public function render($email)
 	{
-		return $this->decorateRow(_TableRow(
+		return _TableRow(
 			_Html($email->type_em_label),
 			_Html($email->address_em),
 			_HtmlYesNo($this->emailable->primary_email_id === $email->id),
         	_Delete($email),
-       )->selfUpdate('getEmailForm', ['id' => $email->id])->inModal());
+       )->selfUpdate('getEmailForm', ['id' => $email->id])->inModal();
 	}
 
     public function getEmailForm($id = null)
@@ -62,6 +63,7 @@ class EmailsTable extends Table
         return new EmailForm($id, [
         	'emailable_id' => $this->emailableId,
         	'emailable_type' => $this->emailableType,
+			'default_email' => $this->prop('default_email_for_form'),
         ]);
     }
 }

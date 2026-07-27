@@ -92,6 +92,30 @@ trait MorphManyEmails
         $existingEmail->save();        
     }
 
+    public function createOrUpdateMainEmail($address)
+    {
+        $existingEmail = $this->email;
+
+        if (!$existingEmail) {
+            Email::createMainFor($this, $address);
+        } else {
+            $existingEmail->setEmailAddress($address);
+            $existingEmail->save();
+        }
+    }
+
+    public function manageChangesMainEmail($address)
+    {
+        $existingEmail = $this->email;
+
+        if ($address) {
+            $this->createOrUpdateMainEmail($address);
+        } else {
+            $existingEmail?->delete();
+        }
+    }
+
+
     /* ELEMENTS */
     public function getPrimaryEmailButton()
     {
