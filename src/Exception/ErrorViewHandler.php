@@ -27,20 +27,43 @@ class ErrorViewHandler
 
             $component = $this->statusComponent($e->getStatusCode());
 
-            $komponent = $component::boot([
-                'principal_message' => $this->statusCodeTitle($e->getStatusCode(), $e->getMessage()),
-                'secondary_message' => $this->statusCodeSubtitle($e->getStatusCode(), $e->getMessage()),
-            ]);
+            try {
+                $this->ensureKompoHelpersAreLoaded();
 
-            try{
+                $komponent = $component::boot([
+                    'principal_message' => $this->statusCodeTitle($e->getStatusCode(), $e->getMessage()),
+                    'secondary_message' => $this->statusCodeSubtitle($e->getStatusCode(), $e->getMessage()),
+                ]);
+
                 return $this->renderKompoExceptionView($komponent);
-            } catch (\Exception $ex) {
+            } catch (\Throwable $ex) {
                 return null;
             }
-            
         }
 
         return false;
+    }
+
+    /**
+     * Error views are Kompo Forms, but Kompo's element helpers (_Rows, _Html, …)
+     * are `require_once`d by KompoServiceProvider::boot() — they are NOT part of
+     * composer's autoload. An exception raised before that provider boots therefore
+     * reaches this handler with the helpers undefined, and the error page itself
+     * dies with "Call to undefined function _Rows()". Load them on demand; the
+     * provider's loader is require_once-based, so re-running it after a normal
+     * boot is a no-op.
+     */
+    protected function ensureKompoHelpersAreLoaded(): void
+    {
+        if (function_exists('_Rows') || !class_exists(\Kompo\KompoServiceProvider::class)) {
+            return;
+        }
+
+        if (!config('kompo.helpers_dir')) {
+            return;
+        }
+
+        \Kompo\KompoServiceProvider::registerHelpers();
     }
 
     protected function shouldRenderCustomView(Throwable $e, $request = null)
