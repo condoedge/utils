@@ -35,6 +35,20 @@ if(!function_exists('getTranslationFromStr')) {
     }
 }
 
+if (!function_exists('executeCallbackInLocale')) {
+    function executeCallbackInLocale(string $locale, callable $callback)
+    {
+        $previous = app()->getLocale();
+        app()->setLocale($locale);
+
+        try {
+            return $callback();
+        } finally {
+            app()->setLocale($previous);
+        }
+    }
+}
+
 /* LOCALE ELEMENTS */
 if(!function_exists('_LocaleSwitcher')) {
     function _LocaleSwitcher()
