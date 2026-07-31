@@ -32,3 +32,25 @@ if(!function_exists('getCurrentComponentPage')) {
 		return request()->route()->controller::class;
 	}
 }
+
+if (!function_exists('safeRedirectPath')) {
+	function safeRedirectPath(?string $path): ?string
+	{
+		if (!url()->isValidUrl($path)) {
+			return route('dashboard');
+		}
+
+		$targetHost = parse_url($path, PHP_URL_HOST);
+		$targetScheme = parse_url($path, PHP_URL_SCHEME);
+
+		if ($targetHost !== request()->getHost()) {
+			return route('dashboard');
+		}
+
+		if (! in_array($targetScheme, ['http', 'https'], true)) {
+			return route('dashboard');
+		}
+
+		return $path;
+	}
+}
