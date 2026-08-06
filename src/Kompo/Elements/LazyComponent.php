@@ -61,7 +61,10 @@ class LazyComponent extends Rows
      */
     public static function lazyPayload(LazyComponentRef $ref): array
     {
-        $payload = ['_lazyId' => $ref->key];
+        $payload = array_merge(
+            request()->all(), // Keeping for filters or sending data
+            ['_lazyId' => $ref->key],
+        );
 
         if ($ref->use !== []) {
             $payload['_lazyUse'] = Crypt::encrypt($ref->use);
