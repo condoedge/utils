@@ -29,10 +29,12 @@ class AddressPlaceEditingForm extends Modal
 	{
 		return [
 			_Input('maps-address-address1')->name('address')->value(request('address')),
-			_Columns(
-				_Input('utils.maps-address-postal-code')->name('postal_code')->value(request('postal_code')),
-				_Input('utils.maps-address-city')->name('city')->value(request('city')),
-			),
+			_Flex(
+				_Input('utils.maps-address-postal-code')->name('postal_code')->value(request('postal_code'))
+					->class('flex-1'),
+				_Input('utils.maps-address-city')->name('city')->value(request('city'))
+					->class('flex-1'),
+			)->class('gap-4'),
 		];
 	}
 
