@@ -5,6 +5,7 @@ namespace Condoedge\Utils\Services\ComplianceValidation;
 use Condoedge\Utils\Events\ComplianceIssueDetected;
 use Condoedge\Utils\Events\MultipleComplianceIssuesDetected;
 use Condoedge\Utils\Models\ComplianceValidation\ComplianceIssue;
+use Condoedge\Utils\Models\ComplianceValidation\ComplianceIssueTypeEnum;
 use Condoedge\Utils\Models\ComplianceValidation\ValidationExecution;
 use Condoedge\Utils\Services\ComplianceValidation\Rules\RuleContract;
 use Illuminate\Support\Collection;
@@ -48,7 +49,7 @@ class RulesProcessor
             ->map(function (ValidatableContract $validatable) use ($rule, $now) {
                 $complianceIssue = $validatable->getFailedValidationObject();
                 $complianceIssue->detected_at = $now;
-                $complianceIssue->type = $rule->getIssueType($validatable)->value;
+                $complianceIssue->type = $rule->getIssueType($validatable)->value ?: ComplianceIssueTypeEnum::WARNING;
                 $complianceIssue->resolved_at = null;
                 $complianceIssue->rule_code = $rule->getCode();
                 $complianceIssue->detail_message = $rule->getIssueDescription($validatable);

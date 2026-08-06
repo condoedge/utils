@@ -165,6 +165,11 @@ class ComplianceIssue extends Model implements ScopedToTeam
     // ELEMENTS
     public function typeBadge()
     {
+        // We have some old cases with type null, so to not get an error we just set it as warning
+        if (!$this->type) {
+            $this->type = ComplianceIssueTypeEnum::WARNING;
+        }
+
         return _Pill($this->type->label())->class($this->type->classes());
     }
 
