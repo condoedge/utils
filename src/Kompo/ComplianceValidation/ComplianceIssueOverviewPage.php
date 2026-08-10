@@ -20,6 +20,9 @@ class ComplianceIssueOverviewPage extends Form
 
     public function created()
     {
+        // Ensuring that is not already resolver, sometimes we refresh the page after the fix but we don't rerun the revalidation, so here we ensure it
+        $this->model->revalidate();
+
         $this->id = static::ID;
         $this->rule = $this->model->getRuleInstance();
         $this->validatable = $this->model->validatable;
