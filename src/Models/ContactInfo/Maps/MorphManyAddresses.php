@@ -16,6 +16,17 @@ trait MorphManyAddresses
         return $this->morphOne(Address::class, 'addressable')->latest();
     }
 
+    // Queryable version of the `address` relation: its latest() ordering is dropped by whereHas, one-of-many isn't.
+    // The closure keeps the aggregate subquery on team addresses only, otherwise it groups the whole addresses table.
+    public function latestAddress()
+    {
+        return $this->morphOne(Address::class, 'addressable')->ofMany(
+            ['created_at' => 'MAX', 'id' => 'MAX'],
+            fn ($query) => $query->where('addresses.addressable_type', $this->getMorphClass()),
+        );
+    }
+
+
     public function primaryBillingAddress()
     {
         return $this->belongsTo(Address::class, 'primary_billing_address_id');
