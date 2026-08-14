@@ -73,8 +73,14 @@ class LogPageView
     {
         try {
             $user = auth()->user();
-            $team = safeCurrentTeam();
-            $teamRole = safeCurrentTeamRole();
+
+            // This runs AFTER the response is built. Resolving a team role is not a pure
+            // read — with none usable it logs the user out — so analytics asking for one
+            // ended sessions that nothing could then report, and the user simply found
+            // themselves signed out. Observe only.
+            [$team, $teamRole, $isSuperAdmin] = readingTeamPassively(
+                fn () => [safeCurrentTeam(), safeCurrentTeamRole(), safeIsSuperAdmin()],
+            );
 
             // Prepare log data
             $logData = [
@@ -102,7 +108,7 @@ class LogPageView
 
                 // User flags
                 'is_authenticated' => auth()->check(),
-                'is_super_admin' => safeIsSuperAdmin(),
+                'is_super_admin' => $isSuperAdmin,
 
                 // Environment
                 'environment' => config('app.env', 'production'),

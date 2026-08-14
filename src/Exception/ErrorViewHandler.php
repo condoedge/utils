@@ -3,6 +3,7 @@
 namespace Condoedge\Utils\Exception;
 
 use Condoedge\Utils\Kompo\HttpExceptions\GenericErrorView;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Throwable;
 
@@ -69,6 +70,14 @@ class ErrorViewHandler
     protected function shouldRenderCustomView(Throwable $e, $request = null)
     {
         if (env('APP_DEBUG')) {
+            return false;
+        }
+
+        // Already carries the response the app built (a redirect, a kompo response).
+        // It is not an HttpException, so the check below would read it as a crash and
+        // throw that response away. Thrown from a route action Laravel unwraps it
+        // itself, but from middleware it arrives here instead.
+        if ($e instanceof HttpResponseException) {
             return false;
         }
 
