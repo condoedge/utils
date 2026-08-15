@@ -115,25 +115,58 @@ trait MorphManyPhones
 
     public function createPhoneFromNumberIfNotExists($number)
     {
-        $existingPhone = $this->phones()->matchNumber($number)->first();
+        $existingPhone = $this->findPhoneByNumber($number);
 
         if (!$existingPhone) {
             $this->createPhoneFromNumber($number);
+
+            return null;
         }
+
+        $this->restorePhoneIfTrashed($existingPhone);
 
         return $existingPhone;
     }
 
+    /**
+     * The main phone is read as `primaryPhone ?: phone`, so it is written the
+     * same way. Comparing against `phone` alone re-created the row the reader
+     * was showing from `primaryPhone`, which the unique index rejects.
+     */
     public function createOrDeleteMainPhoneFromNumber($number)
     {
-        $existingPhone = $this->phone;
-
         if (!$number) {
-            $existingPhone?->delete();
+            $mainPhone = $this->getFirstValidPhone();
+
+            $this->unsetPrimaryPhone();
+            $mainPhone?->delete();
+
+            return;
+        }
+
+        $phone = $this->findPhoneByNumber($number);
+
+        if ($phone) {
+            $this->restorePhoneIfTrashed($phone);
         } else {
-            if (!$existingPhone || !$existingPhone->isSameNumber($number)) {
-                $this->setPrimaryPhone($this->createPhoneFromNumber($number)->id);
-            }
+            $phone = $this->createPhoneFromNumber($number);
+        }
+
+        if ($this->primary_phone_id != $phone->id) {
+            $this->setPrimaryPhone($phone->id);
+        }
+    }
+
+    public function findPhoneByNumber($number)
+    {
+        return $this->phones()->withTrashed()->get()
+            ->first(fn ($phone) => $phone->hasSameRawNumber($number));
+    }
+
+    protected function restorePhoneIfTrashed(Phone $phone): void
+    {
+        if ($phone->trashed()) {
+            $phone->restore();
         }
     }
 
@@ -149,6 +182,12 @@ trait MorphManyPhones
 
     public function createOrUpdateMainPhone($number)
     {
+        if ($duplicate = $this->findPhoneByNumber($number)) {
+            $this->restorePhoneIfTrashed($duplicate);
+
+            return;
+        }
+
         $existingPhone = $this->phone;
 
         if (!$existingPhone) {

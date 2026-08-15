@@ -101,6 +101,17 @@ class Phone extends Model implements HasOwnedRecords, ScopedToTeam
         return $this->getRawFormattedPhoneNumber() == preg_replace('/\D+/', '', $number);
     }
 
+    /**
+     * Compares the stored number alone, extension excluded — this is what the
+     * (morph, number_ph) unique index collides on.
+     */
+    public function hasSameRawNumber($number): bool
+    {
+        $digits = preg_replace('/\D+/', '', (string) $number);
+
+        return $digits !== '' && preg_replace('/\D+/', '', (string) $this->number_ph) === $digits;
+    }
+
     /* ACTIONS */
     public function setPhonable($model)
     {
