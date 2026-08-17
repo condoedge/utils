@@ -13,6 +13,7 @@ use Condoedge\Utils\Models\Tags\MorphToManyTagsTrait;
 use Condoedge\Utils\Models\Traits\BelongsToTeamTrait;
 use Condoedge\Utils\Models\Traits\BelongsToUserTrait;
 use Condoedge\Utils\Models\Traits\HasSearchableNameTrait;
+use Illuminate\Support\Facades\Log;
 use Intervention\Image\Facades\Image;
 use Kompo\Core\FileHandler;
 
@@ -215,16 +216,20 @@ class File extends Model implements Searchable, HasOwnedRecords
 
     public function resizeImage($width, $height)
     {
-        $file = \Storage::disk($this->disk ?? 'public')->get($this->path);
-        $format = pathinfo($this->path, PATHINFO_EXTENSION);
+        try {
+            $file = \Storage::disk($this->disk ?? 'public')->get($this->path);
+            $format = pathinfo($this->path, PATHINFO_EXTENSION);
 
-        $image = Image::make($file)->resize($width, $height, function ($constraint) {
-            $constraint->aspectRatio();
-            $constraint->upsize();
-        })->orientate()->encode($format);
+            $image = Image::make($file)->resize($width, $height, function ($constraint) {
+                $constraint->aspectRatio();
+                $constraint->upsize();
+            })->orientate()->encode($format);
 
-        \Storage::disk($this->disk ?? 'public')->put($this->path, $image);
-        \Storage::disk($this->disk ?? 'public')->setVisibility($this->path, 'public');
+            \Storage::disk($this->disk ?? 'public')->put($this->path, $image);
+            \Storage::disk($this->disk ?? 'public')->setVisibility($this->path, 'public');
+        } catch (\Exception $e) {
+            Log::error($e->getMessage(), $e->getTrace());
+        }
     }
 
     /* SCOPES */
