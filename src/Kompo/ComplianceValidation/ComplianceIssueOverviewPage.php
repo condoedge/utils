@@ -12,6 +12,8 @@ class ComplianceIssueOverviewPage extends Form
     public $id = 'compliance-issue-overview-page';
     public $model = ComplianceIssue::class;
 
+    protected $permissionKey = 'ComplianceIssue';
+
     protected $rule;
     protected $validatable;
     protected $lastExecution;
@@ -20,6 +22,8 @@ class ComplianceIssueOverviewPage extends Form
 
     public function created()
     {
+        abort_if(!$this->model, 404, 'Compliance issue not found.');
+
         // Ensuring that is not already resolver, sometimes we refresh the page after the fix but we don't rerun the revalidation, so here we ensure it
         $this->model->revalidate();
 

@@ -2,6 +2,7 @@
 
 namespace Condoedge\Utils\Models\ComplianceValidation;
 
+use Condoedge\Utils\Contracts\Security\HasOwnedRecords;
 use Condoedge\Utils\Contracts\Security\ScopedToTeam;
 use Condoedge\Utils\Facades\TeamModel;
 use Illuminate\Database\Eloquent\Builder;
@@ -11,7 +12,7 @@ use Condoedge\Utils\Models\Traits\BelongsToTeamTrait;
 use Condoedge\Utils\Services\ComplianceValidation\HierarchicalValidatableContract;
 use Condoedge\Utils\Services\ComplianceValidation\ValidatableContract;
 
-class ComplianceIssue extends Model implements ScopedToTeam
+class ComplianceIssue extends Model implements ScopedToTeam, HasOwnedRecords
 {
     use BelongsToOneTeam;
     use BelongsToTeamTrait;
@@ -136,6 +137,15 @@ class ComplianceIssue extends Model implements ScopedToTeam
                     $q->forTeams($teamIds);
                 }
             }));
+    }
+
+    public function ownedRecordIdsForUser(int $userId): array
+    {
+        if (method_exists($this->validatable, 'ownedRecordIdsForUser')) {
+            return $this->validatable->ownedRecordIdsForUser($userId);
+        }
+
+        return [];
     }
 
     // ACTIONS

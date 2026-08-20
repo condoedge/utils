@@ -37,9 +37,9 @@ class Tag extends Model implements ScopedToTeam
 	}
 
 	/* SCOPES */
-	public function scopeVisibleForTeam($query)
+	public function scopeVisibleForTeam($query, $teamId = null)
 	{
-		return $query->where(fn($q) => $q->where('team_id', safeCurrentTeamId())->orWhere('context', TagContextEnum::ALL));
+		return $query->where(fn($q) => $q->where('team_id', $teamId ?: safeCurrentTeamId())->orWhere('context', TagContextEnum::ALL));
 	}
 
 	public function scopeOfType($query, $type)

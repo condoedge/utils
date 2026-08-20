@@ -7,6 +7,8 @@ use Condoedge\Utils\Models\ComplianceValidation\ComplianceIssue;
 
 class ComplianceRuleDetailsPage extends Form
 {
+    protected $permissionKey = 'ComplianceIssue';
+    
     public $id = 'compliance-rule-details-page';
 
     protected $rule;

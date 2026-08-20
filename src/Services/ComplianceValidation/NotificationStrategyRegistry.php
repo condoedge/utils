@@ -2,7 +2,6 @@
 
 namespace Condoedge\Utils\Services\ComplianceValidation;
 
-use Condoedge\Utils\Services\ComplianceValidation\Strategies\NoNotificationStrategy;
 use Condoedge\Utils\Services\ComplianceValidation\Strategies\ValidatableIsNotificableStrategy;
 
 class NotificationStrategyRegistry
