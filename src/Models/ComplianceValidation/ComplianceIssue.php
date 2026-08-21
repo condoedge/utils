@@ -31,7 +31,7 @@ class ComplianceIssue extends Model implements ScopedToTeam, HasOwnedRecords
     // RELATIONSHIPS
     public function validatable()
     {
-        return $this->morphTo();
+        return $this->morphTo()->withTrashed();
     }
 
     public function notificationLogs()
@@ -141,7 +141,7 @@ class ComplianceIssue extends Model implements ScopedToTeam, HasOwnedRecords
 
     public function ownedRecordIdsForUser(int $userId): array
     {
-        if (method_exists($this->validatable, 'ownedRecordIdsForUser')) {
+        if ($this->validatable && method_exists($this->validatable, 'ownedRecordIdsForUser')) {
             return $this->validatable->ownedRecordIdsForUser($userId);
         }
 
