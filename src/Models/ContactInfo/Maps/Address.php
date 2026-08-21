@@ -40,6 +40,21 @@ class Address extends Model implements HasOwnedRecords, ScopedToTeam
         'lng' => 'float',
     ];
 
+    /** The columns describing the place itself, carried over whenever a row is copied or reused. */
+    public const LOCATION_ATTRIBUTES = [
+        'address1',
+        'apt_or_suite',
+        'postal_code',
+        'city',
+        'state',
+        'country',
+        'street',
+        'street_number',
+        'lat',
+        'lng',
+        'external_id',
+    ];
+
     public function save(array $options = [])
     {
         $this->setTeamId();
@@ -133,8 +148,36 @@ class Address extends Model implements HasOwnedRecords, ScopedToTeam
     }
 
 
-    /* SCOPES */
+    /**
+     * What `addresses_addressable_type_addressable_id_lat_lng_unique` is keyed on. Compared at
+     * the column's own scale, decimal(16,12), so PHP agrees with the index.
+     */
+    public function hasSameCoordinatesAs(Address $other): bool
+    {
+        return $this->lat !== null && $this->lng !== null
+            && $this->coordinateKey($this->lat) === $this->coordinateKey($other->lat)
+            && $this->coordinateKey($this->lng) === $this->coordinateKey($other->lng);
+    }
+
+    /** NULL coordinates are exempt from that index, so the place id still has to dedupe them. */
+    public function hasSamePlaceIdAs(Address $other): bool
+    {
+        return $this->external_id !== null && $this->external_id === $other->external_id;
+    }
+
+    protected function coordinateKey($value): ?string
+    {
+        return $value === null ? null : number_format((float) $value, 12, '.', '');
+    }
+
     /* ACTIONS */
+    public function copyLocationFrom(Address $source): void
+    {
+        foreach (self::LOCATION_ATTRIBUTES as $attribute) {
+            $this->{$attribute} = $source->{$attribute};
+        }
+    }
+
     public function setAddressable($model)
     {
         $this->addressable_type = $model->getRelationType();

@@ -2,6 +2,8 @@
 
 namespace Condoedge\Utils\Models\ContactInfo\Maps;
 
+use Illuminate\Database\UniqueConstraintViolationException;
+
 
 trait MorphManyAddresses
 {
@@ -64,18 +66,59 @@ trait MorphManyAddresses
         if (!$address) {
             return;
         }
-        
-        $copiedAddress = $this->addresses()->where('external_id', $address->external_id)->first();
 
-        if (!$copiedAddress) {
+        $this->setPrimaryBillingAddress($this->copyAddressToSelf($address)->id);
+    }
 
-            $copiedAddress = $address->replicate();
-            $copiedAddress->setAddressable($this);
-            $copiedAddress->save();
+    /**
+     * One row per location per owner. `addresses_..._lat_lng_unique` is keyed on the
+     * coordinates and counts trashed rows, so looking the copy up by `external_id` alone
+     * kept re-inserting a row the index already held.
+     *
+     * The coordinates come first on purpose: matching what the index matches means the row
+     * we hand back can be resynced without ever landing on another row's key.
+     */
+    public function findSameAddress(Address $address): ?Address
+    {
+        $ownedAddresses = $this->addresses()->withTrashed()->get();
 
+        return $ownedAddresses->first(fn ($existing) => $existing->hasSameCoordinatesAs($address))
+            ?: $ownedAddresses->first(fn ($existing) => $existing->hasSamePlaceIdAs($address));
+    }
+
+    protected function copyAddressToSelf(Address $address): Address
+    {
+        $copiedAddress = $this->findSameAddress($address) ?: $address->replicate();
+
+        $copiedAddress->setAddressable($this);
+        $copiedAddress->copyLocationFrom($address);
+
+        try {
+            $this->saveAddressCopy($copiedAddress);
+        } catch (UniqueConstraintViolationException $e) {
+            // Two submits both read no match. The index settled it, so re-read the winner.
+            $copiedAddress = $this->findSameAddress($address);
+
+            if (!$copiedAddress) {
+                throw $e;
+            }
+
+            $this->saveAddressCopy($copiedAddress);
         }
 
-        $this->setPrimaryBillingAddress($copiedAddress->id);
+        return $copiedAddress;
+    }
+
+    protected function saveAddressCopy(Address $address): void
+    {
+        if ($address->exists && $address->trashed()) {
+            $address->restore();
+
+            return;
+        }
+
+        $address->deleted_at = null;
+        $address->save();
     }
 
     public function deleteAddresses()

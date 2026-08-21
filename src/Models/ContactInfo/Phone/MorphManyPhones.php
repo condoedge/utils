@@ -2,6 +2,8 @@
 
 namespace Condoedge\Utils\Models\ContactInfo\Phone;
 
+use Illuminate\Database\UniqueConstraintViolationException;
+
 trait MorphManyPhones
 {
     /* RELATIONSHIPS */
@@ -68,21 +70,47 @@ trait MorphManyPhones
     }
 
     /* ACTIONS */
+    /**
+     * `phones_..._number_ph_unique` counts trashed rows, so the lookup has to see them too,
+     * otherwise copying a number the owner once deleted lands as a 1062.
+     */
     public function setPhonableAndMakePrimary(?Phone $phone)
     {
         if (!$phone) {
             return;
         }
-        
-        $copiedPhone = $this->phones()->matchNumber($phone->number_ph)->first();
 
-        if (!$copiedPhone) {
-            $copiedPhone = $phone->replicate();
-            $copiedPhone->setPhonable($this);
-            $copiedPhone->save();
+        $copiedPhone = $this->findPhoneByNumber($phone->number_ph);
+
+        if ($copiedPhone) {
+            $this->restorePhoneIfTrashed($copiedPhone);
+        } else {
+            $copiedPhone = $this->copyPhoneToSelf($phone);
         }
 
         $this->setPrimaryPhone($copiedPhone->id);
+    }
+
+    protected function copyPhoneToSelf(Phone $phone): Phone
+    {
+        $copiedPhone = $phone->replicate();
+        $copiedPhone->setPhonable($this);
+        $copiedPhone->deleted_at = null;
+
+        try {
+            $copiedPhone->save();
+        } catch (UniqueConstraintViolationException $e) {
+            // Two submits both read no match. The index settled it, so re-read the winner.
+            $copiedPhone = $this->findPhoneByNumber($phone->number_ph);
+
+            if (!$copiedPhone) {
+                throw $e;
+            }
+
+            $this->restorePhoneIfTrashed($copiedPhone);
+        }
+
+        return $copiedPhone;
     }
 
     public function deletePhones()
