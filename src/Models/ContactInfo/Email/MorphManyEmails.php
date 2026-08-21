@@ -77,10 +77,10 @@ trait MorphManyEmails
 
         if (!$address){
             $existingEmail?->delete();
+        } elseif ($existing = $this->findEmailByAddress($address)) {
+            $this->restoreEmailIfTrashed($existing);
         } else {
-            if (!$existingEmail || !$existingEmail->isSameAddress($address)) {
-                $this->createEmailFromAddress($address);
-            }
+            $this->createEmailFromAddress($address);
         }
     }
 
@@ -92,8 +92,27 @@ trait MorphManyEmails
         $existingEmail->save();        
     }
 
+    public function findEmailByAddress($address)
+    {
+        return $this->emails()->withTrashed()->get()
+            ->first(fn ($email) => $email->isSameAddress($address));
+    }
+
+    public function restoreEmailIfTrashed(Email $email): void
+    {
+        if ($email->trashed()) {
+            $email->restore();
+        }
+    }
+
     public function createOrUpdateMainEmail($address)
     {
+        if ($existing = $this->findEmailByAddress($address)) {
+            $this->restoreEmailIfTrashed($existing);
+
+            return;
+        }
+
         $existingEmail = $this->email;
 
         if (!$existingEmail) {

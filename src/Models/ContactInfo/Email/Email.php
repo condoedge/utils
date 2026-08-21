@@ -58,7 +58,10 @@ class Email extends Model implements HasOwnedRecords, ScopedToTeam
 
     public function isSameAddress($address)
     {
-        return $this->getEmailLabel() == $address;
+        $address = trim((string) $address);
+
+        // The unique index compares under utf8mb4_unicode_ci, so the guards have to too.
+        return $address !== '' && strcasecmp(trim((string) $this->getEmailLabel()), $address) === 0;
     }
 
     /* SCOPES */
@@ -76,7 +79,15 @@ class Email extends Model implements HasOwnedRecords, ScopedToTeam
     
     public static function createMainFor($emailable, $address)
     {
-        if ($emailable->emails()->where('address_em', $address)->exists()) {
+        // A cleared email is only soft-deleted and keeps its slot in the unique index,
+        // so a live-rows-only check re-inserted it and hit a 1062.
+        if ($existing = $emailable->findEmailByAddress($address)) {
+            $emailable->restoreEmailIfTrashed($existing);
+
+            if (!$emailable->primary_email_id) {
+                $emailable->setPrimaryEmail($existing->id);
+            }
+
             return;
         }
 
