@@ -39,10 +39,25 @@ if (!function_exists('publicUrlFromFileModel')) {
 }
 
 /* UTILITIES */
+if (!function_exists('initialsFromText')) {
+    function initialsFromText($text)
+    {
+        $words = preg_split('/\s+/u', trim((string) $text), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+
+        if (!$words) {
+            return '';
+        }
+
+        $last = count($words) > 1 ? mb_substr(end($words), 0, 1) : '';
+
+        return mb_strtoupper(mb_substr($words[0], 0, 1).$last);
+    }
+}
+
 if (!function_exists('avatarFromText')) {
     function avatarFromText($text)
     {
-        return 'https://ui-avatars.com/api/?name='.urlencode($text).'&color=7F9CF5&background=EBF4FF';
+        return route('utils.avatar-initials', ['initials' => initialsFromText($text)]);
     }
 }
 

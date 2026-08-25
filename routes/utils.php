@@ -6,6 +6,13 @@ Route::middleware(['auth'])->group(function () {
     Route::post('edit-place-fields', \Condoedge\Utils\Kompo\ContactInfo\Maps\AddressPlaceEditingForm::class)->name('edit-place-fields');
 });
 
+// Public on purpose: placeholder avatars render on the login screen and in printable
+// sheets. It reflects the initials it is given and reads nothing, so there is nothing
+// for an unauthenticated caller to learn.
+Route::get('_avatar/{initials?}', \Condoedge\Utils\Http\Controllers\InitialsAvatarController::class)
+    ->where('initials', '[^/]{0,16}')
+    ->name('utils.avatar-initials');
+
 Route::get('api/tutorials/{name}', function (string $name) {
     $path = resource_path("tutorials/{$name}.json");
 
