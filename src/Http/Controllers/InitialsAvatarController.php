@@ -2,7 +2,6 @@
 
 namespace Condoedge\Utils\Http\Controllers;
 
-use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 
 /**
@@ -17,7 +16,7 @@ class InitialsAvatarController extends Controller
     protected const COLOR = '#7F9CF5';
     protected const BACKGROUND = '#EBF4FF';
 
-    public function __invoke(Request $request, $initials = '')
+    public function __invoke($initials = '')
     {
         $initials = $this->sanitize($initials);
 
