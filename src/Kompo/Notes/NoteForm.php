@@ -47,7 +47,7 @@ class NoteForm extends Modal
     public function rules()
     {
         return [
-            'content_nt' => 'required|string|max:255',
+            'content_nt' => 'required|string|max:2000',
             'date_nt' => 'required|date',
         ];
     }
