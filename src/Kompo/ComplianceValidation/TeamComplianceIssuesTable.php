@@ -8,6 +8,11 @@ class TeamComplianceIssuesTable extends AbstractComplianceIssuesTable
 {
     protected $permissionKey = 'ComplianceIssue';
 
+    public function created()
+    {
+        abort_if(!auth()->user()->hasPermission('ComplianceIssue', teamIds: $this->getTeamsIds()), 404);
+    }
+
     public function query()
     {
         $teamsIds = $this->getTeamsIds();

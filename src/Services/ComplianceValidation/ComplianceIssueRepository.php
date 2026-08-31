@@ -23,8 +23,8 @@ class ComplianceIssueRepository
     protected function filterNewIssues(string $ruleCode, Collection $issuesData): array
     {
         $existingKeys = ComplianceIssue::where('rule_code', $ruleCode)
-            ->whereIn('validatable_id', $issuesData->pluck('validatable_id'))
-            ->whereIn('validatable_type', $issuesData->pluck('validatable_type'))
+            ->whereIntegerInRaw('validatable_id', $issuesData->pluck('validatable_id')->unique())
+            ->whereIn('validatable_type', $issuesData->pluck('validatable_type')->unique())
             ->whereNull('resolved_at')
             ->get(['validatable_id', 'validatable_type'])
             ->map(fn($item) => $item->validatable_type . '_' . $item->validatable_id)
@@ -66,7 +66,7 @@ class ComplianceIssueRepository
 
         ComplianceIssue::where('rule_code', $ruleCode)
             ->whereNull('resolved_at')
-            ->whereNotIn('validatable_id', $stillFailingIds)
+            ->whereIntegerNotInRaw('validatable_id', $stillFailingIds)
             ->update(['resolved_at' => now()]);
     }
 }

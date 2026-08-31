@@ -22,7 +22,7 @@ class ComplianceIssueOverviewPage extends Form
 
     public function created()
     {
-        abort_if(!$this->model, 404, 'Compliance issue not found.');
+        abort_if(!$this->model->id, 404, 'Compliance issue not found.');
 
         // Ensuring that is not already resolver, sometimes we refresh the page after the fix but we don't rerun the revalidation, so here we ensure it
         $this->model->revalidate();
