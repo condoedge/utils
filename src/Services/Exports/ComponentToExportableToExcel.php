@@ -80,7 +80,13 @@ class ComponentToExportableToExcel implements FromArray, WithHeadings, ShouldAut
     public function headings(): array
     {
         if ($this->getExportChildClass()) {
-            $childInstance = $this->component->render(collect($this->getItems(null, 1))->first())->findByComponent($this->getExportChildClass());
+            $firstPlaceholderItem = collect($this->getItems(null, 1))->first();
+            
+            // If the query return 0 items unfortunaly we can't get the headers since the boot of the component would throw an error in a lot of cases
+            // Since it's expecting a render item not as null.
+            if (!$firstPlaceholderItem) return [];
+
+            $childInstance = $this->component->render($firstPlaceholderItem)->findByComponent($this->getExportChildClass());
             $childInstance->bootForAction();
 
             return $this->parseHeaders($childInstance->headers());
