@@ -80,7 +80,7 @@ class RulesProcessor
 
         return ComplianceIssue::where('rule_code', $ruleCode)
             ->whereNull('resolved_at')
-            ->whereIn('validatable_id', $validatableIds)
+            ->whereIntegerInRaw('validatable_id', $validatableIds)
             ->whereIn('validatable_type', $validatableTypes)
             ->get()
             ->keyBy(fn (ComplianceIssue $issue) => $issue->validatable_type . ':' . $issue->validatable_id);
