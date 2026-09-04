@@ -8,8 +8,10 @@ use Condoedge\Utils\Services\ComplianceValidation\ComplianceNotificationLogger;
 use Condoedge\Utils\Services\ComplianceValidation\ComplianceNotificationService;
 use Condoedge\Utils\Services\ComplianceValidation\NotificationStrategyRegistry;
 use Condoedge\Utils\Services\ComplianceValidation\Rules\RuleContract;
+use Condoedge\Utils\Services\ComplianceValidation\Strategies\NoNotificationStrategy;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 
 class HandleBatchComplianceNotifications implements ShouldQueue
@@ -39,41 +41,51 @@ class HandleBatchComplianceNotifications implements ShouldQueue
     public function handle(MultipleComplianceIssuesDetected $event): void
     {
         try {
-            $failingValidatables = $event->getFailingValidatables();
             $ruleCode = $event->ruleCode;
 
-            // Group validatables by notification context to get appropriate strategies
-            $groupedByContext = $this->groupValidatablesByContext($failingValidatables);
-
-            // Collect all context notifiables first
-            $allContextNotifiables = [];
-            foreach ($groupedByContext as $notificationContext => $validatables) {
+            // Strategy first, rows second: a context nobody is notified for must
+            // never pay to hydrate its failing validatables.
+            $notifiablesMap = [];
+            foreach ($event->getFailingValidatableIdsByType() as $notificationContext => $ids) {
                 $strategy = $this->getNotificationStrategy($event, $notificationContext, $ruleCode);
-                $contextNotifiables = $strategy->getBatchNotifiables($validatables, $ruleCode);
-                $allContextNotifiables = array_merge($allContextNotifiables, $contextNotifiables);
-            }
 
-            // Process all notifiables globally (merge duplicates)
-            $allNotifiablesMap = [];
-            foreach ($allContextNotifiables as $key => $data) {
-                if (!isset($allNotifiablesMap[$key])) {
-                    $allNotifiablesMap[$key] = [
+                if ($strategy instanceof NoNotificationStrategy) {
+                    continue;
+                }
+
+                $contextNotifiables = $strategy->getBatchNotifiables(
+                    $event->loadValidatables($notificationContext, $ids),
+                    $ruleCode
+                );
+
+                // Merge duplicates as we go: one notifiable can fail across contexts.
+                foreach ($contextNotifiables as $key => $data) {
+                    $notifiablesMap[$key] ??= [
                         'notifiable' => $data['notifiable'],
                         'validatables' => []
                     ];
+
+                    $notifiablesMap[$key]['validatables'] = array_merge(
+                        $notifiablesMap[$key]['validatables'],
+                        $data['validatables']
+                    );
                 }
-                $allNotifiablesMap[$key]['validatables'] = array_merge(
-                    $allNotifiablesMap[$key]['validatables'], 
-                    $data['validatables']
-                );
             }
 
+            if (!$notifiablesMap) {
+                return;
+            }
+
+            $issuesByValidatable = $event->getPersistedIssues()
+                ->keyBy(fn (ComplianceIssue $issue) => $issue->validatable_type . ':' . $issue->validatable_id);
+
             // Send one notification per unique notifiable with all their validatables
-            foreach ($allNotifiablesMap as $notifiableData) {
+            foreach ($notifiablesMap as $notifiableData) {
                 $this->sendBatchNotification(
-                    $notifiableData['notifiable'], 
-                    $event, 
-                    $notifiableData['validatables']
+                    $notifiableData['notifiable'],
+                    $event,
+                    $notifiableData['validatables'],
+                    $issuesByValidatable
                 );
             }
         } catch (\Exception $e) {
@@ -87,22 +99,6 @@ class HandleBatchComplianceNotifications implements ShouldQueue
             // Re-throw if you want the job to retry, or handle gracefully
             // throw $e;
         }
-    }
-
-    /**
-     * Group validatables by their notification context (morph class)
-     */
-    protected function groupValidatablesByContext(array $validatables): array
-    {
-        $grouped = [];
-        foreach ($validatables as $validatable) {
-            $context = $validatable->getMorphClass();
-            if (!isset($grouped[$context])) {
-                $grouped[$context] = [];
-            }
-            $grouped[$context][] = $validatable;
-        }
-        return $grouped;
     }
 
     /**
@@ -131,9 +127,7 @@ class HandleBatchComplianceNotifications implements ShouldQueue
     protected function getRuleInstance(string $ruleCode): ?RuleContract
     {
         try {
-            complianceRulesService()->getRuleFromCode($ruleCode);
-            
-            return null;
+            return complianceRulesService()->getRuleFromCode($ruleCode);
         } catch (\Exception $e) {
             Log::warning('Could not get rule instance for batch notifications', [
                 'rule_code' => $ruleCode,
@@ -165,12 +159,9 @@ class HandleBatchComplianceNotifications implements ShouldQueue
      * can render notification history. Project-side adapters can call the logger
      * again with per-channel detail (sent, failed, ...) once delivery completes.
      */
-    protected function sendBatchNotification($notifiable, MultipleComplianceIssuesDetected $event, array $validatables): void
+    protected function sendBatchNotification($notifiable, MultipleComplianceIssuesDetected $event, array $validatables, Collection $issuesByValidatable): void
     {
         $this->notificationService->sendBatchNotification($notifiable, $event, $validatables);
-
-        $issuesByValidatable = $event->getPersistedIssues()
-            ->keyBy(fn (ComplianceIssue $issue) => $issue->validatable_type . ':' . $issue->validatable_id);
 
         foreach ($validatables as $validatable) {
             $issue = $issuesByValidatable->get($validatable->getMorphClass() . ':' . $validatable->getKey());

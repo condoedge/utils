@@ -3,6 +3,7 @@
 namespace Condoedge\Utils\Events;
 
 use Condoedge\Utils\Services\ComplianceValidation\RulesGetter;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
@@ -56,22 +57,51 @@ class MultipleComplianceIssuesDetected
     }
 
     /**
+     * Stored ids grouped by morph type. Free of DB work, so a consumer can
+     * resolve per-context behaviour before deciding to hydrate anything.
+     */
+    public function getFailingValidatableIdsByType(): array
+    {
+        $grouped = [];
+
+        foreach ($this->failingValidatableIds as $validatableData) {
+            $grouped[$validatableData['type']][] = $validatableData['id'];
+        }
+
+        return $grouped;
+    }
+
+    /**
+     * Load one morph type's failing rows in a single query. Rows deleted since
+     * detection simply drop out, as they did when this loaded them one by one.
+     */
+    public function loadValidatables(string $type, array $ids): array
+    {
+        $class = Relation::morphMap()[$type] ?? null;
+
+        if (!$class || empty($ids)) {
+            return [];
+        }
+
+        $model = new $class();
+
+        return $class::query()
+            ->whereIntegerInRaw($model->getQualifiedKeyName(), $ids)
+            ->get()
+            ->all();
+    }
+
+    /**
      * Reconstruct the failing validatables from stored IDs
      */
     public function getFailingValidatables(): array
     {
         $validatables = [];
 
-        foreach ($this->failingValidatableIds as $validatableData) {
-            try {
-                $model = findOrFailMorphModel($validatableData['id'], $validatableData['type']);
-                $validatables[] = $model;
-            } catch (\Exception $e) {
-                // Skip if model not found (might have been deleted)
-                continue;
-            }
+        foreach ($this->getFailingValidatableIdsByType() as $type => $ids) {
+            $validatables = array_merge($validatables, $this->loadValidatables($type, $ids));
         }
-        
+
         return $validatables;
     }
 }

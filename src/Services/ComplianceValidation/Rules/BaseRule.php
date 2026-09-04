@@ -14,7 +14,6 @@ use Condoedge\Utils\Services\ComplianceValidation\Schedules\WeeklySchedule;
 use Condoedge\Utils\Services\ComplianceValidation\Solutions\AbstractComplianceSolutionHandler;
 use Condoedge\Utils\Services\ComplianceValidation\Solutions\DefaultComplianceSolutionHandler;
 use Condoedge\Utils\Services\ComplianceValidation\Strategies\NoNotificationStrategy;
-use Condoedge\Utils\Services\ComplianceValidation\Strategies\ValidatableIsNotificableStrategy;
 use Condoedge\Utils\Services\ComplianceValidation\ValidatableContract;
 use Illuminate\Support\Str;
 use Kompo\Elements\BaseElement;
@@ -205,8 +204,10 @@ abstract class BaseRule implements RuleContract, ScheduledRuleContract
     public function getNotificationStrategyFor(string $validatableContext): ?NotificationStrategyContract
     {
         $strategies = $this->getNotificationStrategies();
-        
-        return $strategies[$validatableContext] ?? $strategies['default'] ?? new ValidatableIsNotificableStrategy();
+
+        // Null, not a fallback strategy: a rule that declares nothing must let
+        // the registry answer, or rule-defined precedence swallows it.
+        return $strategies[$validatableContext] ?? $strategies['default'] ?? null;
     }
 
     /**
@@ -224,10 +225,9 @@ abstract class BaseRule implements RuleContract, ScheduledRuleContract
      */
     protected function getNotificationStrategies(): array
     {
-        // Default: no notifications
-        return [
-            'default' => new NoNotificationStrategy()
-        ];
+        // Empty, not a NoNotificationStrategy: an implicit default here reads as
+        // rule-defined and would mask the registry for every rule.
+        return [];
     }
 
     /**
