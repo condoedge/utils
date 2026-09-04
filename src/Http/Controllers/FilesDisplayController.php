@@ -12,9 +12,13 @@ class FilesDisplayController extends Controller
     {
     	$model = Relation::morphMap()[$type];
 
-    	$model = $model::findOrFail($id);
+    	$model = $model::asSystemOperation()->findOrFail($id);
 
         $disk = $model->disk ?? 'public';
+
+        if ($model->viewableForUser() === false) {
+            abort(404, __('error.file-not-found'));
+        }
 
         // if (!auth()->user()->can('view', $model)) {
         //     abort(403, __('error.you-cant-view-this-file'));

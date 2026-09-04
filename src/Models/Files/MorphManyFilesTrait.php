@@ -9,12 +9,12 @@ trait MorphManyFilesTrait
     /* RELATIONS */
     public function file()
     {
-        return $this->morphOne(FileModel::getClass(), 'fileable');
+        return $this->morphOne(FileModel::getClass(), 'fileable')->asSystemOperation();
     }
 
     public function files()
     {
-        return $this->morphMany(FileModel::getClass(), 'fileable');
+        return $this->morphMany(FileModel::getClass(), 'fileable')->asSystemOperation();
     }
 
     /* CALCULATED FIELDS */
