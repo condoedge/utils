@@ -58,6 +58,12 @@ trait MorphManyPhones
         return $number;
     }
 
+    /** Companion of `getFirstValidPhoneToInputs()`, for fields using `->withExtension()`. */
+    public function getFirstValidPhoneExtension()
+    {
+        return $this->getFirstValidPhone()?->extension_ph;
+    }
+
     /* ATTRIBUTES */
     public function getPrimaryPhoneNumberAttribute(): string
     {
@@ -161,7 +167,7 @@ trait MorphManyPhones
      * same way. Comparing against `phone` alone re-created the row the reader
      * was showing from `primaryPhone`, which the unique index rejects.
      */
-    public function createOrDeleteMainPhoneFromNumber($number)
+    public function createOrDeleteMainPhoneFromNumber($number, $extension = false)
     {
         if (!$number) {
             $mainPhone = $this->getFirstValidPhone();
@@ -180,14 +186,37 @@ trait MorphManyPhones
             $phone = $this->createPhoneFromNumber($number);
         }
 
+        $this->applyPhoneExtension($phone, $extension);
+
         if ($this->primary_phone_id != $phone->id) {
             $this->setPrimaryPhone($phone->id);
         }
     }
 
+    /**
+     * `false` means the form had no extension field, so the stored one is left alone — only the
+     * fields using `->withExtension()` submit the companion. An empty value clears it.
+     */
+    protected function applyPhoneExtension(Phone $phone, $extension): void
+    {
+        if ($extension === false) {
+            return;
+        }
+
+        $extension = is_string($extension) ? trim($extension) : $extension;
+        $extension = ($extension === '' || $extension === null) ? null : (string) $extension;
+
+        if ($phone->extension_ph !== $extension) {
+            $phone->setExtension($extension);
+            $phone->save();
+        }
+    }
+
+    /** A live row wins over a trashed twin, so a repaired duplicate is never resurrected. */
     public function findPhoneByNumber($number)
     {
         return $this->phones()->withTrashed()->get()
+            ->sortBy(fn ($phone) => [$phone->trashed() ? 1 : 0, $phone->id])
             ->first(fn ($phone) => $phone->hasSameRawNumber($number));
     }
 
@@ -208,10 +237,11 @@ trait MorphManyPhones
         return $existingPhone;
     }
 
-    public function createOrUpdateMainPhone($number)
+    public function createOrUpdateMainPhone($number, $extension = false)
     {
         if ($duplicate = $this->findPhoneByNumber($number)) {
             $this->restorePhoneIfTrashed($duplicate);
+            $this->applyPhoneExtension($duplicate, $extension);
 
             return;
         }
@@ -219,19 +249,21 @@ trait MorphManyPhones
         $existingPhone = $this->phone;
 
         if (!$existingPhone) {
-            $this->createPhoneFromNumber($number);
+            $existingPhone = $this->createPhoneFromNumber($number);
         } else {
             $existingPhone->setPhoneNumber($number);
             $existingPhone->save();
         }
+
+        $this->applyPhoneExtension($existingPhone, $extension);
     }
 
-    public function manageChangesMainPhone($number)
+    public function manageChangesMainPhone($number, $extension = false)
     {
         $existingPhone = $this->phone;
 
         if ($number) {
-            $this->createOrUpdateMainPhone($number);
+            $this->createOrUpdateMainPhone($number, $extension);
         } else {
             $existingPhone?->delete();
         }

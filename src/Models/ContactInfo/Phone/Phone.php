@@ -86,9 +86,10 @@ class Phone extends Model implements HasOwnedRecords, ScopedToTeam
         }
     }
 
+    /** Digits of the number alone. The extension is not part of it and must not be welded on. */
     public function getRawFormattedPhoneNumber()
     {
-        return preg_replace('/\D+/', '', $this->getFullLabelWithExtension());
+        return preg_replace('/\D+/', '', $this->getFormattedPhoneNumber());
     }
 
     public function getPhoneNumber()
@@ -107,9 +108,30 @@ class Phone extends Model implements HasOwnedRecords, ScopedToTeam
      */
     public function hasSameRawNumber($number): bool
     {
+        $candidate = static::canonicalNumberDigits($number);
+
+        return $candidate !== '' && static::canonicalNumberDigits($this->number_ph) === $candidate;
+    }
+
+    /**
+     * E.164 digits. Stored rows predate the country code the form now submits, so both
+     * sides are parsed before comparison — otherwise a number never matches itself.
+     */
+    protected static function canonicalNumberDigits($number): string
+    {
         $digits = preg_replace('/\D+/', '', (string) $number);
 
-        return $digits !== '' && preg_replace('/\D+/', '', (string) $this->number_ph) === $digits;
+        if ($digits === '') {
+            return '';
+        }
+
+        try {
+            $phone = new PhoneNumber((string) $number, config('kompo-utils.default-country-phone', 'CA'));
+
+            return preg_replace('/\D+/', '', $phone->formatE164());
+        } catch (\Exception $e) {
+            return $digits;
+        }
     }
 
     /* ACTIONS */
@@ -123,6 +145,11 @@ class Phone extends Model implements HasOwnedRecords, ScopedToTeam
     {
         //TODO sanitize phone number
         $this->number_ph = $number;
+    }
+
+    public function setExtension($extension)
+    {
+        $this->extension_ph = $extension;
     }
 
     /* ELEMENTS */

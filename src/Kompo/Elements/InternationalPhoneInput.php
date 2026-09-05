@@ -39,6 +39,21 @@ class InternationalPhoneInput extends Input
         return $this->config(['validateFront' => $enabled]);
     }
 
+    /**
+     * Adds the optional extension ("poste") box. Its value is submitted alongside the number
+     * under `<name>_ext`; fields that do not opt in submit nothing and never clear a stored one.
+     */
+    public function withExtension($default = null)
+    {
+        return $this->config([
+            'withExtension' => true,
+            'extensionValue' => $default,
+            // Config strings never pass through Kompo's label auto-translation.
+            'extensionLabel' => __('crm.phone-extension'),
+            'extensionClearLabel' => __('crm.phone-extension-remove'),
+        ]);
+    }
+
     public function backendRule()
     {
         return $this->rules([new InternationalPhoneRule]);
