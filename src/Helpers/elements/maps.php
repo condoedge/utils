@@ -73,7 +73,7 @@ if (!function_exists('loadFormattedLabel')) {
             return;
         }
 
-        $value = collect(config('kompo.places_attributes'))->mapWithKeys(fn ($col, $key) => [$col => $address->{$col} ?? $address[$col]]);
+        $value = collect(config('kompo.places_attributes'))->mapWithKeys(fn ($col, $key) => [$col => $address->{$col} ?? $address[$col] ?? null]);
 
         if (is_object($address)) {
             $address->setRawAttributes(array_filter([
