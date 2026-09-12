@@ -225,8 +225,9 @@ class File extends Model implements Searchable, HasOwnedRecords
                 $constraint->upsize();
             })->orientate()->encode($format);
 
-            \Storage::disk($this->disk ?? 'public')->put($this->path, $image);
-            \Storage::disk($this->disk ?? 'public')->setVisibility($this->path, 'public');
+            // Visibility travels on the write: a separate setVisibility() issues PutObjectAcl,
+            // which some S3-compatible backends (Linode's newer clusters) don't implement.
+            \Storage::disk($this->disk ?? 'public')->put($this->path, $image, 'public');
         } catch (\Exception $e) {
             Log::error($e->getMessage(), $e->getTrace());
         }
