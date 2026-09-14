@@ -16,6 +16,30 @@ if(!function_exists('throwValidationError')) {
     }
 }
 
+if (!function_exists('kompoValidationErrors')) {
+    /**
+     * Convert Laravel's dot-notated validation keys to the literal bracket
+     * names used by nested Kompo inputs.
+     */
+    function kompoValidationErrors(array $errors)
+    {
+        $mapped = [];
+
+        foreach ($errors as $key => $messages) {
+            $parts = explode('.', $key);
+            $kompoKey = array_shift($parts);
+
+            foreach ($parts as $part) {
+                $kompoKey .= '[' . $part . ']';
+            }
+
+            $mapped[$kompoKey] = $messages;
+        }
+
+        return $mapped;
+    }
+}
+
 if(!function_exists('throwValidationConfirmation')) {
     function throwValidationConfirmation($message)
     {
