@@ -19,6 +19,11 @@ class PageViewLog extends Model
      */
     protected $table = 'page_view_logs';
 
+    public function getConnectionName()
+    {
+        return config('analytics.connection') ?: parent::getConnectionName();
+    }
+
     /**
      * The attributes that are mass assignable.
      *

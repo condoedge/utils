@@ -189,4 +189,5 @@ return [
         'secondary' => '#6B7280',   // Gray
     ],
 
+    'connection' => env('ANALYTICS_DB_CONNECTION', 'mysql_analytics'),
 ];
