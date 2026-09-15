@@ -13,8 +13,9 @@ Route::middleware(['auth'])->group(function(){
 	Route::get('audio-preview/{type}/{id}', \Condoedge\Utils\Kompo\Files\AudioPreview::class)->name('audio.preview');
 	Route::get('video-preview/{type}/{id}', \Condoedge\Utils\Kompo\Files\VideoPreview::class)->name('video.preview');
 	Route::get('raw-document-preview/{type}/{id}', \Condoedge\Utils\Kompo\Files\RawDocumentPreview::class)->name('raw_document.preview');
+
+	Route::get('display-files-modal/{mime}/{type}/{id}/{column}/{index?}', DisplayFileModal::class)->name('preview-files-modal');
+
+	Route::get('display-files/{type}/{id}/{column}/{index?}', [FileColumnsController::class, 'display'])->name('preview-files');
+	Route::get('download-files/{type}/{id}/{column}/{index?}', [FileColumnsController::class, 'download'])->name('download-files');
 });
-
-Route::get('display-files-modal/{mime}/{type}/{id}/{column}/{index?}', DisplayFileModal::class)->name('preview-files-modal');
-
-Route::get('display-files/{type}/{id}/{column}/{index?}', [FileColumnsController::class, 'display'])->name('preview-files');
