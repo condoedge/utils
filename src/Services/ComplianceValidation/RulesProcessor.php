@@ -27,7 +27,6 @@ class RulesProcessor
     public function processRule(RuleContract $rule): ?ValidationExecution
     {
         // Overlapping runs would each see the same issues as new and announce them twice
-        // (prod 2026-09-15: three manual runs started within 8 seconds).
         $lock = Cache::lock('compliance-rule:' . $rule->getCode(), 900);
 
         if (!$lock->get()) {
@@ -49,17 +48,19 @@ class RulesProcessor
         $complianceIssuesData = $this->createComplianceIssuesData($rule, $failingValidatables);
         $newIssues = $this->repository->syncIssues($rule->getCode(), $complianceIssuesData, $failingValidatables);
 
-        // Only issues first detected by this run are announced: still-open ones were
-        // announced when they appeared, and re-sending them every run floods recipients.
+        // By default only issues first detected by this run are announced. The reminder flag
+        // re-announces every still-open issue on each run instead.
         $newKeys = array_flip(array_map(fn (array $issue) => $issue['validatable_type'] . ':' . $issue['validatable_id'], $newIssues));
-        $newValidatables = array_values(array_filter($failingValidatables, fn ($validatable) => isset($newKeys[$validatable->getMorphClass() . ':' . $validatable->getKey()])));
+        $announced = config('kompo-utils.compliance-remind-open-issues', false)
+            ? $failingValidatables
+            : array_values(array_filter($failingValidatables, fn ($validatable) => isset($newKeys[$validatable->getMorphClass() . ':' . $validatable->getKey()])));
 
-        $persistedIssues = $this->loadPersistedIssues($rule->getCode(), $newValidatables);
+        $persistedIssues = $this->loadPersistedIssues($rule->getCode(), $announced);
 
-        $this->dispatchPerIssueEvents($rule, $newValidatables, $persistedIssues);
+        $this->dispatchPerIssueEvents($rule, $announced, $persistedIssues);
 
-        if ($newValidatables) {
-            event(new MultipleComplianceIssuesDetected($rule->getCode(), $newValidatables, $persistedIssues->pluck('id')->all()));
+        if ($announced) {
+            event(new MultipleComplianceIssuesDetected($rule->getCode(), $announced, $persistedIssues->pluck('id')->all()));
         }
 
         return $this->createExecutionRecord($rule, $startedAt, $testedCount, $failingValidatables);

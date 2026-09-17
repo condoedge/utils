@@ -16,6 +16,9 @@ return [
 
     'compliance-validation-rules' => [],
 
+    // Re-announce every still-open compliance issue on each rule run, not only newly detected ones.
+    'compliance-remind-open-issues' => false,
+
     // Enable plugin-based interception of Eloquent relationship methods.
     // When false, relationship overrides are completely disabled (zero overhead).
     // When true, plugins implementing interceptRelation() can modify relationship queries.
