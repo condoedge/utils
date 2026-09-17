@@ -36,7 +36,10 @@ class ComplianceValidationService
         $rules = $this->parseRules($rules);
 
         foreach ($rules as $rule) {
-            $executions[] = $this->processor->processRule($rule);
+            // Null: the rule was already running elsewhere.
+            if ($execution = $this->processor->processRule($rule)) {
+                $executions[] = $execution;
+            }
         }
         
         return $executions;

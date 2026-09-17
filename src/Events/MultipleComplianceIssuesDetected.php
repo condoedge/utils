@@ -51,8 +51,9 @@ class MultipleComplianceIssuesDetected
             return \Condoedge\Utils\Models\ComplianceValidation\ComplianceIssue::query()->whereRaw('1=0')->get();
         }
 
+        // Raw integers: a bound whereIn fails with 1390 past 65,535 placeholders.
         return \Condoedge\Utils\Models\ComplianceValidation\ComplianceIssue::with('validatable')
-            ->whereIn('id', $this->persistedComplianceIssueIds)
+            ->whereIntegerInRaw('id', $this->persistedComplianceIssueIds)
             ->get();
     }
 

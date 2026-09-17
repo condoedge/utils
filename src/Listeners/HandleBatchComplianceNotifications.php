@@ -18,6 +18,12 @@ class HandleBatchComplianceNotifications implements ShouldQueue
 {
     use InteractsWithQueue;
 
+    /**
+     * At most once: a retry, or a second worker re-reserving a long run, starts again from the
+     * first recipient and re-sends everything already queued. Failing beats notifying twice.
+     */
+    public $tries = 1;
+
     protected NotificationStrategyRegistry $strategyRegistry;
     protected ComplianceNotificationService $notificationService;
     protected ComplianceNotificationLogger $logger;
@@ -96,8 +102,8 @@ class HandleBatchComplianceNotifications implements ShouldQueue
                 'trace' => $e->getTraceAsString()
             ]);
 
-            // Re-throw if you want the job to retry, or handle gracefully
-            // throw $e;
+            // Swallowing made a broken run look successful. $tries = 1, so this fails it instead of re-sending.
+            throw $e;
         }
     }
 

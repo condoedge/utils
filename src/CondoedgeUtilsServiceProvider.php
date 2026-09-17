@@ -282,10 +282,7 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
             // $schedule->command('compliance:run-validation --frequency=monthly')->monthly()->at('00:30');
             // $schedule->command('compliance:run-validation --frequency=business-days')->weekdays()->at('08:00');
 
-            // Option 2: Minute-based checking (use if you need precise timing)
-            // $schedule->command('compliance:run-validation --scheduled')->everyMinute();
-
-            // Option 3: Hourly checks (good compromise)
+            // Option 2: Hourly checks (good compromise). --scheduled matches the whole hour, so never run it more often.
             $schedule->command('compliance:run-validation --scheduled')->hourly();
         });
     }

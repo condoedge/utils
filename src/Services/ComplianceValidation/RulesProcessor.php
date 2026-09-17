@@ -9,6 +9,7 @@ use Condoedge\Utils\Models\ComplianceValidation\ComplianceIssueTypeEnum;
 use Condoedge\Utils\Models\ComplianceValidation\ValidationExecution;
 use Condoedge\Utils\Services\ComplianceValidation\Rules\RuleContract;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 
 class RulesProcessor
 {
@@ -20,20 +21,46 @@ class RulesProcessor
     }
 
     /**
-     * Process a single rule: detect violations, persist issues, track execution
+     * Process a single rule: detect violations, persist issues, track execution.
+     * Null when another run of the same rule is in progress.
      */
-    public function processRule(RuleContract $rule): ValidationExecution
+    public function processRule(RuleContract $rule): ?ValidationExecution
+    {
+        // Overlapping runs would each see the same issues as new and announce them twice
+        // (prod 2026-09-15: three manual runs started within 8 seconds).
+        $lock = Cache::lock('compliance-rule:' . $rule->getCode(), 900);
+
+        if (!$lock->get()) {
+            return null;
+        }
+
+        try {
+            return $this->runRule($rule);
+        } finally {
+            $lock->release();
+        }
+    }
+
+    protected function runRule(RuleContract $rule): ValidationExecution
     {
         $startedAt = now();
         [$failingValidatables, $testedCount] = $rule->findViolations();
 
         $complianceIssuesData = $this->createComplianceIssuesData($rule, $failingValidatables);
-        $this->repository->syncIssues($rule->getCode(), $complianceIssuesData, $failingValidatables);
+        $newIssues = $this->repository->syncIssues($rule->getCode(), $complianceIssuesData, $failingValidatables);
 
-        $persistedIssues = $this->loadPersistedIssues($rule->getCode(), $failingValidatables);
+        // Only issues first detected by this run are announced: still-open ones were
+        // announced when they appeared, and re-sending them every run floods recipients.
+        $newKeys = array_flip(array_map(fn (array $issue) => $issue['validatable_type'] . ':' . $issue['validatable_id'], $newIssues));
+        $newValidatables = array_values(array_filter($failingValidatables, fn ($validatable) => isset($newKeys[$validatable->getMorphClass() . ':' . $validatable->getKey()])));
 
-        $this->dispatchPerIssueEvents($rule, $failingValidatables, $persistedIssues);
-        event(new MultipleComplianceIssuesDetected($rule->getCode(), $failingValidatables, $persistedIssues->pluck('id')->all()));
+        $persistedIssues = $this->loadPersistedIssues($rule->getCode(), $newValidatables);
+
+        $this->dispatchPerIssueEvents($rule, $newValidatables, $persistedIssues);
+
+        if ($newValidatables) {
+            event(new MultipleComplianceIssuesDetected($rule->getCode(), $newValidatables, $persistedIssues->pluck('id')->all()));
+        }
 
         return $this->createExecutionRecord($rule, $startedAt, $testedCount, $failingValidatables);
     }

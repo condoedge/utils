@@ -9,12 +9,15 @@ class ComplianceIssueRepository
 {
     /**
      * Synchronize compliance issues for a specific rule
+     * @return array The issue rows this sync inserted, i.e. first detected by this run
      */
-    public function syncIssues(string $ruleCode, Collection $issuesData, array $currentFailingValidatables): void
+    public function syncIssues(string $ruleCode, Collection $issuesData, array $currentFailingValidatables): array
     {
         $newIssues = $this->filterNewIssues($ruleCode, $issuesData);
         $this->insertNewIssues($newIssues);
         $this->resolveFixedIssues($ruleCode, $currentFailingValidatables);
+
+        return $newIssues;
     }
 
     /**

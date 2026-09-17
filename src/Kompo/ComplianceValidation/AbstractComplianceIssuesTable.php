@@ -2,6 +2,7 @@
 
 namespace Condoedge\Utils\Kompo\ComplianceValidation;
 
+use Condoedge\Utils\Jobs\RunComplianceValidation;
 use Condoedge\Utils\Models\ComplianceValidation\ComplianceIssue;
 use Condoedge\Utils\Kompo\Common\WhiteTable;
 use Condoedge\Utils\Models\ComplianceValidation\ComplianceIssueTypeEnum;
@@ -113,9 +114,10 @@ abstract class AbstractComplianceIssuesTable extends WhiteTable
 
     public function runComplianceValidation()
     {
-        dispatch(function () {
-            complianceService()->validateDefaultRules();
-        });
+        // The button is only hidden from others; the action is reachable by anyone who can open the page.
+        abort_unless(safeIsSuperAdmin(), 403);
+
+        RunComplianceValidation::dispatch();
     }
 
     public function openRulesCatalog()

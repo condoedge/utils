@@ -10,7 +10,7 @@ class RunComplianceValidationCommand extends Command
 {
     protected $signature = 'compliance:run-validation 
                            {--rules=* : Specific rule codes to run (optional)}
-                           {--scheduled : Run only rules scheduled for current time}
+                           {--scheduled : Run only rules scheduled for the current hour}
                            {--frequency= : Run rules by frequency (daily, weekly, monthly, etc.)}
                            {--datetime= : Run rules scheduled for specific datetime (Y-m-d H:i format)}
                            {--list-schedules : List all rules with their schedules}
@@ -110,8 +110,10 @@ class RunComplianceValidationCommand extends Command
     protected function handleScheduledRules(ComplianceValidationService $service): void
     {
         $this->info('Running rules scheduled for current time...');
-        
-        $executions = $service->validateScheduledRules();
+
+        // Invoked hourly: foreground commands queued before it can push the start past minute 0,
+        // which schedules match exactly, and would skip the day's rules.
+        $executions = $service->validateScheduledRules(now()->startOfHour());
         
         if (empty($executions)) {
             $this->comment('No rules were scheduled to run at this time.');
