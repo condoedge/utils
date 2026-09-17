@@ -80,7 +80,7 @@ trait MorphManyAddresses
      */
     public function findSameAddress(Address $address): ?Address
     {
-        $ownedAddresses = $this->addresses()->withTrashed()->get();
+        $ownedAddresses = $this->addresses()->asSystemOperation()->withTrashed()->get();
 
         return $ownedAddresses->first(fn ($existing) => $existing->hasSameCoordinatesAs($address))
             ?: $ownedAddresses->first(fn ($existing) => $existing->hasSamePlaceIdAs($address));

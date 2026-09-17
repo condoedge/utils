@@ -94,7 +94,7 @@ trait MorphManyEmails
 
     public function findEmailByAddress($address)
     {
-        return $this->emails()->withTrashed()->get()
+        return $this->emails()->asSystemOperation()->withTrashed()->get()
             ->first(fn ($email) => $email->isSameAddress($address));
     }
 

@@ -215,7 +215,7 @@ trait MorphManyPhones
     /** A live row wins over a trashed twin, so a repaired duplicate is never resurrected. */
     public function findPhoneByNumber($number)
     {
-        return $this->phones()->withTrashed()->get()
+        return $this->phones()->asSystemOperation()->withTrashed()->get()
             ->sortBy(fn ($phone) => [$phone->trashed() ? 1 : 0, $phone->id])
             ->first(fn ($phone) => $phone->hasSameRawNumber($number));
     }
