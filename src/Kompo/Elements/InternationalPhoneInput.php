@@ -16,6 +16,10 @@ class InternationalPhoneInput extends Input
         $this->config([
             'displayFormat' => 'international', // e164|national|international
             'validateFront' => true,
+            // Without detection, a country here means the input never asks a third party where
+            // the visitor is. With it, the IP result wins and this is the fallback.
+            'defaultCountry' => config('kompo-utils.default-country-phone', 'CA'),
+            'detectCountryByIp' => (bool) config('kompo-utils.detect-country-phone-by-ip', false),
         ])->noInputWrapper();
     }
 

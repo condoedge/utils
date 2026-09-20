@@ -4,7 +4,12 @@ return [
     'load-migrations' => true,
 
     'translator-email' => env('TRANSLATOR_EMAIL', 'benoit@decizif.com'),
-    
+
+    // Country phone inputs start on, and whether the browser may ask a third party where the
+    // visitor is. With detection on, the IP wins and this is only the fallback.
+    'default-country-phone' => env('PHONE_DEFAULT_COUNTRY', 'CA'),
+    'detect-country-phone-by-ip' => env('PHONE_DETECT_COUNTRY_BY_IP', false),
+
     'note-model-namespace' => \Condoedge\Utils\Models\Notes\Note::class,
     'file-model-namespace' => \Condoedge\Utils\Models\Files\File::class,
 
