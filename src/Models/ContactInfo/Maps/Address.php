@@ -101,7 +101,7 @@ class Address extends Model implements HasOwnedRecords, ScopedToTeam
     public function getAddressLabel($full = false)
     {
         return collect([
-            $this->address1, 
+            $this->address1 ?: ($this->street_number.' '. $this->street), 
             $full ? $this->getExtraItems() : null,
             $this->city.', '.$this->state,
             $this->postal_code,
@@ -189,6 +189,10 @@ class Address extends Model implements HasOwnedRecords, ScopedToTeam
         // Calling place we initialize de key => value mapping in places.
         _Place();
         $addressData = is_string($addressData) ? Place::placeToDB($addressData) : $addressData;
+
+        if (empty($addressData['address1']) && !empty($addressData['street']) && !empty($addressData['street_number'])) {
+            $addressData['address1'] = ($addressData['street_number'] . ' ' . $addressData['street']);
+        }
 
         if ($addressable->addresses()->where('address1', $addressData['address1'])->exists()) {
             return;
