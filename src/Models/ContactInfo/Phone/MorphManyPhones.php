@@ -232,6 +232,7 @@ trait MorphManyPhones
         $existingPhone = new Phone();
         $existingPhone->setPhonable($this);
         $existingPhone->setPhoneNumber($number);
+        $existingPhone->type_ph = Phone::TYPE_PH_CELLULAR;
         $existingPhone->save();   
         
         return $existingPhone;
