@@ -101,7 +101,7 @@ class Address extends Model implements HasOwnedRecords, ScopedToTeam
     public function getAddressLabel($full = false)
     {
         return collect([
-            $this->address1 ?: ($this->street_number.' '. $this->street), 
+            trim($this->address1 ?: ($this->street_number.' '. $this->street)), 
             $full ? $this->getExtraItems() : null,
             $this->city.', '.$this->state,
             $this->postal_code,
