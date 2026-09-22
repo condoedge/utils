@@ -306,3 +306,16 @@ Kompo\Elements\BaseElement::macro('conditionToShow', function ($condition, $retu
 
     return $this->label($text);
 });
+
+/**
+ * Show the full-screen loading overlay while this trigger's action runs.
+ * For plain ajax actions prefer ->withLoadingIn(GlobalLoading::PANEL_ID); this
+ * covers ->submit(), which never reaches applyLoadingPanel in Action.js.
+ */
+Kompo\Elements\Trigger::macro('withFullLoading', function () {
+    Interaction::appendToWithAction($this, new Action($this, 'run', [
+        '() => window._kompo?.loading?.begin()',
+    ]));
+
+    return $this;
+});
