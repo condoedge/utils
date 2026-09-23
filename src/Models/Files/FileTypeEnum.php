@@ -91,6 +91,14 @@ enum FileTypeEnum: int
         };
     }
 
+    public function getContainerStyles()
+    {
+        return match ($this) {
+            self::PDF => 'width: 95vw; height: 95vh;',
+            default => 'width: 60vw; height: 55vh;',
+        };
+    }
+
     public function getPreviewButton($komponent, $model)
     {
         return match ($this) {
