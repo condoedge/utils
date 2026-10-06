@@ -11,6 +11,13 @@ class AddressPlaceEditingForm extends Modal
 
 	public $_Title = 'utils.manage-address';
 
+	public function created()
+	{
+		// The edit link posts the whole Google place and a route-booted store keeps all of it,
+		// so it would ride in every later request header. Only the event name is read back.
+		$this->_kompo['store'] = ['event' => $this->prop('event')];
+	}
+
 	public function handle()
 	{
 		return [
