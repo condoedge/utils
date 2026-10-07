@@ -166,7 +166,12 @@ trait HasModelPlugins
         if ($override) {
             static::$globalPlugins = $plugins;
         } else {
-            static::$globalPlugins = array_merge(static::$globalPlugins ?? [], $plugins);
+            // Providers call this at every application boot and the list outlives the application: each plugin once.
+            foreach ($plugins as $plugin) {
+                if (!in_array($plugin, static::$globalPlugins ?? [], true)) {
+                    static::$globalPlugins[] = $plugin;
+                }
+            }
         }
 
         // Invalidate caches since plugins changed

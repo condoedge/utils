@@ -28,6 +28,8 @@ if (!function_exists('addMetaData')) {
         $table->timestamp('updated_at')->defaultRaw('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP');
 
         $table->softDeletes();
+        // No foreign key: an audit stamp must never be able to fail a delete.
+        $table->unsignedBigInteger('deleted_by')->nullable();
     }
 }
 
