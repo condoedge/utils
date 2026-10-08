@@ -58,16 +58,22 @@ class SendExportViaEmail implements ShouldQueue
         }
 
         $exportableInstance = $this->exportableInstance;
-        $component = getPrivateProperty($exportableInstance, 'component');
 
-        if ($component && method_exists($component, 'bootForAction')) {
-            $component->bootForAction();
-        }
+        $export = function () use ($exportableInstance) {
+            $component = getPrivateProperty($exportableInstance, 'component');
 
-        \Maatwebsite\Excel\Facades\Excel::store(
-            $exportableInstance,
-            $this->filename,
-        );
+            if ($component && method_exists($component, 'bootForAction')) {
+                $component->bootForAction();
+            }
+
+            \Maatwebsite\Excel\Facades\Excel::store(
+                $exportableInstance,
+                $this->filename,
+            );
+        };
+
+        // The user's export: in the worker too it reads with their security, not the console bypass (kompo/auth).
+        function_exists('executeWithoutConsoleBypass') ? executeWithoutConsoleBypass($export) : $export();
 
         \Mail::to($this->email)->send(new \Condoedge\Utils\Mail\ExportReady($this->signedUrl, $this->filename));
     }
