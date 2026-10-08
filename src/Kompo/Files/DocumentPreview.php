@@ -7,6 +7,6 @@ class DocumentPreview extends AbstractPreview
 	public function render()
 	{
 		return _DocxPreview(fileRoute($this->fileType, $this->model->id))
-			->style('height: 90vh; width: min(95vw, 900px); max-width: 100%;');
+			->style('height:95vh; width: 95vw');
 	}
 }

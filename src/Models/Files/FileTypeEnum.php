@@ -96,8 +96,7 @@ enum FileTypeEnum: int
     public function getContainerStyles()
     {
         return match ($this) {
-            self::PDF => 'width: 95vw; height: 95vh;',
-            self::DOCUMENT => 'width: min(95vw, 900px); height: 90vh;',
+            self::PDF, self::DOCUMENT => 'width: 95vw; height: 95vh;',
             default => 'width: 60vw; height: 55vh;',
         };
     }
@@ -125,7 +124,7 @@ enum FileTypeEnum: int
             self::AUDIO => _Audio($route),
             self::VIDEO => _Video($route),
             self::RAW_DOCUMENT => _Html('<embed src="' . $route . '" frameborder="0" width="100%" height="100%">'),
-            self::DOCUMENT => _DocxPreview($route)->style('max-height: 80vh;'),
+            self::DOCUMENT => _DocxPreview($route),
             default => _Rows(
                 _Sax('document-upload', 52)->class('text-gray-500 mb-2'),
                 _Html('utils.no-preview-available')->class('text-gray-500 text-lg'),

@@ -17,6 +17,7 @@ class DisplayFileModal extends Modal
     protected $modelId;
     protected $column;
     protected $index;
+    protected $fileTypeEnum;
 
     public function created()
     {
@@ -25,16 +26,20 @@ class DisplayFileModal extends Modal
         $this->modelId = $this->prop('id');
         $this->column = $this->prop('column');
         $this->index = $this->prop('index') ?? 0;
+
+        // Only the type/subtype separator was encoded, subtypes keep their own dashes.
+        $this->fileTypeEnum = FileTypeEnum::fromMimeType(Str::replaceFirst('-', '/', $this->mime));
+
+        // A Word page is wider than the default modal and would be shrunk to fit it.
+        if ($this->fileTypeEnum === FileTypeEnum::DOCUMENT) {
+            $this->removeClass('max-w-xl');
+        }
     }
 
     public function body()
     {
-        // Only the type/subtype separator was encoded, subtypes keep their own dashes.
-        $mime = Str::replaceFirst('-', '/', $this->mime);
-
         return _Rows(
-            FileTypeEnum::fromMimeType($mime)?->componentFromColumn($this->type, $this->modelId, $this->column, $this->index - 1)
-             ?? _Html('utils.no-preview-available'),
+            $this->fileTypeEnum->componentFromColumn($this->type, $this->modelId, $this->column, $this->index - 1),
         )->style('overflow-y: auto;')->class('px-8 py-6');
     }
 
