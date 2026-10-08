@@ -4,6 +4,7 @@ namespace Condoedge\Utils\Kompo\Files;
 
 use Condoedge\Utils\Kompo\Common\Modal;
 use Condoedge\Utils\Models\Files\FileTypeEnum;
+use Illuminate\Support\Str;
 
 class DisplayFileModal extends Modal
 {
@@ -28,7 +29,8 @@ class DisplayFileModal extends Modal
 
     public function body()
     {
-        $mime = str_replace('-', '/', $this->mime);
+        // Only the type/subtype separator was encoded, subtypes keep their own dashes.
+        $mime = Str::replaceFirst('-', '/', $this->mime);
 
         return _Rows(
             FileTypeEnum::fromMimeType($mime)?->componentFromColumn($this->type, $this->modelId, $this->column, $this->index - 1)

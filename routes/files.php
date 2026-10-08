@@ -13,6 +13,7 @@ Route::middleware(['auth'])->group(function(){
 	Route::get('audio-preview/{type}/{id}', \Condoedge\Utils\Kompo\Files\AudioPreview::class)->name('audio.preview');
 	Route::get('video-preview/{type}/{id}', \Condoedge\Utils\Kompo\Files\VideoPreview::class)->name('video.preview');
 	Route::get('raw-document-preview/{type}/{id}', \Condoedge\Utils\Kompo\Files\RawDocumentPreview::class)->name('raw_document.preview');
+	Route::get('document-preview/{type}/{id}', \Condoedge\Utils\Kompo\Files\DocumentPreview::class)->name('document.preview');
 
 	Route::get('display-files-modal/{mime}/{type}/{id}/{column}/{index?}', DisplayFileModal::class)->name('preview-files-modal');
 

@@ -23,9 +23,7 @@ class FileColumnsController extends Controller
             return response()->json(['error' => 'File not found'], 404);
         }
 
-        return response()->download(
-            Storage::disk($file['disk'] ?? 'local')->get($file['path']),
-        );
+        return Storage::disk($file['disk'] ?? 'local')->download($file['path']);
     }
 
     public function display($type, $id, $column, $index = null)

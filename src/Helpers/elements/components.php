@@ -88,3 +88,13 @@ if (!function_exists('_ApexChart')) {
             ->config(['chartOptions' => $chartOptions]);
     }
 }
+
+if (!function_exists('_DocxPreview')) {
+    function _DocxPreview($url)
+    {
+        return \Condoedge\Utils\Kompo\Elements\DocxPreview::form()->config([
+            'url' => $url,
+            'fallbackLabel' => __('utils.no-preview-available'),
+        ]);
+    }
+}

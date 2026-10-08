@@ -3,6 +3,7 @@
 namespace Condoedge\Utils\Models\Files;
 
 use Condoedge\Utils\Kompo\Files\AudioPreview;
+use Condoedge\Utils\Kompo\Files\DocumentPreview;
 use Condoedge\Utils\Kompo\Files\ImagePreview;
 use Condoedge\Utils\Kompo\Files\PdfPreview;
 use Condoedge\Utils\Kompo\Files\RawDocumentPreview;
@@ -71,7 +72,7 @@ enum FileTypeEnum: int
 
     public function isPreviewable()
     {
-        return in_array($this, [self::IMAGE, self::PDF, self::AUDIO, self::VIDEO, self::RAW_DOCUMENT]);
+        return in_array($this, [self::IMAGE, self::PDF, self::AUDIO, self::VIDEO, self::RAW_DOCUMENT, self::DOCUMENT]);
     }
 
     public function getPreviewComponent($model)
@@ -87,6 +88,7 @@ enum FileTypeEnum: int
             self::AUDIO => new AudioPreview(null, $modelParams),
             self::VIDEO => new VideoPreview(null, $modelParams),
             self::RAW_DOCUMENT => new RawDocumentPreview(null, $modelParams),
+            self::DOCUMENT => new DocumentPreview(null, $modelParams),
             default => null,
         };
     }
@@ -95,6 +97,7 @@ enum FileTypeEnum: int
     {
         return match ($this) {
             self::PDF => 'width: 95vw; height: 95vh;',
+            self::DOCUMENT => 'width: min(95vw, 900px); height: 90vh;',
             default => 'width: 60vw; height: 55vh;',
         };
     }
@@ -107,6 +110,7 @@ enum FileTypeEnum: int
             self::AUDIO => $komponent->get('audio.preview', ['id' => $model->id, 'type' => $model->getMorphClass()])->inModal(),
             self::VIDEO => $komponent->get('video.preview', ['id' => $model->id, 'type' => $model->getMorphClass()])->inModal(),
             self::RAW_DOCUMENT => $komponent->get('raw_document.preview', ['id' => $model->id, 'type' => $model->getMorphClass()])->inModal(),
+            self::DOCUMENT => $komponent->get('document.preview', ['id' => $model->id, 'type' => $model->getMorphClass()])->inModal(),
             default => null,
         };
     }
@@ -121,6 +125,7 @@ enum FileTypeEnum: int
             self::AUDIO => _Audio($route),
             self::VIDEO => _Video($route),
             self::RAW_DOCUMENT => _Html('<embed src="' . $route . '" frameborder="0" width="100%" height="100%">'),
+            self::DOCUMENT => _DocxPreview($route)->style('max-height: 80vh;'),
             default => _Rows(
                 _Sax('document-upload', 52)->class('text-gray-500 mb-2'),
                 _Html('utils.no-preview-available')->class('text-gray-500 text-lg'),
