@@ -31,7 +31,7 @@ if (!function_exists("performSearchOptions")) {
 if (!function_exists("getModelFromMorphable")) {
 	function getModelFromMorphable($morphableType, $morphableId)
 	{
-		$modelClass = Relation::morphMap()[$morphableType];
+		$modelClass = Relation::morphMap()[$morphableType] ?? $morphableType;
 		return $modelClass::findOrFail($morphableId);
 	}
 }
@@ -39,7 +39,7 @@ if (!function_exists("getModelFromMorphable")) {
 if (!function_exists("performSearchOptions")) {
 	function getModelFromMorphString($morphString, $delimiter = '|')
 	{
-		[$morphableType, $morphableId] = explode('|', $morphString);
+		[$morphableType, $morphableId] = explode($delimiter, $morphString);
 
 		return getModelFromMorphable($morphableType, $morphableId);
 	}
