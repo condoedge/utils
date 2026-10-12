@@ -19,7 +19,7 @@ class DebugReload extends ComponentPlugin
         }
 
         $this->component->elements = array_merge($this->component->elements, [
-            _Link(!$iconEl ? 'refresh' : null)->icon($iconEl)->refresh()->class('absolute top-6 right-6')
+            _Link(!$iconEl ? 'refresh' : null)->icon($iconEl)->refresh()->class('!absolute top-6 right-6')
         ]);
 
         $this->prependComponentProperty('class', ' relative ');
