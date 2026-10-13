@@ -18,15 +18,34 @@ class FileUploadModalManager extends Modal
 
 	public function handle()
     {
+        [$fileableType, $fileableId] = $this->pickedFileable();
+
         if(!$this->model->id) {
-            FileModel::uploadMultipleFiles(request()->file('files'), $this->model->fileable_type, $this->model->fileable_id, request('tags'));
+            FileModel::uploadMultipleFiles(request()->file('files'), $fileableType, $fileableId, request('tags'));
         } else {
-            $this->model->fileable_type = request('fileable_type');
-            $this->model->fileable_id = request('fileable_id');
+            $this->model->fileable_type = $fileableType;
+            $this->model->fileable_id = $fileableId;
             if(request('tags')) $this->model->tags()->sync(request('tags'));
             $this->model->save();
         }
 	}
+
+    /**
+     * The [type, id] chosen in FileFileableForm, or nulls for a file with no parent.
+     */
+    protected function pickedFileable()
+    {
+        $records = FileModel::attachableRecordsQuery(request('fileable_type'));
+
+        if (!$records || !request('fileable_id')) {
+            return [null, null];
+        }
+
+        // Only a record the picker offers can be chosen.
+        abort_unless($records->whereKey(request('fileable_id'))->exists(), 403);
+
+        return [request('fileable_type'), request('fileable_id')];
+    }
 
 	public function body()
 	{

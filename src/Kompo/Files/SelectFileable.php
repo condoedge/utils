@@ -2,8 +2,8 @@
 
 namespace Condoedge\Utils\Kompo\Files;
 
+use Condoedge\Utils\Facades\FileModel;
 use Condoedge\Utils\Kompo\Common\Form;
-use Illuminate\Database\Eloquent\Relations\Relation;
 
 class SelectFileable extends Form
 {
@@ -18,13 +18,9 @@ class SelectFileable extends Form
 
     public function render()
     {
-        // I want to convert fileableType to a select option
-        $model = Relation::morphMap()[$this->fileableType];
-        $model = $model::query();
-
         return _Select()->placeholder('files-type-fileable')
             ->options(
-                $model->forTeam(safeCurrentTeamId())->get()->mapWithKeys(
+                FileModel::attachableRecordsQuery($this->fileableType)->get()->mapWithKeys(
                     fn ($model) => [$model->id => $model->display]
                 )
             )->default($this->fileableId)

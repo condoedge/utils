@@ -34,12 +34,19 @@ class FileFileableForm extends Form
 
     public function getSelectFileable()
     {
-        if (!request('fileable_type') && !$this->defaultType) {
+        $fileableType = request('fileable_type') ?: $this->defaultType;
+
+        if (!$fileableType) {
             return _Html('translate.files-select-type-fileable-first')->class('text-gray-600 italic');
         }
 
+        // 'general' (files with no parent) is not a model: there is no record to pick.
+        if (!FileModel::attachableRecordsQuery($fileableType)) {
+            return null;
+        }
+
         return new SelectFileable(null, [
-            'fileable_type' => request('fileable_type') ?: $this->defaultType,
+            'fileable_type' => $fileableType,
             'fileable_id' => request('fileable_id') ?: $this->defaultId,
         ]);
     }

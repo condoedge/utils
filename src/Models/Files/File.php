@@ -13,6 +13,7 @@ use Condoedge\Utils\Models\Tags\MorphToManyTagsTrait;
 use Condoedge\Utils\Models\Traits\BelongsToTeamTrait;
 use Condoedge\Utils\Models\Traits\BelongsToUserTrait;
 use Condoedge\Utils\Models\Traits\HasSearchableNameTrait;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Log;
 use Intervention\Image\Facades\Image;
 use Kompo\Core\FileHandler;
@@ -255,6 +256,17 @@ class File extends Model implements Searchable, HasOwnedRecords
         return collect(static::typesOptions())->mapWithKeys(
             fn($label, $value) => [$value => ucfirst(__($label[0]))]
         );
+    }
+
+    /**
+     * The records a file can be attached to for a type. Null for 'general' (no parent) and unknown types.
+     */
+    public static function attachableRecordsQuery($fileableType)
+    {
+        $isOfferedType = is_string($fileableType) && array_key_exists($fileableType, static::typesOptions());
+        $model = $isOfferedType ? Relation::getMorphedModel($fileableType) : null;
+
+        return $model ? $model::query()->forTeam(safeCurrentTeamId()) : null;
     }
 
 
