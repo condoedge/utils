@@ -337,7 +337,8 @@ if (!function_exists('mailSvg')) {
 }
 
 if (!function_exists('mailProgressBar')) {
-    function mailProgressBar($totalSales, $goal)
+    /** $formatAmount: the host's own money format, for the amounts shown. */
+    function mailProgressBar($totalSales, $goal, ?callable $formatAmount = null)
     {
     	$color = '#004890ff';
         $borderColor = '#EEF2F6';
@@ -346,14 +347,14 @@ if (!function_exists('mailProgressBar')) {
         $totalSales = floatval($totalSales);
 
         $pct = !$goal ? 100 : intval($totalSales / $goal * 100);
-        $totalSales = number_format($totalSales);
-        $goal = number_format($goal);
+
+        $formatAmount ??= fn ($amount) => '$'.number_format($amount);
 
         return '<div style="text-align:center; background-color: '.$borderColor.'; border-radius:.675rem; padding: 8px 16px 16px 16px;">'.
-            '<div style="font-weight:600;font-size:2rem;color: black; margin-bottom:0.5rem">'.$totalSales.' $</div>'.
+            '<div style="font-weight:600;font-size:2rem;color: black; margin-bottom:0.5rem">'.$formatAmount($totalSales).'</div>'.
         	_ProgressBarHtml($pct, $color).
             '<div style="display:flex;justify-content:space-between;font-size:0.85rem;font-weight:semibold;margin-top:0.25rem">'.
-            	'<div>$'.$totalSales.' / $'.$goal.'</div>'.
+            	'<div>'.$formatAmount($totalSales).' / '.$formatAmount($goal).'</div>'.
             	'<div>'.$pct.'%</div>'.
             '</div>'.
         '</div>';
