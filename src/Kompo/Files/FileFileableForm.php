@@ -21,15 +21,15 @@ class FileFileableForm extends Form
 
     public function render()
     {
-        return _Columns(
-            _Select()->placeholder('files-type-fileable')->options(
+        return _Flex(
+            _Select()->class('flex-1 !mb-0')->placeholder('files-type-fileable')->options(
                 FileModel::formattedTypesOptions(),
-            )->default($this->defaultType)->name('fileable_type')
+            )->default($this->defaultType)->name('fileable_type')->config(['floatingOptions' => true])
             ->selfGet('getSelectFileable')->inPanel1(),
             _Panel1(
                 $this->getSelectFileable()
-            ),
-        );
+            )->class('flex-1'),
+        )->class('gap-6 !items-center mb-2');
     }
 
     public function getSelectFileable()
