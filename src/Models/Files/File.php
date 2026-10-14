@@ -287,7 +287,7 @@ class File extends Model implements Searchable, HasOwnedRecords
                             collect(static::typesOptions())->mapWithKeys(
                                 fn($label, $value) => static::selectOption($value, __($label[0]), $label[1])
                             )
-                        )->selectedClass('!bg-info text-white', '')
+                        )
                 )->class('mb-4'),
 
 
@@ -364,7 +364,7 @@ class File extends Model implements Searchable, HasOwnedRecords
             ->class('mb-0')
             ->containerClass('row no-gutters')
             ->optionClass('w-20 lg:w-24')
-            ->selectedClass('bg-info text-greenmain', 'text-greenmain')
+            ->selectedClass('!bg-info text-greenmain', 'text-greenmain')
             ->filter();
     }
 
