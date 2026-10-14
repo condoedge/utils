@@ -157,7 +157,7 @@ if (!function_exists('secureCall')) {
 				return $object->$functionName(...$params);
 			} 
 		} catch (\Exception $e) {
-			\Log::error('Error in secureCall: ' . $e->getMessage());
+			\Log::error('Error in secureCall: ' . $e->getMessage(), ['exception' => $e]);
 			return null;
 		}
 	}
