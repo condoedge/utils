@@ -12,6 +12,11 @@ class CarbonLabelCast extends AbstractLabelCast
 
         $format = $this->options['format'] ?? 'M d, Y H:i';
 
+        // Change-log old_data holds the raw string, not the casted Carbon.
+        if (!$value instanceof \DateTimeInterface) {
+            $value = \Carbon\Carbon::parse($value);
+        }
+
         return $value->format($format);
     }
 }

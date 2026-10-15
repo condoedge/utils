@@ -23,6 +23,14 @@ class InternationalPhoneInput extends Input
         ])->noInputWrapper();
     }
 
+    /** The Vue component reads its placeholder from config only: Kompo's own property never reached it. */
+    public function placeholder($placeholder)
+    {
+        parent::placeholder($placeholder);
+
+        return $this->config(['placeholder' => $this->placeholder]);
+    }
+
     public function defaultCountry(?string $iso2)
     {
         return $this->config(['defaultCountry' => $iso2]);
