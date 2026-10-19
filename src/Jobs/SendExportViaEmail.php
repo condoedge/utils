@@ -51,6 +51,12 @@ class SendExportViaEmail implements ShouldQueue
     {
         app()->instance('bootFlag', true);
 
+        // A sheet is built whole in memory (opt-in, e.g. '2G'). This process only: a queue worker stops after a job that
+        // leaves it above its --memory. Left as is when unlimited (-1).
+        if (($memoryLimit = config('kompo-utils.export-memory-limit')) && ini_get('memory_limit') !== '-1') {
+            ini_set('memory_limit', $memoryLimit);
+        }
+
         // Rebuilding the request context just if running through queue worker.
         if (app()->runningInConsole()) {
             $this->setOriginalRequest();

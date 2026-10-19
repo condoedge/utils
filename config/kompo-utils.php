@@ -37,6 +37,9 @@ return [
     // (Condoedge\Utils\Services\Exports\ExcelExportSplitter). Null: always one xlsx.
     'export-rows-per-file' => null,
 
+    // memory_limit of an emailed export's job (Condoedge\Utils\Jobs\SendExportViaEmail), e.g. '2G'. Null: PHP's own.
+    'export-memory-limit' => null,
+
     // Kill switch for Condoedge\Utils\Services\CachedServiceWrapper.
     // When false, the wrapper passes through to the underlying service without
     // touching the Cache facade — so tests and local dev see fresh results.

@@ -168,7 +168,7 @@ class ComponentToExportableToExcel implements FromGenerator, WithHeadings, Shoul
                 
                 // Force memory cleanup if needed in large batches
                 if ($index > 0 && $index % 500 === 0) {
-                    gc_collect_cycles();
+                    $this->freeMemory();
                 }
             }
 
@@ -182,9 +182,19 @@ class ComponentToExportableToExcel implements FromGenerator, WithHeadings, Shoul
             }
 
             if ($index > 0 && $index % 500 === 0) {
-                gc_collect_cycles();
+                $this->freeMemory();
             }
         }
+    }
+
+    protected function freeMemory(): void
+    {
+        // Kompo translates every label, here the rows' own texts (names, emails...), and the translator keeps each text
+        // it was asked for: forgotten as the rows go, or a big export holds them all. Lines reload from the lang files.
+        app('translator')->flushParsedKeys();
+        app('translator')->setLoaded([]);
+
+        gc_collect_cycles();
     }
 
     /* PARSING METHODS */

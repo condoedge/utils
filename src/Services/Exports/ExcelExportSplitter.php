@@ -8,9 +8,9 @@ use Maatwebsite\Excel\Excel as ExcelWriter;
 use Maatwebsite\Excel\Facades\Excel;
 
 /**
- * Stores an export as Excel::store() does. Opt-in (kompo-utils.export-rows-per-file): a ComponentToExportableToExcel
- * with more rows than that is stored instead as a zip of xlsx parts of at most that many rows, each with the headings,
- * so no single spreadsheet has to fit in memory.
+ * Stores an export as Excel::store() does. Opt-in (kompo-utils.export-rows-per-file): an export with more rows than
+ * that is stored instead as a zip of xlsx parts of at most that many rows, each with the headings, so no single
+ * spreadsheet has to fit in memory. Its parts: ComponentToExportableToExcel::onlyPages(), or an ExportPart.
  */
 class ExcelExportSplitter
 {
@@ -47,7 +47,7 @@ class ExcelExportSplitter
 
             for ($i = 1; $i <= $partsCount; $i++) {
                 // The last part runs to the end: rows added since the count aren't lost.
-                $part = $export->onlyPages(($i - 1) * $pagesPerPart + 1, $i === $partsCount ? null : $i * $pagesPerPart);
+                $part = $this->part($export, ($i - 1) * $pagesPerPart + 1, $i === $partsCount ? null : $i * $pagesPerPart);
 
                 $partPath = $dir . DIRECTORY_SEPARATOR . "{$name}-{$i}-of-{$partsCount}.xlsx";
                 file_put_contents($partPath, Excel::raw($part, ExcelWriter::XLSX));
@@ -80,26 +80,44 @@ class ExcelExportSplitter
 
     protected function partsCount($export): int
     {
-        if (!$this->rowsPerFile || !($export instanceof ComponentToExportableToExcel)) {
-            return 1;
-        }
+        $rowsCount = $this->rowsPerFile ? $this->rowsCount($export) : null;
 
-        $query = getPrivateProperty($export, 'component')->query();
+        return $rowsCount ? (int) ceil($rowsCount / ($this->pagesPerPart($export) * $this->chunkSize($export))) : 1;
+    }
 
-        // Not a query (a collection): it can't be read by pages.
-        if (!($query instanceof Builder)) {
-            return 1;
-        }
+    // Null: an export that can't be read by pages, stored whole.
+    protected function rowsCount($export): ?int
+    {
+        $query = match (true) {
+            $export instanceof ComponentToExportableToExcel => getPrivateProperty($export, 'component')->query(),
+            ExportPart::supports($export) => $export->query(),
+            default => null,
+        };
 
-        // toBase() applies the model's scopes (the rows the export reads); the pagination count handles group by.
-        $count = (method_exists($query, 'toBase') ? $query->toBase() : $query)->getCountForPagination();
+        return $query instanceof Builder ? $this->queryCount($query) : null;
+    }
 
-        return (int) ceil($count / ($this->pagesPerPart($export) * $export->chunkSize()));
+    // toBase() applies the model's scopes (the rows the export reads); the pagination count handles group by.
+    protected function queryCount($query): int
+    {
+        return (method_exists($query, 'toBase') ? $query->toBase() : $query)->getCountForPagination();
+    }
+
+    protected function part($export, int $firstPage, ?int $lastPage)
+    {
+        return $export instanceof ComponentToExportableToExcel
+            ? $export->onlyPages($firstPage, $lastPage)
+            : ExportPart::of($export, $firstPage, $lastPage);
+    }
+
+    protected function chunkSize($export): int
+    {
+        return $export instanceof ComponentToExportableToExcel ? $export->chunkSize() : ExportPart::chunkSize($export);
     }
 
     // Parts are whole pages of the export's chunks.
     protected function pagesPerPart($export): int
     {
-        return max(1, intdiv($this->rowsPerFile, $export->chunkSize()));
+        return max(1, intdiv($this->rowsPerFile, $this->chunkSize($export)));
     }
 }
