@@ -3,6 +3,7 @@
 namespace Condoedge\Utils\Jobs;
 
 use Condoedge\Utils\Facades\UserModel;
+use Condoedge\Utils\Services\Exports\ExcelExportSplitter;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Bus\Queueable;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -21,6 +22,7 @@ class SendExportViaEmail implements ShouldQueue
     protected $routeName;
     
     protected $signedUrl;
+    protected $zipSignedUrl; // When the export is split into a zip (ExcelExportSplitter)
 
     public $timeout = 0; // Disable timeout for this job to allow long-running exports
 
@@ -39,6 +41,7 @@ class SendExportViaEmail implements ShouldQueue
         $this->routeName = request('from_route') ?? request()->route()?->getName();
 
         $this->signedUrl = \URL::signedRoute('report.download', ['filename' => $this->filename]);
+        $this->zipSignedUrl = \URL::signedRoute('report.download', ['filename' => ExcelExportSplitter::zipName($this->filename)]);
     }
 
     /**
@@ -66,16 +69,16 @@ class SendExportViaEmail implements ShouldQueue
                 $component->bootForAction();
             }
 
-            \Maatwebsite\Excel\Facades\Excel::store(
-                $exportableInstance,
-                $this->filename,
-            );
+            // Excel::store(), or a zip of parts when the export is too big (opt-in).
+            return app(ExcelExportSplitter::class)->store($exportableInstance, $this->filename);
         };
 
         // The user's export: in the worker too it reads with their security, not the console bypass (kompo/auth).
-        function_exists('executeWithoutConsoleBypass') ? executeWithoutConsoleBypass($export) : $export();
+        $storedFilename = function_exists('executeWithoutConsoleBypass') ? executeWithoutConsoleBypass($export) : $export();
 
-        \Mail::to($this->email)->send(new \Condoedge\Utils\Mail\ExportReady($this->signedUrl, $this->filename));
+        $zipped = $storedFilename === ExcelExportSplitter::zipName($this->filename);
+
+        \Mail::to($this->email)->send(new \Condoedge\Utils\Mail\ExportReady($zipped ? $this->zipSignedUrl : $this->signedUrl, $storedFilename));
     }
 
     protected function setOriginalRequest()

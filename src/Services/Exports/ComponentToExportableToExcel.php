@@ -5,16 +5,17 @@ namespace Condoedge\Utils\Services\Exports;
 use Illuminate\Contracts\Database\Query\Builder;
 use Illuminate\Support\Facades\Log;
 use Condoedge\Utils\Services\Exports\Traits\ExportableUtilsTrait;
-use Maatwebsite\Excel\Concerns\FromArray;
+use Maatwebsite\Excel\Concerns\FromGenerator;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithColumnFormatting;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use Maatwebsite\Excel\Concerns\WithTitle;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
-class ComponentToExportableToExcel implements FromArray, WithHeadings, ShouldAutoSize, WithColumnFormatting, WithTitle, WithStyles, WithChunkReading
+class ComponentToExportableToExcel implements FromGenerator, WithHeadings, ShouldAutoSize, WithColumnFormatting, WithTitle, WithStyles, WithChunkReading
 {
     use ExportableUtilsTrait;
 
@@ -31,9 +32,23 @@ class ComponentToExportableToExcel implements FromArray, WithHeadings, ShouldAut
     protected $pastCountOfItems = 1; // Just needed to child classes
     protected $chunkSize = 1000; // Default chunk size
 
+    // The pages (of chunkSize rows) of the query this file holds: all of them, unless it's a part (ExcelExportSplitter).
+    protected $firstPage = 1;
+    protected $lastPage = null;
+
     public function __construct($component)
     {
         $this->component = $component;
+    }
+
+    // A copy of this export holding only those pages (to the end when $lastPage is null).
+    public function onlyPages(int $firstPage, ?int $lastPage): static
+    {
+        $part = clone $this;
+        $part->firstPage = $firstPage;
+        $part->lastPage = $lastPage;
+
+        return $part;
     }
 
     public function chunkSize(): int
@@ -56,8 +71,11 @@ class ComponentToExportableToExcel implements FromArray, WithHeadings, ShouldAut
 
     public function styles($sheet)
     {
+        // Up to the last column used (Z at most, as before): styling up to Z created 26 cells per row, most of them empty.
+        $lastColumn = Coordinate::stringFromColumnIndex(min(Coordinate::columnIndexFromString($sheet->getHighestColumn()), 26));
+
         // Rows height adjustment when we use break lines in cells
-        $sheet->getStyle('A1:Z' . $sheet->getHighestRow())
+        $sheet->getStyle('A1:' . $lastColumn . $sheet->getHighestRow())
             ->getAlignment()
             ->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_TOP)
             ->setWrapText(true);
@@ -80,7 +98,7 @@ class ComponentToExportableToExcel implements FromArray, WithHeadings, ShouldAut
     public function headings(): array
     {
         if ($this->getExportChildClass()) {
-            $firstPlaceholderItem = collect($this->getItems(null, 1))->first();
+            $firstPlaceholderItem = $this->lazyItems()->current();
             
             // If the query return 0 items unfortunaly we can't get the headers since the boot of the component would throw an error in a lot of cases
             // Since it's expecting a render item not as null.
@@ -101,13 +119,19 @@ class ComponentToExportableToExcel implements FromArray, WithHeadings, ShouldAut
         
     }
 
+    // The whole sheet at once, for direct callers: the export itself streams the rows through generator().
     public function array(): array
     {
+        return iterator_to_array($this->generator(), false);
+    }
+
+    // Row by row, so neither the models nor the rows are all in memory at once (Maatwebsite writes them 1000 at a time).
+    public function generator(): \Generator
+    {
         if ($this->getExportChildClass()) {
-            $itemsGroups = [];
             $boldColumn = collect($this->boldColumns)->last();
               // Process one item at a time to save memory
-            foreach ($this->getItems() as $index => $item) {
+            foreach ($this->lazyItems() as $index => $item) {
                 $childInstance = $this->component->render($item)->findByComponent($this->getExportChildClass());
                 $childInstance->bootForAction();
 
@@ -136,7 +160,7 @@ class ComponentToExportableToExcel implements FromArray, WithHeadings, ShouldAut
                 }
                 
                 foreach ($groupItems as $groupItem) {
-                    $itemsGroups[] = $groupItem;
+                    yield $groupItem;
                 }
                   // Free memory
                 unset($childItems);
@@ -147,27 +171,20 @@ class ComponentToExportableToExcel implements FromArray, WithHeadings, ShouldAut
                     gc_collect_cycles();
                 }
             }
-            
-            return $itemsGroups;
+
+            return;
         }
 
-        $result = [];
-        $items = $this->getItems();
-
-        foreach ($items as $index => $item) {
+        foreach ($this->lazyItems() as $index => $item) {
             $formattedItem = $this->formatItemToExport($item);
             if ($formattedItem) {
-                $result[] = $formattedItem;
+                yield $formattedItem;
             }
 
             if ($index > 0 && $index % 500 === 0) {
                 gc_collect_cycles();
             }
         }
-
-        unset($items);
-
-        return $result;
     }
 
     /* PARSING METHODS */
@@ -260,39 +277,63 @@ class ComponentToExportableToExcel implements FromArray, WithHeadings, ShouldAut
         $items = $fromInstance->query();
 
         if ($items instanceof Builder) {
-            $result = [];
-            $page = 1;
-            $chunkSize = $this->chunkSize();
-
-            do {
-                $chunk = $items->forPage($page, $chunkSize)->get();
-
-                if ($chunk->isEmpty()) {
-                    break;
-                }
-
-                $modelClass = get_class($chunk->first());
-
-                foreach ($chunk as $item) {
-                    $result[] = $item;
-                }
-
-                if (method_exists($modelClass, 'notifyChunkBoundary')) {
-                    $modelClass::notifyChunkBoundary();
-                }
-
-                unset($chunk);
-
-                $page++;
-            } while (true);
-
-            $items = collect($result);
-            unset($result);
+            $items = collect(iterator_to_array($this->chunkedItems($items), false));
         }
 
         $fromInstance->hasPagination = $prevHasPagination;
 
         return $items;
+    }
+
+    // getItems() one at a time: only the current chunk of the query is loaded.
+    protected function lazyItems($fromInstance = null)
+    {
+        $fromInstance = $fromInstance ?? $this->component;
+
+        $prevHasPagination = $fromInstance->hasPagination;
+        $fromInstance->hasPagination = false;
+
+        $items = $fromInstance->query();
+
+        $fromInstance->hasPagination = $prevHasPagination;
+
+        if ($items instanceof Builder) {
+            yield from $this->chunkedItems($items, $this->firstPage, $this->lastPage);
+
+            return;
+        }
+
+        foreach ($items as $index => $item) {
+            yield $index => $item;
+        }
+    }
+
+    protected function chunkedItems(Builder $query, int $page = 1, ?int $lastPage = null)
+    {
+        $index = 0;
+        $chunkSize = $this->chunkSize();
+
+        do {
+            $chunk = $query->forPage($page, $chunkSize)->get();
+
+            if ($chunk->isEmpty()) {
+                break;
+            }
+
+            $modelClass = get_class($chunk->first());
+
+            foreach ($chunk as $item) {
+                yield $index++ => $item;
+            }
+
+            if (method_exists($modelClass, 'notifyChunkBoundary')) {
+                $modelClass::notifyChunkBoundary();
+            }
+
+            unset($chunk);
+
+            $page++;
+        } while ($lastPage === null || $page <= $lastPage);
     }
 
     /** FORMATS */

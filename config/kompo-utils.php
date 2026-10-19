@@ -33,6 +33,10 @@ return [
         'enabled' => false,
     ],
 
+    // Emailed exports with more rows than this come as a zip of xlsx parts of at most this many rows
+    // (Condoedge\Utils\Services\Exports\ExcelExportSplitter). Null: always one xlsx.
+    'export-rows-per-file' => null,
+
     // Kill switch for Condoedge\Utils\Services\CachedServiceWrapper.
     // When false, the wrapper passes through to the underlying service without
     // touching the Cache facade — so tests and local dev see fresh results.
