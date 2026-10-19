@@ -156,6 +156,9 @@ if (!function_exists('secureCall')) {
 				$object = array_shift($params);
 				return $object->$functionName(...$params);
 			} 
+		} catch (\Illuminate\Http\Exceptions\HttpResponseException $e) {
+			// A deliberate response, not a failure: e.g. the no-team-role logout redirect must end the request.
+			throw $e;
 		} catch (\Exception $e) {
 			\Log::error('Error in secureCall: ' . $e->getMessage(), ['exception' => $e]);
 			return null;
