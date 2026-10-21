@@ -38,12 +38,10 @@ class DisplayFileModal extends Modal
 
     public function body()
     {
-        // The pdf embed fills its parent, so the parent needs a height of its own.
-        $height = $this->isPaged() ? 'height: calc(95vh - 14rem);' : '';
-
+        // What is left of the modal's 95vh once its header and paddings are drawn.
         return _Rows(
-            $this->fileTypeEnum->componentFromColumn($this->type, $this->modelId, $this->column, $this->index - 1),
-        )->style('overflow-y: auto;' . $height)->class('px-8 py-6');
+            $this->fileTypeEnum->componentFromColumn($this->type, $this->modelId, $this->column, $this->index - 1, 'calc(95vh - 14rem)'),
+        )->style('overflow-y: auto;')->class('px-8 py-6');
     }
 
     protected function isPaged(): bool

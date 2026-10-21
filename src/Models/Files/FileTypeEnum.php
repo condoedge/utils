@@ -114,16 +114,20 @@ enum FileTypeEnum: int
         };
     }
 
-    public function componentFromColumn($type, $id, $column, $index = null)
+    /**
+     * @param string $embedHeight CSS height of embedded viewers (pdf, text). A percentage only works when every parent has a fixed height.
+     */
+    public function componentFromColumn($type, $id, $column, $index = null, string $embedHeight = '100%')
     {
         $route = route('preview-files', ['type' => $type, 'id' => $id, 'column' => $column, 'index' => $index]);
+        $embed = '<embed src="' . $route . '" frameborder="0" style="width: 100%; height: ' . $embedHeight . ';">';
 
         return match ($this) {
             self::IMAGE => _Img($route)->class('w-full h-auto bg-cover bg-center'),
-            self::PDF => _Html('<embed src="' . $route . '" frameborder="0" width="100%" height="100%">'),
+            self::PDF => _Html($embed),
             self::AUDIO => _Audio($route),
             self::VIDEO => _Video($route),
-            self::RAW_DOCUMENT => _Html('<embed src="' . $route . '" frameborder="0" width="100%" height="100%">'),
+            self::RAW_DOCUMENT => _Html($embed),
             self::DOCUMENT => _DocxPreview($route),
             default => _Rows(
                 _Sax('document-upload', 52)->class('text-gray-500 mb-2'),
