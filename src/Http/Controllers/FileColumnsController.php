@@ -11,7 +11,7 @@ class FileColumnsController extends Controller
     {
         $model = getModelFromMorphable($type, $id);
 
-        $isArrayOfImages = (bool) $index;
+        $isArrayOfImages = $index !== null;
 
         if ($isArrayOfImages) {
             $file = $model->getAttribute($column)[$index] ?? null;
@@ -23,7 +23,7 @@ class FileColumnsController extends Controller
             return response()->json(['error' => 'File not found'], 404);
         }
 
-        return Storage::disk($file['disk'] ?? 'local')->download($file['path']);
+        return Storage::disk($file['disk'] ?? 'public')->download($file['path']);
     }
 
     public function display($type, $id, $column, $index = null)
