@@ -8,7 +8,7 @@ class YesNoLabelCast extends AbstractLabelCast
 {
     public function convert($value, $column)
     {
-        if (!$value) return null;
+        if (is_null($value)) return null;
 
         return $value ? __('utils.yes') : __('utils.no');
     }

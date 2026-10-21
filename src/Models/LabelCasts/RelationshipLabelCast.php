@@ -20,10 +20,11 @@ class RelationshipLabelCast extends AbstractLabelCast
 
         if (!$class || (!$column && !$method)) return $value;
 
+        // Null when the related row is deleted or outside the reader's scope.
         if ($method) {
-            return $class::find($value)->$method();
+            return $class::find($value)?->$method();
         }
 
-        return $class::find($value)->getAttribute($column);
+        return $class::find($value)?->getAttribute($column);
     }
 }

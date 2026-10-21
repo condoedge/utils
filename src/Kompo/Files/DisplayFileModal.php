@@ -30,17 +30,25 @@ class DisplayFileModal extends Modal
         // Only the type/subtype separator was encoded, subtypes keep their own dashes.
         $this->fileTypeEnum = FileTypeEnum::fromMimeType(Str::replaceFirst('-', '/', $this->mime));
 
-        // A Word page is wider than the default modal and would be shrunk to fit it.
-        if ($this->fileTypeEnum === FileTypeEnum::DOCUMENT) {
+        // A page is wider than the default modal and would be shrunk to fit it.
+        if ($this->isPaged()) {
             $this->removeClass('max-w-xl');
         }
     }
 
     public function body()
     {
+        // The pdf embed fills its parent, so the parent needs a height of its own.
+        $height = $this->isPaged() ? 'height: calc(95vh - 14rem);' : '';
+
         return _Rows(
             $this->fileTypeEnum->componentFromColumn($this->type, $this->modelId, $this->column, $this->index - 1),
-        )->style('overflow-y: auto;')->class('px-8 py-6');
+        )->style('overflow-y: auto;' . $height)->class('px-8 py-6');
+    }
+
+    protected function isPaged(): bool
+    {
+        return in_array($this->fileTypeEnum, [FileTypeEnum::PDF, FileTypeEnum::DOCUMENT]);
     }
 
     public function headerButtons()
