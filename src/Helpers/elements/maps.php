@@ -76,6 +76,7 @@ if (!function_exists('loadFormattedLabel')) {
         $value = collect(config('kompo.places_attributes'))->mapWithKeys(fn ($col, $key) => [$col => $address->{$col} ?? $address[$col] ?? null]);
 
         if (is_object($address)) {
+            $address = clone $address;
             $address->setRawAttributes(array_filter([
                 ...$value->all(),
                 'address_label' => $address->getAddressInline(),
