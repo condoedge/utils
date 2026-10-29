@@ -226,6 +226,14 @@ if (!function_exists('validateCompressibleImage')) {
     }
 }
 
+if (!function_exists('validateCompressibleImages')) {
+    // For 'field.*' of a multi-image field: images already saved come back as JSON, only a new upload is checked
+    function validateCompressibleImages(?int $maxKb = null, ?int $maxIncomingKb = null, ?int $maxWidth = null)
+    {
+        return new \Condoedge\Utils\Rule\CompressibleImageRule($maxKb, $maxIncomingKb, $maxWidth);
+    }
+}
+
 if (!function_exists('validateCompressibleLogoImage')) {
     function validateCompressibleLogoImage(string $field, ?int $maxKb = null, ?int $maxIncomingKb = null, ?int $maxWidth = null)
     {

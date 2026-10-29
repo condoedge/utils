@@ -40,10 +40,9 @@ class CompressibleImageRule implements ValidationRule
 
 		$compressionService = app(ImageCompressionServiceContract::class);
 
+		// Kompo resizes every image it stores with the same library: one it can't read (SVG, HEIC) would crash the save
 		if (!$compressionService->canCompress($value)) {
-			if (($value->getSize() ?? 0) > ($this->maxFinalKb * 1024)) {
-				$fail(__('utils.image-could-not-be-compressed', ['max' => $this->toDisplayMb($this->maxFinalKb)]));
-			}
+			$fail(__('utils.image-type-not-supported'));
 
 			return;
 		}
