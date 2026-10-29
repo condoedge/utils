@@ -70,7 +70,9 @@ class ExportPlugin extends ComponentPlugin
     // Options of exports
     public function exportToExcelViaEmail()
     {
-        if (!request('export_email') || Validator::make(request()->only('export_email'), ['export_email' => 'required|email'])->fails()) {
+        // email:filter, not the RFC default: an accented local part passes RFC, then the mailer drops it as a recipient
+        // and the queued job fails after building the whole export ("An email must have a To header").
+        if (!request('export_email') || Validator::make(request()->only('export_email'), ['export_email' => 'required|email:filter'])->fails()) {
             return throwValidationError('export_email', !request('export_email') ? __('utils.email-is-required') : __('translate.email-is-invalid'));
         }
 
