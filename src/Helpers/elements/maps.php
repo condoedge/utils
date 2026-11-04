@@ -85,11 +85,31 @@ if (!function_exists('loadFormattedLabel')) {
         } else {
             $address = (object) array_filter([
                 ...$value->all(),
-                'address_label' => implode(' ', [$address['address1'] ?? null, $address['city'] ?? null, $address['province'] ?? null, $address['postal_code'] ?? null]),
+                'address_label' => placeArrayLabel($address),
                 // ...$address
             ]);
         }
 
         return $address;
+    }
+}
+
+if (!function_exists('placeArrayLabel')) {
+    /**
+     * Same shape as Address::getAddressLabel(), inline. address1 is what Google named the place:
+     * the street line for an address, the venue's name for a place found by name, which then
+     * comes first and the street line after it.
+     */
+    function placeArrayLabel(array $address): string
+    {
+        $streetLine = trim(($address['street_number'] ?? '') . ' ' . ($address['street'] ?? ''));
+        $name = trim((string) ($address['address1'] ?? ''));
+
+        return collect([
+            $name !== '' && $name !== $streetLine ? $name : null,
+            $streetLine !== '' ? $streetLine : null,
+            trim(($address['city'] ?? '') . ', ' . ($address['state'] ?? ''), ' ,'),
+            $address['postal_code'] ?? null,
+        ])->filter()->implode(', ');
     }
 }
