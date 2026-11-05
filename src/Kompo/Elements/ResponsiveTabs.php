@@ -22,6 +22,9 @@ class ResponsiveTabs extends Rows
 
     protected $tabParamKey = 'tab_number';
 
+    protected $activeTab;
+    protected $eagerActiveTab = false;
+
     public static $breakpoints = [
         'sm' => 'sm:block sm:hidden',
         'md' => 'md:block md:hidden',
@@ -40,12 +43,69 @@ class ResponsiveTabs extends Rows
         $this->uniqueId = uniqid();
     }
 
+    // Kompo boots the children here, before mounted(): the active lazy tab has to be in place by then.
+    public function prepareForDisplay($komponent)
+    {
+        if ($this->eagerActiveTab) {
+            $this->renderLazyTab($this->activeTabIndex());
+        }
+
+        parent::prepareForDisplay($komponent);
+    }
+
     public function mounted()
     {
+        $activeTab = $this->activeTabIndex();
+
         $this->elements = [
-            $this->selectTabs(),
-            $this->tabsDecorated(),
+            $this->selectTabs($activeTab),
+            $this->tabsDecorated($activeTab),
         ];
+    }
+
+    /**
+     * The tab shown first: its index (from 0) or the id given to the tab with ->id().
+     * A numeric tab parameter already in the URL still wins, as it does in the browser.
+     */
+    public function activeTab($indexOrId = null)
+    {
+        $this->activeTab = $indexOrId;
+
+        return $this;
+    }
+
+    /** Renders the active tab with the page instead of lazily, when it holds a _LazyComponent. */
+    public function eagerActiveTab($eager = true)
+    {
+        $this->eagerActiveTab = $eager;
+
+        return $this;
+    }
+
+    protected function activeTabIndex()
+    {
+        $persisted = $this->tabParamKey ? request($this->tabParamKey) : null;
+
+        $wanted = is_numeric($persisted) ? $persisted : ($this->activeTab ?? $persisted);
+
+        if (is_numeric($wanted)) {
+            return (int) $wanted;
+        }
+
+        $index = $wanted ? collect($this->elements)->search(fn ($tab) => $tab?->id == $wanted) : false;
+
+        return $index === false ? 0 : $index;
+    }
+
+    protected function renderLazyTab($index)
+    {
+        $tab = $this->elements[$index] ?? null;
+        $lazyElement = $tab?->elements[0] ?? null;
+        $closure = is_object($lazyElement) ? getPrivateProperty($lazyElement, 'closure') : null;
+
+        if ($closure) {
+            $tab->content($closure());
+        }
     }
 
     public function breakpoint(string $breakpoint)
@@ -113,11 +173,12 @@ class ResponsiveTabs extends Rows
         return $this;
     }
 
-    protected function tabsDecorated()
+    protected function tabsDecorated($activeTab)
     {
         $callback = $this->tabsCallbackDecoration;
 
         return _SwipeableTabs(...$this->elements)
+            ->activeTab($activeTab)
             ->commonClass("hidden {$this->breakpoint}:block mr-8")
             ->when($this->tabsClass, fn ($el) => $el->class($this->tabsClass))
             ->when($this->tabsCommonClass, fn ($el) => $el->commonClass($this->tabsCommonClass . " hidden {$this->breakpoint}:block"))
@@ -128,7 +189,7 @@ class ResponsiveTabs extends Rows
             ->when($callback && is_callable($callback), fn ($el) => $callback($el));
     }
 
-    protected function selectTabs()
+    protected function selectTabs($activeTab)
     {
         return _Select()
             ->placeholder($this->tabLabels[0])
@@ -139,7 +200,7 @@ class ResponsiveTabs extends Rows
                 'readonly' => 'readonly',
             ])
             ->options($this->tabLabels)
-            ->value(request('tab_number') ?: 0)
+            ->value($activeTab)
             ->onChange(
                 fn ($e) => $e
                     ->run($this->jsSelect())
@@ -169,7 +230,7 @@ class ResponsiveTabs extends Rows
             let tabIndex = activateTabFromSelect("' . $this->uniqueId . '");
 
             (
-                ' . getPushParameterFn('tab_number', 'tabIndex', true) . '
+                ' . getPushParameterFn($this->tabParamKey ?: 'tab_number', 'tabIndex', true) . '
             )()
         }';
     }

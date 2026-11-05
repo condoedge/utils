@@ -188,29 +188,7 @@ if (!function_exists('_lazyPlaceholder')) {
 
 function _LazyTabs(...$tabs)
 {
-    $currentTab = request('tab_number', 0);
-
-    return _ResponsiveTabs(
-        ...collect($tabs)->map(function ($tab, $index) use ($currentTab) {
-            if ($index == $currentTab) {
-                try {
-                    $lazyElement = getPrivateProperty($tab, 'elements')[0] ?? null;
-                    $closure = getPrivateProperty($lazyElement, 'closure') ?? null;
-
-                    if ($closure) {
-                        return _SwipeableTab(
-                            $closure()
-                        )->label(getPrivateProperty($tab, 'label'));
-                    }
-                } catch (\Exception $e) {
-                    // If any error occurs during reflection, fallback to original tab (that uses by default lazy loading)
-                    return $tab;
-                }
-            }
-
-            return $tab;
-        })->all(),
-    );
+    return _ResponsiveTabs(...$tabs)->eagerActiveTab();
 }
 
 if (!function_exists('_LazyTab')) {

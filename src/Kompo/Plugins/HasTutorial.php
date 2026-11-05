@@ -9,6 +9,20 @@ use Illuminate\Support\Str;
 
 class HasTutorial extends ComponentPlugin
 {
+    protected static $viewedResolver;
+    protected static $viewedMarker;
+
+    /**
+     * Project-wide override of where "this user has seen this tutorial" is stored.
+     * $resolver: fn(string $slug, $component): bool — $marker: fn(string $slug, $component): void.
+     * A component can override both for itself with tutorialViewed($slug) / markTutorialViewed($slug).
+     */
+    public static function resolveViewedUsing(?\Closure $resolver, ?\Closure $marker = null)
+    {
+        static::$viewedResolver = $resolver;
+        static::$viewedMarker = $marker;
+    }
+
     public function onBoot()
     {
         //
@@ -59,6 +73,14 @@ class HasTutorial extends ComponentPlugin
 
     protected function alreadyViewed(string $slug): bool
     {
+        if ($this->componentHasMethod('tutorialViewed')) {
+            return (bool) $this->callComponentMethod('tutorialViewed', $slug);
+        }
+
+        if (static::$viewedResolver) {
+            return (bool) call_user_func(static::$viewedResolver, $slug, $this->component);
+        }
+
         if (!in_array(HasUserSettings::class, class_uses(UserModel::getClass()))) {
             return true;
         }
@@ -68,6 +90,18 @@ class HasTutorial extends ComponentPlugin
 
     protected function markAsViewed(string $slug): void
     {
+        if ($this->componentHasMethod('markTutorialViewed')) {
+            $this->callComponentMethod('markTutorialViewed', $slug);
+
+            return;
+        }
+
+        if (static::$viewedMarker) {
+            call_user_func(static::$viewedMarker, $slug, $this->component);
+
+            return;
+        }
+
         auth()->user()?->saveSetting($this->viewedKey($slug), true);
     }
 
