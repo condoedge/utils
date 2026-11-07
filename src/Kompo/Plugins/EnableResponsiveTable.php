@@ -5,6 +5,7 @@ namespace Condoedge\Utils\Kompo\Plugins;
 use Kompo\Core\KompoId;
 use Kompo\Elements\BaseElement;
 use Kompo\Elements\Layout;
+use Kompo\Elements\TriggerWithSubmenu;
 use Kompo\Th;
 
 class EnableResponsiveTable extends \Condoedge\Utils\Kompo\Plugins\Base\ComponentPlugin
@@ -89,7 +90,8 @@ class EnableResponsiveTable extends \Condoedge\Utils\Kompo\Plugins\Base\Componen
 
         KompoId::setForElement($cloned);
 
-        if ($cloned instanceof Layout && !empty($cloned->elements)) {
+        // A dropdown keeps its items in elements too: the copies must not share their ids, or only one gets its boot info.
+        if (($cloned instanceof Layout || $cloned instanceof TriggerWithSubmenu) && !empty($cloned->elements)) {
             $cloned->elements = array_map(function ($child) {
                 return ($child instanceof BaseElement)
                     ? $this->cloneElementWithNewIds($child)
