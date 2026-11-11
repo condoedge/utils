@@ -1,5 +1,6 @@
 <?php
 
+use Condoedge\Utils\Kompo\Elements\CodeInput;
 use Condoedge\Utils\Kompo\Elements\Collapsible;
 use Condoedge\Utils\Kompo\Elements\ResponsiveTabs;
 use Condoedge\Utils\Kompo\Elements\InternationalPhoneInput;
@@ -71,6 +72,13 @@ if (!function_exists('_InternationalPhoneInput')) {
     function _InternationalPhoneInput()
     {
         return InternationalPhoneInput::form(...func_get_args());
+    }
+}
+
+if (!function_exists('_CodeInput')) {
+    function _CodeInput()
+    {
+        return CodeInput::form(...func_get_args());
     }
 }
 
