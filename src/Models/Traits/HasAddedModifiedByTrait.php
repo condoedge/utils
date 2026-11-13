@@ -36,14 +36,18 @@ trait HasAddedModifiedByTrait
     }
 
     // ACTIONS
+    /**
+     * Only a logged-in user is stamped. Writes with no auth (jobs, commands, imports) leave the
+     * columns as they are: a null added_by means "no logged-in user created this row".
+     */
     public function manageAddedModifiedBy()
     {
         if (auth()->check()) {
             if (!$this->getKey() || !$this->exists) {
-                $this->added_by = $this->added_by ?: auth()->id() ?? config('kompo-auth.default-added-by-modified-by');
+                $this->added_by = $this->added_by ?: auth()->id();
             }
 
-            $this->modified_by = auth()->id() ?? config('kompo-auth.default-added-by-modified-by');
+            $this->modified_by = auth()->id();
         }
     }
 }
