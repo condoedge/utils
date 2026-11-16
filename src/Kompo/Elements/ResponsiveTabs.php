@@ -65,7 +65,7 @@ class ResponsiveTabs extends Rows
 
     /**
      * The tab shown first: its index (from 0) or the id given to the tab with ->id().
-     * A numeric tab parameter already in the URL still wins, as it does in the browser.
+     * A tab parameter already in the URL (index or id) still wins, as it does in the browser.
      */
     public function activeTab($indexOrId = null)
     {
@@ -86,15 +86,22 @@ class ResponsiveTabs extends Rows
     {
         $persisted = $this->tabParamKey ? request($this->tabParamKey) : null;
 
-        $wanted = is_numeric($persisted) ? $persisted : ($this->activeTab ?? $persisted);
+        $index = $this->tabIndex($persisted) ?? $this->tabIndex($this->activeTab) ?? 0;
 
-        if (is_numeric($wanted)) {
-            return (int) $wanted;
+        // An index kept from a longer tab set: the browser falls back to the first tab too.
+        return isset($this->elements[$index]) ? $index : 0;
+    }
+
+    /** Null for an id no tab has here: the tab can be absent for this user or this record. */
+    protected function tabIndex($indexOrId)
+    {
+        if (is_numeric($indexOrId)) {
+            return (int) $indexOrId;
         }
 
-        $index = $wanted ? collect($this->elements)->search(fn ($tab) => $tab?->id == $wanted) : false;
+        $index = $indexOrId ? collect($this->elements)->search(fn ($tab) => $tab?->id == $indexOrId) : false;
 
-        return $index === false ? 0 : $index;
+        return $index === false ? null : $index;
     }
 
     protected function renderLazyTab($index)
@@ -222,16 +229,11 @@ class ResponsiveTabs extends Rows
 
                 let tabs = document.querySelectorAll(`#responsive-tabs-${id} a[role=tab]`);
 
+                // The clicked tab writes itself in the URL.
                 [...tabs][tabIndex >= 0 ? tabIndex : 0].click();
-
-                return tabIndex;
             }
 
-            let tabIndex = activateTabFromSelect("' . $this->uniqueId . '");
-
-            (
-                ' . getPushParameterFn($this->tabParamKey ?: 'tab_number', 'tabIndex', true) . '
-            )()
+            activateTabFromSelect("' . $this->uniqueId . '");
         }';
     }
 }
