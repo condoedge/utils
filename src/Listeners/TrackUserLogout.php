@@ -27,7 +27,7 @@ class TrackUserLogout
             $eventData = [
                 'app_user_id' => GoogleTagManager::hashUserId($user->id),
                 'sessionDuration' => session()->get('login_time')
-                    ? now()->diffInMinutes(session()->get('login_time'))
+                    ? (int) now()->diffInMinutes(session()->get('login_time'), true)
                     : null,
                 'timestamp' => now()->toIso8601String(),
             ];

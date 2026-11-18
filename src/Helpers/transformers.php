@@ -68,7 +68,7 @@ if (!function_exists('getAgeFromDob')) {
 			return '';
 		}
 
-		return carbonNow()->diffInYears(carbon($dateOfBirth));
+		return (int) carbonNow()->diffInYears(carbon($dateOfBirth), true);
 	}
 }
 

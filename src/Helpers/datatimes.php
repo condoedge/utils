@@ -5,7 +5,7 @@ use Illuminate\Support\Carbon;
 if (!function_exists('tsToDate')) {
 	function tsToDate($timestamp, $format = 'Y-m-d')
 	{
-		return Carbon::createFromTimestamp($timestamp)->translatedFormat($format);
+		return Carbon::createFromTimestamp($timestamp, config('app.timezone'))->translatedFormat($format);
 	}
 }
 
