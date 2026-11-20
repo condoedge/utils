@@ -17,7 +17,7 @@ class ClearLazyComponentsCommand extends Command
 
         if (is_dir($path)) {
             File::deleteDirectory($path);
-            mkdir($path, 0755, true);
+            mkdir($path, 0775, true);
         }
 
         $this->info('Lazy component cache cleared.');

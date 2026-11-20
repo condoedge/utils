@@ -91,7 +91,7 @@ class LazyComponentRegistry
 
         $dir = dirname($path);
         if (!is_dir($dir)) {
-            mkdir($dir, 0755, true);
+            mkdir($dir, 0775, true);
         }
 
         // Unique temp file + atomic rename: concurrent requests compiling the same key
