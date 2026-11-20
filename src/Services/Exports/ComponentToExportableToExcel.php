@@ -381,16 +381,8 @@ class ComponentToExportableToExcel implements FromGenerator, WithHeadings, Shoul
         try {
             $text = strip_tags(html_entity_decode(trim($text)));
 
-            if ($format == $this->currencyFormat()) {
-                $text = preg_replace('/[^\d.,-]/', '', $text);
-            }
-
-            if (preg_match(static::REGEX_CURRENCY, $text)) {
-                return floatval(preg_replace('/[^0-9.-]/', '', $text));
-            }
-
-            if (preg_match(static::REGEX_CURRENCY_FR, $text)) {
-                return floatval(str_replace(',', '.', preg_replace('/[^0-9.,-]/', '', $text)));
+            if ($format == $this->currencyFormat() || preg_match(static::REGEX_CURRENCY, $text) || preg_match(static::REGEX_CURRENCY_FR, $text)) {
+                return $this->currencyToNumber($text) ?? preg_replace('/[^\d.,-]/', '', $text);
             }
 
             if ($format === $this->dateFormat()) {
@@ -427,6 +419,18 @@ class ComponentToExportableToExcel implements FromGenerator, WithHeadings, Shoul
             Log::error($e->getMessage(), ['class' => static::class, 'component' => get_class($this->component), 'text' => $text, 'trace' => $e->getTraceAsString(), 'user' => auth()->user()]);
             return $text;
         }
+    }
+
+    // "$ 1,234.56" or "1 234,56 $": the separator before the last one or two digits is the decimal one, the others group thousands.
+    protected function currencyToNumber($text)
+    {
+        $number = preg_replace('/[^\d.,-]/', '', $text);
+
+        $number = preg_match('/^(-?[\d.,]*?)[.,](\d{1,2})$/', $number, $parts)
+            ? str_replace(['.', ','], '', $parts[1]) . '.' . $parts[2]
+            : str_replace(['.', ','], '', $number);
+
+        return is_numeric($number) ? (float) $number : null;
     }
 
     protected function convertHtmlToPlainText($html)
