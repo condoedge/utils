@@ -49,7 +49,10 @@ Element::macro('selfMethods', function (array $methods) {
  * @return \Kompo\Rows The current instance of the Rows class.
 */
 \Kompo\Rows::macro('copyToClipboard', function ($text, $alertMessage = 'auth.copied-to-clipboard') {
-    return $this->onClick(fn($e) => $e->run('() => {navigator.clipboard?.writeText("' . $text . '")}') &&
+    // One JSON string literal: line breaks, quotes and tags in the text can neither break nor escape it.
+    $literal = json_encode((string) $text, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE);
+
+    return $this->onClick(fn($e) => $e->run('() => {navigator.clipboard?.writeText(' . $literal . ')}') &&
         $e->alert($alertMessage));
 });
 
