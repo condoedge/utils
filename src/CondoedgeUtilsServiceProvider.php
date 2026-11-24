@@ -148,7 +148,9 @@ class CondoedgeUtilsServiceProvider extends ServiceProvider
             return new Graph();
         });
 
-        $this->app->singleton(GlobalConfigServiceContract::class, function ($app) {
+        // Scoped, not singleton: the DB driver remembers what it read, and a queue worker or Octane must start each
+        // job or request from the table again.
+        $this->app->scoped(GlobalConfigServiceContract::class, function ($app) {
             $driver = config('services.global_config_service.driver');
 
             $driverConfig = config("services.global_config_service.drivers.{$driver}");

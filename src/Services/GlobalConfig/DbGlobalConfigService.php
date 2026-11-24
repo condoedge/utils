@@ -7,11 +7,19 @@ use Condoedge\Utils\Models\GlobalConfig;
 class DbGlobalConfigService extends AbstractConfigService
 {
     /**
+     * Keys already read: [value] when the row exists, [] when it does not. The service is bound scoped, so this
+     * lasts one request, one queued job or one command, and a long-lived worker reads the table again per job.
+     */
+    protected array $read = [];
+
+    /**
      * @inheritDoc
      */
     public function forget(string $key)
     {
         GlobalConfig::where('key', $key)->delete();
+
+        unset($this->read[$key]);
     }
 
     /**
@@ -19,13 +27,13 @@ class DbGlobalConfigService extends AbstractConfigService
      */
     public function get(string $key, $default = null)
     {
-        $config = GlobalConfig::where('key', $key)->first();
+        if (!array_key_exists($key, $this->read)) {
+            $config = GlobalConfig::where('key', $key)->first();
 
-        if ($config) {
-            return $config->value;
+            $this->read[$key] = $config ? [$config->value] : [];
         }
 
-        return $default;
+        return $this->read[$key] ? $this->read[$key][0] : $default;
     }
 
     /**
@@ -45,6 +53,8 @@ class DbGlobalConfigService extends AbstractConfigService
             ['key' => $key],
             ['value' => $value]
         );
+
+        $this->read[$key] = [$config->value];
 
         return $config;
     }
