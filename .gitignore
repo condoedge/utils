@@ -2,3 +2,4 @@
 composer.lock
 /node_modules/
 resources/views/tutorial-test.html
+.phpunit.result.cache
